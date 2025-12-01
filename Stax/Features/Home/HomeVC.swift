@@ -7,10 +7,6 @@
 
 import UIKit
 
-enum HomeEvent{
-    case homeButtonTapped
-}
-
 class HomeVC: UIViewController {
     var didSendEventClosure: ((HomeEvent) -> Void)?
 

@@ -9,7 +9,7 @@ import UIKit
 
 //MARK: - MainCoordinator
 protocol MainCoordinatorProtocol: Coordinator{
-    func onboardingFLow()
+    func onboardingFlow()
     func showMainFlow()
 }
 
@@ -21,18 +21,17 @@ class MainCoordinator: MainCoordinatorProtocol{
     
     var navigationController: UINavigationController
     
-    var type: CoordinatorType { return .tab }
+    var type: CoordinatorType { return .app }
     
     required init(_ navigationController: UINavigationController) {
         self.navigationController = navigationController
-        navigationController.setNavigationBarHidden(true, animated: false)
     }
     
     func start() {
        showMainFlow()
     }
     
-    func onboardingFLow() {
+    func onboardingFlow() {
         print("onboarding flow")
     }
     

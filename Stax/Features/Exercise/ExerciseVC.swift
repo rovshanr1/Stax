@@ -6,9 +6,6 @@
 //
 
 import UIKit
-enum ExerciseEvent{
-    
-}
 
 class ExerciseVC: UIViewController {
     var didSendEventClosure: ((ExerciseEvent) -> Void)?

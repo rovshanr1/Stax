@@ -6,9 +6,6 @@
 //
 
 import UIKit
-enum ProfileEvent{
-    
-}
 
 class ProfileVC: UIViewController {
     var didSendEventClosure: ((ProfileEvent) -> Void)?

@@ -10,7 +10,7 @@ protocol TabCoordinatorProtocol: Coordinator{
     var tabBarController: UITabBarController  {get set}
     
     func selectedPage(_ page: TabBarPage)
-    func setSelectedPage(_ page: TabBarPage)
+    func setSelectedIndex(_ page: TabBarPage)
     func currentPage() -> TabBarPage?
 }
 
@@ -49,11 +49,11 @@ class TabCoordinator: NSObject, Coordinator {
         ///Set delegate for UITabBarCOntroller
         tabBarController.delegate = self
         ///Addign page's controllers
-        tabBarController.setViewControllers(tabControllers, animated: true)
+        tabBarController.setViewControllers(tabControllers, animated: false)
         ///Let set index
         tabBarController.selectedIndex = TabBarPage.home.rawValue
         ///Styling
-        tabBarController.tabBar.isTranslucent = false
+        tabBarController.tabBar.tintColor = .activeItems
         
         ///attach tabBarController to navigation controller associate
         navigationController.viewControllers = [tabBarController]
@@ -63,24 +63,25 @@ class TabCoordinator: NSObject, Coordinator {
     
     private func getTabController(_ page: TabBarPage) -> UINavigationController{
         let navController = UINavigationController()
-        navController.setNavigationBarHidden(true, animated: false)
-        
+    
         navController.tabBarItem = UITabBarItem.init(title: page.title, image: page.icon, selectedImage: page.selectedIcon)
         
         switch page {
         case .home:
-            let homeVC = HomeVC()
-            
-            navController.pushViewController(homeVC, animated: true)
+            let homeCoordinator = HomeCoordinator(navController)
+            homeCoordinator.finishDelegate = self
+            childCoordinators.append(homeCoordinator)
+            homeCoordinator.start()
         case .exercise:
-            let exerciseVC = ExerciseVC()
-            
-            navController.pushViewController(exerciseVC, animated: true)
-            
+            let exerciseCoordinator = ExerciseCoordinator(navController)
+            exerciseCoordinator.finishDelegate = self
+            childCoordinators.append(exerciseCoordinator)
+            exerciseCoordinator.start()
         case .profile:
-            let profileVC = ProfileVC()
-            
-            navController.pushViewController(profileVC, animated: true)
+            let profileCoordinator = ProfileCoordinator(navController)
+            profileCoordinator.finishDelegate = self
+            childCoordinators.append(profileCoordinator)
+            profileCoordinator.start()
         }
         
         return navController
@@ -91,6 +92,10 @@ class TabCoordinator: NSObject, Coordinator {
     }
     
     func selectedPage(_ page: TabBarPage) {
+        tabBarController.selectedIndex = page.rawValue
+    }
+    
+    func setSelectedIndex(_ page: TabBarPage) {
         guard let index = TabBarPage.allCases.firstIndex(of: page) else { return }
         tabBarController.selectedIndex = index
     }
@@ -101,6 +106,12 @@ class TabCoordinator: NSObject, Coordinator {
 
 extension TabCoordinator: UITabBarControllerDelegate{
     func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
+        
+    }
+}
+
+extension TabCoordinator: CoordinatorFinishDelegate{
+    func coordinatorDidFinish(childCoordinator coordinator: Coordinator) {
         
     }
 }

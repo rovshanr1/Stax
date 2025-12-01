@@ -9,7 +9,7 @@ import UIKit
 //MARK: - CoordinatorType
 
 enum CoordinatorType{
-    case app, login, tab
+    case app, login, tab, page
 }
 
 //MARK: - Coordinator
