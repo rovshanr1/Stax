@@ -57,13 +57,11 @@ class TabCoordinator: NSObject, Coordinator {
         
         ///attach tabBarController to navigation controller associate
         navigationController.viewControllers = [tabBarController]
-        
-        
     }
     
     private func getTabController(_ page: TabBarPage) -> UINavigationController{
         let navController = UINavigationController()
-    
+        navController.navigationBar.prefersLargeTitles = true
         navController.tabBarItem = UITabBarItem.init(title: page.title, image: page.icon, selectedImage: page.selectedIcon)
         
         switch page {
@@ -72,8 +70,8 @@ class TabCoordinator: NSObject, Coordinator {
             homeCoordinator.finishDelegate = self
             childCoordinators.append(homeCoordinator)
             homeCoordinator.start()
-        case .exercise:
-            let exerciseCoordinator = ExerciseCoordinator(navController)
+        case .workout:
+            let exerciseCoordinator = WorkoutCoordinator(navController)
             exerciseCoordinator.finishDelegate = self
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()
@@ -110,8 +108,9 @@ extension TabCoordinator: UITabBarControllerDelegate{
     }
 }
 
+//MARK: - CoordinatorDinishDelegate
 extension TabCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator coordinator: Coordinator) {
-        
+        childCoordinators = childCoordinators.filter({ $0 !== coordinator})
     }
 }

@@ -38,6 +38,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     func showMainFlow() {
         let tabCoordinator = TabCoordinator(navigationController)
         tabCoordinator.finishDelegate = self
+        navigationController.setNavigationBarHidden(true, animated: false)
         tabCoordinator.start()
         childCoordinators.append(tabCoordinator)
     }

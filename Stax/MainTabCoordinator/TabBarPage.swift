@@ -8,14 +8,14 @@
 import UIKit
 
 enum TabBarPage: Int, CaseIterable{
-    case home, exercise, profile
+    case home, workout, profile
     
     var title: String{
         switch self{
         case .home:
             return "Home"
-        case .exercise:
-            return "Exercise"
+        case .workout:
+            return "Workout"
         case .profile:
             return "Profile"
         }
@@ -25,7 +25,7 @@ enum TabBarPage: Int, CaseIterable{
         switch self{
         case .home:
             return UIImage(systemName: "house")
-        case .exercise:
+        case .workout:
             return  UIImage(systemName: "dumbbell")
         case .profile:
             return UIImage(systemName: "person")
@@ -36,7 +36,7 @@ enum TabBarPage: Int, CaseIterable{
         switch self{
         case .home:
             return UIImage(systemName: "house.fill")
-        case .exercise:
+        case .workout:
             return  UIImage(systemName: "dumbbell.fill")
         case .profile:
             return UIImage(systemName: "person.fill")
