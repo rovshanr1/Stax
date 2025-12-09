@@ -9,11 +9,13 @@ import UIKit
 import SnapKit
 
 class WorkoutSessionView: UIView {
+    var addExerciseButtonTapped: (() -> Void)?
+    
     
     private var tableView: UITableView = {
        let uiTableView = UITableView()
         uiTableView.register(WorkoutSessionTableViewCell.self, forCellReuseIdentifier: WorkoutSessionTableViewCell.reuseIdentifier)
-        uiTableView.register(WorkoutSessionButtonSectionTableViewCell.self, forCellReuseIdentifier: WorkoutSessionButtonSectionTableViewCell.reuseIdentifier)
+        uiTableView.register(WorkoutSessionButtonsTableViewCell.self, forCellReuseIdentifier: WorkoutSessionButtonsTableViewCell.reuseIdentifier)
         uiTableView.allowsSelection = false
         return uiTableView
     }()
@@ -69,8 +71,13 @@ extension WorkoutSessionView: UITableViewDataSource, UITableViewDelegate {
             cell.configureTime(with: currentTimerString)
             return cell
         case 1:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionButtonSectionTableViewCell.reuseIdentifier, for: indexPath) as? WorkoutSessionButtonSectionTableViewCell else {
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionButtonsTableViewCell.reuseIdentifier, for: indexPath) as? WorkoutSessionButtonsTableViewCell else {
                 fatalError("Unable to dequeue WorkoutSessionTableViewCell")
+                
+            }
+            
+            cell.onTapAddExerciseButton = {[weak self] in
+                self?.addExerciseButtonTapped?()
             }
             return cell
         default:

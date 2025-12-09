@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import CoreData
+
 protocol TabCoordinatorProtocol: Coordinator{
     var tabBarController: UITabBarController  {get set}
     
@@ -21,12 +23,14 @@ class TabCoordinator: NSObject, Coordinator {
     
     var navigationController: UINavigationController
     var tabBarController: UITabBarController
+    let context: NSManagedObjectContext
     
     var type: CoordinatorType { .tab }
     
-    required init(_ navigationController: UINavigationController) {
+    init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
         self.tabBarController = .init()
+        self.context = context
     }
     
     deinit{
@@ -71,7 +75,7 @@ class TabCoordinator: NSObject, Coordinator {
             childCoordinators.append(homeCoordinator)
             homeCoordinator.start()
         case .workout:
-            let exerciseCoordinator = WorkoutCoordinator(navController)
+            let exerciseCoordinator = WorkoutCoordinator(navController, context: context)
             exerciseCoordinator.finishDelegate = self
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()

@@ -7,13 +7,11 @@
 
 import UIKit
 //MARK: - CoordinatorType
-
 enum CoordinatorType{
-    case app, login, tab, page
+    case app, login, tab, page, pageSheet
 }
 
 //MARK: - Coordinator
-
 protocol Coordinator: AnyObject{
     var finishDelegate: CoordinatorFinishDelegate? { get set}
     
@@ -31,12 +29,9 @@ protocol Coordinator: AnyObject{
     
     /// A place to put logic to finish the flow, to clean all children coordinators, and to notify the parent that this coordinator is ready to be deallocated
     func finish()
-    
-    init(_ navigationController: UINavigationController)
 }
 
 //MARK: - CoordinatorExtension
-
 extension Coordinator{
     func finish() {
         childCoordinators.removeAll()
@@ -46,7 +41,6 @@ extension Coordinator{
 
 
 //MARK: - CoordinatorOutput
-
 protocol CoordinatorFinishDelegate: AnyObject{
     func coordinatorDidFinish(childCoordinator: Coordinator)
 }

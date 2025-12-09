@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class WorkoutSessionButtonSectionTableViewCell: UITableViewCell {
+class WorkoutSessionButtonsTableViewCell: UITableViewCell {
     
     static let reuseIdentifier  = "WorkoutSessionButtonSectionTableViewCell"
     

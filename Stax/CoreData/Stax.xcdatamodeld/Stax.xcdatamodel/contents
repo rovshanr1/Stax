@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24299" systemVersion="25B78" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <entity name="Exercise" representedClassName="Exercise" syncable="YES" codeGenerationType="class"/>
-    <entity name="Workout" representedClassName="Workout" syncable="YES" codeGenerationType="class"/>
-    <entity name="WorkoutExercise" representedClassName="WorkoutExercise" syncable="YES" codeGenerationType="class"/>
-    <entity name="WorkoutSets" representedClassName="WorkoutSets" syncable="YES" codeGenerationType="class"/>
-</model>

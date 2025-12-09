@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 
 class WorkoutVC: UIViewController {
-    var didSendEventClosure: ((ExerciseEvent) -> Void)?
+    var didSendEventClosure: ((WorkoutEvent) -> Void)?
     
     private var contentView = WorkoutView()
     

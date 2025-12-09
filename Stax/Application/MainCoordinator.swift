@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreData
 
 //MARK: - MainCoordinator
 protocol MainCoordinatorProtocol: Coordinator{
@@ -23,8 +24,11 @@ class MainCoordinator: MainCoordinatorProtocol{
     
     var type: CoordinatorType { return .app }
     
-    required init(_ navigationController: UINavigationController) {
+    let context: NSManagedObjectContext
+    
+    init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
+        self.context = context
     }
     
     func start() {
@@ -36,7 +40,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func showMainFlow() {
-        let tabCoordinator = TabCoordinator(navigationController)
+        let tabCoordinator = TabCoordinator(navigationController, context: context)
         tabCoordinator.finishDelegate = self
         navigationController.setNavigationBarHidden(true, animated: false)
         tabCoordinator.start()

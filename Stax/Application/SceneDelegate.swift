@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreData
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -15,6 +16,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
+        
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        
+        let seeder = DataSeeder(context: context)
+        seeder.seed()
 
         window = UIWindow(windowScene: windowScene)
         
@@ -24,7 +31,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = navigationViewController
         window?.makeKeyAndVisible()
         
-        coordinator = MainCoordinator.init(navigationViewController)
+        coordinator = MainCoordinator.init(navigationViewController, context: context)
         coordinator?.start()
     }
 

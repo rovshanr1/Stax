@@ -1,0 +1,14 @@
+[
+    {
+        "name": "Bench Press",
+        "targetMuscle": "Chest"
+    },
+    {
+        "name": "Squat",
+        "targetMuscle": "Legs"
+    },
+    {
+        "name": "Pull Up",
+        "targetMuscle": "Back"
+    }
+]

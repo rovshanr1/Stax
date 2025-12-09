@@ -10,6 +10,8 @@ import SnapKit
 import Combine
 
 class WorkoutSessionVC: UIViewController {
+    var didSendEventClosure: ((WorkoutSessionEvent) -> Void)?
+    
     private var cancellables = Set<AnyCancellable>()
     
     private let contentView = WorkoutSessionView()
@@ -22,6 +24,7 @@ class WorkoutSessionVC: UIViewController {
         setupNavbar()
         setupUI()
         bindVM()
+        bindEvents()
     }
     
     private func setupUI(){
@@ -32,6 +35,12 @@ class WorkoutSessionVC: UIViewController {
                                                               left: 0,
                                                               bottom: 0,
                                                               right: 0))
+        }
+    }
+    
+    private func bindEvents(){
+        contentView.addExerciseButtonTapped = { [weak self] in
+            self?.didSendEventClosure?(.addExercise)
         }
     }
     
@@ -73,7 +82,7 @@ extension WorkoutSessionVC{
     }
     
     @objc private func finishSession() {
-        
+        AlertManager.showErrorAlert(on: self, with: WorkoutServiceError.noAddExercise)
     }
     
     @objc private func cancelSession(){
