@@ -35,7 +35,7 @@ class WorkoutSessionButtonsTableViewCell: UITableViewCell {
     
     private let secondaryLabel: UILabel = {
         let label = UILabel()
-        label.text = "Add an exercise to start yout workout"
+        label.text = "Add an exercise to start your workout"
         label.font = .systemFont(ofSize: 14, weight: .regular)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
@@ -55,27 +55,27 @@ class WorkoutSessionButtonsTableViewCell: UITableViewCell {
         return button
     }()
     
-    private var settingsButton: UIButton = {
-        var config = UIButton.Configuration.filled()
-        config.title = "Settings"
-        config.baseForegroundColor = .label
-        config.baseBackgroundColor = .secondarySystemBackground
-        config.cornerStyle = .large
-        var button = UIButton()
-        button.configuration = config
-        return button
-    }()
-    
-    private var cancelButton: UIButton = {
-        var config = UIButton.Configuration.filled()
-        config.title = "Cancel"
-        config.baseForegroundColor = .systemRed
-        config.baseBackgroundColor = .secondarySystemBackground
-        config.cornerStyle = .large
-        var button = UIButton()
-        button.configuration = config
-        return button
-    }()
+//    private var settingsButton: UIButton = {
+//        var config = UIButton.Configuration.filled()
+//        config.title = "Settings"
+//        config.baseForegroundColor = .label
+//        config.baseBackgroundColor = .secondarySystemBackground
+//        config.cornerStyle = .large
+//        var button = UIButton()
+//        button.configuration = config
+//        return button
+//    }()
+//    
+//    private var cancelButton: UIButton = {
+//        var config = UIButton.Configuration.filled()
+//        config.title = "Cancel"
+//        config.baseForegroundColor = .systemRed
+//        config.baseBackgroundColor = .secondarySystemBackground
+//        config.cornerStyle = .large
+//        var button = UIButton()
+//        button.configuration = config
+//        return button
+//    }()
     
     lazy private var labelStackView: UIStackView = {
         var stackView = UIStackView(arrangedSubviews: [primaryLabel, secondaryLabel])
@@ -92,15 +92,15 @@ class WorkoutSessionButtonsTableViewCell: UITableViewCell {
         return stackView
     }()
     
-    lazy private var secondaryButtonStackView: UIStackView = {
-        var stackView = UIStackView(arrangedSubviews: [settingsButton, cancelButton])
-        stackView.axis = .horizontal
-        stackView.spacing = 12
-        return stackView
-    }()
+//    lazy private var secondaryButtonStackView: UIStackView = {
+//        var stackView = UIStackView(arrangedSubviews: [settingsButton, cancelButton])
+//        stackView.axis = .horizontal
+//        stackView.spacing = 12
+//        return stackView
+//    }()
     
     lazy private var buttonStackView: UIStackView = {
-        var stackView = UIStackView(arrangedSubviews: [addExerciseButton, secondaryButtonStackView])
+        var stackView = UIStackView(arrangedSubviews: [addExerciseButton /*, secondaryButtonStackView*/])
         stackView.axis = .vertical
         stackView.spacing = 12
         return stackView
@@ -133,15 +133,16 @@ class WorkoutSessionButtonsTableViewCell: UITableViewCell {
         }
         addExerciseButton.addTarget(self, action: #selector(onTapAddExerciseButtonTapped), for: .touchUpInside)
         
-        //SettingButton
-        settingsButton.snp.makeConstraints { (make) in
-            make.height.equalTo(30)
-        }
-        
-        //CancelButton
-        cancelButton.snp.makeConstraints { (make) in
-            make.height.equalTo(30)
-        }
+//        //SettingButton
+//        settingsButton.snp.makeConstraints { (make) in
+//            make.height.equalTo(30)
+//        }
+//        
+//        //CancelButton
+//        cancelButton.snp.makeConstraints { (make) in
+//            make.height.equalTo(30)
+//        }
+//
         
         //ImageView Height
         dumbbellImageView.snp.makeConstraints { (make) in
@@ -152,13 +153,12 @@ class WorkoutSessionButtonsTableViewCell: UITableViewCell {
         
         //Constraints
         mainStackView.snp.makeConstraints { (make) in
-            make.edges.equalTo(contentView).inset(12).priority(999)
+            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 24, left: 12, bottom: 12, right: 12)).priority(999)
         }
     }
     
     
     @objc private func onTapAddExerciseButtonTapped(){
         self.onTapAddExerciseButton?()
-        print("button tapped")
     }
 }

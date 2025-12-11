@@ -14,8 +14,7 @@ class WorkoutSessionTableViewCell: UITableViewCell {
     private let duration: UILabel = {
         let label = UILabel()
         label.textColor = .secondaryLabel
-        label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textAlignment = .left
+        label.font = .systemFont(ofSize: 12, weight: .regular)
         label.text = "Duration"
         return label
     }()
@@ -23,8 +22,7 @@ class WorkoutSessionTableViewCell: UITableViewCell {
     private let volume: UILabel = {
         let label = UILabel()
         label.textColor = .secondaryLabel
-        label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textAlignment = .left
+        label.font = .systemFont(ofSize: 12, weight: .regular)
         label.text = "Volume"
         return label
     }()
@@ -32,8 +30,7 @@ class WorkoutSessionTableViewCell: UITableViewCell {
     private let sets: UILabel = {
         let label = UILabel()
         label.textColor = .secondaryLabel
-        label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textAlignment = .left
+        label.font = .systemFont(ofSize: 12, weight: .regular)
         label.text = "Sets"
         return label
     }()
@@ -41,17 +38,15 @@ class WorkoutSessionTableViewCell: UITableViewCell {
     private var timer: UILabel = {
         let label = UILabel()
         label.textColor = .label
-        label.font = .monospacedSystemFont(ofSize: 18, weight: .semibold)
-        label.textAlignment = .left
-        label.text = "00h:00m:00s"
+        label.font = .monospacedSystemFont(ofSize: 12, weight: .semibold)
+        label.text = "0h 0m 0s"
         return label
     }()
     
     private var volumeLabel: UILabel = {
         let label = UILabel()
         label.textColor = .label
-        label.font = .monospacedSystemFont(ofSize: 18, weight: .semibold)
-        label.textAlignment = .left
+        label.font = .monospacedSystemFont(ofSize: 12, weight: .semibold)
         label.text = "0 kg"
         return label
     }()
@@ -59,23 +54,26 @@ class WorkoutSessionTableViewCell: UITableViewCell {
     private var setsLabel: UILabel = {
         let label = UILabel()
         label.textColor = .label
-        label.font = .monospacedSystemFont(ofSize: 18, weight: .semibold)
-        label.textAlignment = .left
+        label.font = .monospacedSystemFont(ofSize: 12, weight: .semibold)
         label.text = "0"
         return label
     }()
     
     private lazy var labelStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [duration, sets, volume])
+        let stackView = UIStackView(arrangedSubviews: [duration, volume, sets])
         stackView.axis = .horizontal
+        stackView.alignment = .center
         stackView.distribution = .fillEqually
+        stackView.spacing = 4
         return stackView
     }()
     
     private lazy var valueStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [timer, setsLabel, volumeLabel])
+        let stackView = UIStackView(arrangedSubviews: [timer, volumeLabel, setsLabel])
         stackView.axis = .horizontal
+        stackView.alignment = .center
         stackView.distribution = .fillEqually
+        stackView.spacing = 4
         return stackView
     }()
     
@@ -101,7 +99,7 @@ class WorkoutSessionTableViewCell: UITableViewCell {
         contentView.addSubview(mainStackView)
         
         mainStackView.snp.makeConstraints { (make) in
-            make.edges.equalTo(contentView).inset(12)
+            make.edges.equalTo(contentView).inset(12).priority(999)
         }
     }
     

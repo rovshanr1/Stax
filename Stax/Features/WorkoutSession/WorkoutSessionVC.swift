@@ -16,7 +16,8 @@ class WorkoutSessionVC: UIViewController {
     
     private let contentView = WorkoutSessionView()
     
-    private let viewModel = WorkoutSessionViewModel()
+    var viewModel: WorkoutSessionViewModel!
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,10 +32,7 @@ class WorkoutSessionVC: UIViewController {
         view.addSubview(contentView)
         
         contentView.snp.makeConstraints { (make) in
-            make.edges.equalTo(self.view).inset(UIEdgeInsets(top: 0,
-                                                              left: 0,
-                                                              bottom: 0,
-                                                              right: 0))
+            make.edges.equalTo(self.view).inset(0)
         }
     }
     
@@ -61,17 +59,21 @@ class WorkoutSessionVC: UIViewController {
     
 }
 
-//MARK: - NavigationItems
+//MARK: - NavigationBarItems
 extension WorkoutSessionVC{
     private func setupNavbar() {
         title = "Active Session"
         
         let finishBtn = UIButton(type: .system)
-        finishBtn.setTitle("Finish", for: .normal)
-        finishBtn.tintColor = .label
-        finishBtn.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        var config = UIButton.Configuration.plain()
+        config.baseForegroundColor = .label
+        config.cornerStyle = .large
+        config.baseBackgroundColor = .clear
+        config.title = "Finish"
+        finishBtn.configuration = config
         finishBtn.addTarget(self, action: #selector(finishSession), for: .touchUpInside)
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: finishBtn)
+        navigationItem.rightBarButtonItem?.hidesSharedBackground = true
         
         let cancelBtn = UIButton(type: .system)
         cancelBtn.setImage(UIImage(systemName: "chevron.down"), for: .normal)
@@ -86,6 +88,6 @@ extension WorkoutSessionVC{
     }
     
     @objc private func cancelSession(){
-        dismiss(animated: true)
+        didSendEventClosure?(.finishWorkout)
     }
 }
