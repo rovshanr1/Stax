@@ -1,5 +1,5 @@
 //
-//  WorkoutSessionViewModel.swift
+//  WorkoutSessionVM.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 05.12.25.
@@ -7,37 +7,41 @@
 
 import UIKit
 import Combine
+import CoreData
 
 final class WorkoutSessionViewModel{
     //MARK: - I/O Structs
-    //Input: "Orders" fromd the VC (Orders)
+    ///Input: "Orders" fromd the VC (Orders)
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
         let didTapFinish: PassthroughSubject<Void, Never>
         let didTapCancel: PassthroughSubject<Void, Never>
     }
     
-    //Output: "Data" to VC (Data Streams)
+    ///Output: "Data" to VC (Data Streams)
     struct Output{
         let timerSubject: CurrentValueSubject<String, Never>
-        let dissmisEvent: PassthroughSubject<Void, Never>
+        let dismissEvent: PassthroughSubject<Void, Never>
     }
     
     //MARK: - Properties
     let input: Input
     let output: Output
     
+    
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
     private var secondsElapsed = 0
     
     //MARK: - Initializer
-    init() {
+    init(context: NSManagedObjectContext) {
+        
+        
         self.input = .init(viewDidLoad: .init(),
                            didTapFinish: .init(),
                            didTapCancel: .init())
-        self.output = .init(timerSubject: .init("00s"),
-                            dissmisEvent: .init())
+        self.output = .init(timerSubject: .init("0s"),
+                            dismissEvent: .init())
         
         transform()
         
@@ -59,14 +63,14 @@ final class WorkoutSessionViewModel{
                 
                 //TODO: - The registration process that will be done when the finish button is pressed will be done here.
                 
-                self.output.dissmisEvent.send()
+                self.output.dismissEvent.send()
             }
             .store(in: &cancellables)
         
         input.didTapCancel
             .sink { [weak self] in
                 self?.stopTimer()
-                self?.output.dissmisEvent.send()
+                self?.output.dismissEvent.send()
             }
             .store(in: &cancellables)
         
@@ -93,11 +97,11 @@ final class WorkoutSessionViewModel{
         let seconds = totalSeconds % 60
         
         if hours > 0 {
-            return String(format: "%02dh:%02dm:%02ds", hours, minutes, seconds)
+            return String(format: "%2dh %2dm %2ds", hours, minutes, seconds)
         }else if minutes > 0 {
-            return String(format: "%02dm:%02ds", minutes, seconds)
+            return String(format: "%2dm %2ds", minutes, seconds)
         }else {
-            return String(format: "%02ds", seconds)
+            return String(format: "%2ds", seconds)
         }
     }
 }
