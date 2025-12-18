@@ -21,7 +21,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let context = appDelegate.persistentContainer.viewContext
         
         let seeder = DataSeeder(context: context)
-        seeder.seed()
+        seeder.seedExercise()
 
         window = UIWindow(windowScene: windowScene)
         

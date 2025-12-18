@@ -9,26 +9,33 @@ import UIKit
 import SnapKit
 import Combine
 
-class WorkoutSessionVC: UIViewController {
+class WorkoutSessionVC: UIViewController {    
+    //Internal Properties
     var didSendEventClosure: ((WorkoutSessionEvent) -> Void)?
-    
-    private var cancellables = Set<AnyCancellable>()
-    
-    private let contentView = WorkoutSessionView()
-    
     var viewModel: WorkoutSessionViewModel!
     
+    //Private Properties
+    private var cancellables = Set<AnyCancellable>()
+    private let contentView = WorkoutSessionView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        setupNavbar()
+        
         setupUI()
+    }
+    
+    //MARK: - Setup UI Method
+    private func setupUI(){
+        view.backgroundColor = .systemBackground
+        
+        setupNavbar()
+        constraints()
         bindVM()
         bindEvents()
     }
     
-    private func setupUI(){
+    //MARK: - Constraints
+    private func constraints(){
         view.addSubview(contentView)
         
         contentView.snp.makeConstraints { (make) in
@@ -36,6 +43,7 @@ class WorkoutSessionVC: UIViewController {
         }
     }
     
+    //MARK: - Event Binding
     private func bindEvents(){
         contentView.addExerciseButtonTapped = { [weak self] in
             self?.didSendEventClosure?(.addExercise)
@@ -43,6 +51,7 @@ class WorkoutSessionVC: UIViewController {
     }
     
     
+    //MARK: - ViewModel Binding
     private func bindVM(){
         viewModel.output.timerSubject
             .receive(on: DispatchQueue.main)
@@ -52,7 +61,12 @@ class WorkoutSessionVC: UIViewController {
             }
             .store(in: &cancellables)
         
-        
+        viewModel.output.dismissEvent
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] _ in
+                self?.didSendEventClosure?(.finishWorkout)
+            }
+            .store(in: &cancellables)
         
         viewModel.input.viewDidLoad.send()
     }
@@ -83,11 +97,31 @@ extension WorkoutSessionVC{
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: cancelBtn)
     }
     
+    //MARK: - Action
     @objc private func finishSession() {
-        AlertManager.showErrorAlert(on: self, with: WorkoutServiceError.noAddExercise)
+        AlertManager.showConfirmationAlert(
+            on: self,
+            title: "Finish Workout",
+            message: "Do you want to save and end this workout?",
+            confirmTitle: "Save & Finish",
+            cancelTitle: "Continue Workout"
+        ){[weak self] in
+            guard let self else{return}
+            self.viewModel.input.didTapFinish.send(())
+        }
     }
     
     @objc private func cancelSession(){
-        didSendEventClosure?(.finishWorkout)
+        AlertManager.showConfirmationAlert(on: self,
+                                           title: "Cancel Workout!",
+                                           message: "Are you sure you want to cancel this workout?",
+                                           confirmTitle: "Yes",
+                                           cancelTitle: "No")
+        { [weak self] in
+            guard let self else { return }
+            didSendEventClosure?(.finishWorkout)
+        }
+        
+        
     }
 }

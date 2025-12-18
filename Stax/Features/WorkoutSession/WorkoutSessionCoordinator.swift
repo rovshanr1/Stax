@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 import CoreData
 
 enum WorkoutSessionEvent{
@@ -17,6 +18,8 @@ final class WorkoutSessionCoordinator: Coordinator{
     //StandartDelegate
     weak var finishDelegate: CoordinatorFinishDelegate?
     
+    var vm: WorkoutSessionViewModel?
+    
     var childCoordinators: [Coordinator] = []
     
     var navigationController: UINavigationController
@@ -24,6 +27,8 @@ final class WorkoutSessionCoordinator: Coordinator{
     var type: CoordinatorType { .workoutSession}
     
     let context: NSManagedObjectContext
+    
+    var cancellables: Set<AnyCancellable> = []
     
     init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
@@ -39,8 +44,11 @@ final class WorkoutSessionCoordinator: Coordinator{
         }
         
         //VM Injection
-        let vm = WorkoutSessionViewModel(context: context)
-        sessionVC.viewModel = vm
+        let workoutRepo = DataRepository<Workout>(context: context)
+        let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
+        self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo)
+
+        sessionVC.viewModel = self.vm
         
         navigationController.viewControllers = [sessionVC]
     }
@@ -60,6 +68,13 @@ final class WorkoutSessionCoordinator: Coordinator{
         
         let exerciseCoordinator = ExerciseListCoordinator(listNav, context: context)
         exerciseCoordinator.finishDelegate = self
+        
+        exerciseCoordinator.didFinishWithSelection = {[weak self] selectedExercise in
+            guard let self else {return}
+         
+            
+            self.vm?.input.addExercise.send(selectedExercise)
+        }
         
         childCoordinators.append(exerciseCoordinator)
         exerciseCoordinator.start()

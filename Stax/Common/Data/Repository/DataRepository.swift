@@ -56,7 +56,6 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
         let entityName = T.entity()
         
         let object = NSEntityDescription.insertNewObject(forEntityName: entityName.name!, into: context) as! T
-        
         return object
     }
     
@@ -82,5 +81,18 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
                 }
             }
         }.eraseToAnyPublisher()
+    }
+    
+    func makeFetchResultsController(sortDescriptors: [NSSortDescriptor], predicate: NSPredicate? = nil) -> NSFetchedResultsController<T>{
+        let request = NSFetchRequest<T>(entityName: T.entity().name!)
+        request.sortDescriptors = sortDescriptors
+        request.predicate = predicate
+        
+        return NSFetchedResultsController(
+            fetchRequest: request,
+            managedObjectContext: context,
+            sectionNameKeyPath: nil,
+            cacheName: nil
+        )
     }
 }

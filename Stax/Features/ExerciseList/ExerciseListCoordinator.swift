@@ -10,9 +10,12 @@ import CoreData
 
 enum ExerciseListEvent{
     case cancel
+    case exerciseSelected(Exercise)
 }
 
 final class ExerciseListCoordinator: Coordinator {
+    var didFinishWithSelection: ((Exercise) -> Void)?
+    
     var finishDelegate: CoordinatorFinishDelegate?
     
     var childCoordinators: [Coordinator] = []
@@ -36,6 +39,9 @@ final class ExerciseListCoordinator: Coordinator {
         }
         
         //TODO: - DI ViewModel
+        let dataRepo = DataRepository<Exercise>(context: context)
+        let viewModel = ExerciseListVM(dataRepo: dataRepo)
+        exerciseListVC.viewModel = viewModel
         
         navigationController.pushViewController(exerciseListVC, animated: true)
     }
@@ -44,6 +50,9 @@ final class ExerciseListCoordinator: Coordinator {
     private func handle (_ event: ExerciseListEvent){
         switch event{
         case .cancel:
+            self.finish()
+        case .exerciseSelected(let exercise):
+            didFinishWithSelection?(exercise)
             self.finish()
         }
     }

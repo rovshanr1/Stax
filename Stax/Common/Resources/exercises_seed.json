@@ -10,5 +10,73 @@
     {
         "name": "Pull Up",
         "targetMuscle": "Back"
+    },
+    {
+        "name": "Deadlift",
+        "targetMuscle": "Back"
+    },
+    {
+        "name": "Overhead Press",
+        "targetMuscle": "Shoulders"
+    },
+    {
+        "name": "Barbell Row",
+        "targetMuscle": "Back"
+    },
+    {
+        "name": "Lat Pulldown",
+        "targetMuscle": "Back"
+    },
+    {
+        "name": "Leg Press",
+        "targetMuscle": "Legs"
+    },
+    {
+        "name": "Romanian Deadlift",
+        "targetMuscle": "Hamstrings"
+    },
+    {
+        "name": "Lateral Raise",
+        "targetMuscle": "Shoulders"
+    },
+    {
+        "name": "Bicep Curl",
+        "targetMuscle": "Biceps"
+    },
+    {
+        "name": "Tricep Pushdown",
+        "targetMuscle": "Triceps"
+    },
+    {
+        "name": "Chest Fly",
+        "targetMuscle": "Chest"
+    },
+    {
+        "name": "Hip Thrust",
+        "targetMuscle": "Glutes"
+    },
+    {
+        "name": "Leg Curl",
+        "targetMuscle": "Hamstrings"
+    },
+    {
+        "name": "Leg Extension",
+        "targetMuscle": "Quads"
+    },
+    {
+        "name": "Face Pull",
+        "targetMuscle": "Rear Delts"
+    },
+    {
+        "name": "Calf Raise",
+        "targetMuscle": "Calves"
+    },
+    {
+        "name": "Incline Bench Press",
+        "targetMuscle": "Upper Chest"
+    },
+    {
+        "name": "Seated Cable Row",
+        "targetMuscle": "Back"
     }
 ]
