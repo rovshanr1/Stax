@@ -20,7 +20,7 @@ class WorkoutSessionView: UIView {
         return uiTableView
     }()
     
-    private var currentTimerString: String = "00h:00m:00s"
+    private var currentTimerString: String = "0h 0m 00s"
 
     override init(frame: CGRect) {
         super.init(frame: frame)

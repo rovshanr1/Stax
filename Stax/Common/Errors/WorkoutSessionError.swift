@@ -1,5 +1,5 @@
 //
-//  WorkoutServiceError.swift
+//  WorkoutSessionError.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 07.12.25.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum WorkoutServiceError: Error {
+enum WorkoutSessionError: Error {
     case noAddExercise
     
     var description: String? {

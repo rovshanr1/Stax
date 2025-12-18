@@ -9,16 +9,24 @@ import UIKit
 
 
 final class AlertManager{
-    private static func showTextAlert(on vc: UIViewController, with title: String, with message: String){
+    static func showConfirmationAlert(on vc: UIViewController,
+                                      title: String,
+                                      message: String,
+                                      confirmTitle: String,
+                                      cancelTitle: String,
+                                      action: @escaping () -> Void){
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        let cancel = UIAlertAction(title: cancelTitle, style: .cancel, handler: nil)
+        let confirm = UIAlertAction(title: confirmTitle, style: .default) { _ in
+            action()
+        }
+        
+        alert.addAction(cancel)
+        alert.addAction(confirm)
         
         DispatchQueue.main.async {
             vc.present(alert, animated: true, completion: nil)
         }
-    }
-    
-    static func showErrorAlert(on vc: UIViewController, with error: Error){
-        showTextAlert(on: vc, with: "Error", with: error.localizedDescription)
+        
     }
 }

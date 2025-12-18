@@ -21,11 +21,10 @@ final class HomeCoordinator: Coordinator{
     
     var type: CoordinatorType { .page }
     
- 
-    
     init(_ navigationController: UINavigationController) {
         self.navigationController = navigationController
     }
+    
     func start() {
         let homeVC = HomeVC()
         

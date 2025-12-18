@@ -34,12 +34,7 @@ final class WorkoutCoordinator: Coordinator{
         let exerciseVC = WorkoutVC()
         
         exerciseVC.didSendEventClosure = {[weak self] event in
-            guard let self else { return }
-            
-            switch event{
-            case .startEmptyWorkout:
-                self.showActiveWorkout()
-            }
+            self?.handle(event)
         }
         
         navigationController.pushViewController(exerciseVC, animated: true)
@@ -47,7 +42,10 @@ final class WorkoutCoordinator: Coordinator{
     
     
     private func handle(_ event: WorkoutEvent){
-        
+        switch event{
+        case .startEmptyWorkout:
+            self.showActiveWorkout()
+        }
     }
     
     private func showActiveWorkout(){
@@ -69,7 +67,7 @@ extension WorkoutCoordinator: CoordinatorFinishDelegate{
         childCoordinators = childCoordinators.filter { $0 !== childCoordinator }
         
         switch childCoordinator.type {
-        case .pageSheet:
+        case .workoutSession:
             navigationController.dismiss(animated: true)
         default:
             break

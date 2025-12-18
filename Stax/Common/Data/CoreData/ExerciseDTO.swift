@@ -10,5 +10,5 @@ import Foundation
 
 struct ExerciseDTO: Codable{
     let name: String
-    let targetMuscleGroups: String
+    let targetMuscle: String
 }
