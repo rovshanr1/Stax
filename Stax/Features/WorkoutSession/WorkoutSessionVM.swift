@@ -121,9 +121,6 @@ final class WorkoutSessionViewModel: NSObject{
                         .sink(receiveCompletion: { _ in}, receiveValue: {_ in})
                         .store(in: &cancellables)
                 }
-                
-              
-                
                 self.output.dismissEvent.send()
             }
             .store(in: &cancellables)
@@ -176,7 +173,6 @@ final class WorkoutSessionViewModel: NSObject{
         
         let newIndex = output.exercises.value.count
         newSet.orderIndex = Int16(newIndex)
-        
         newSet.createdAt = Date()
         
         exerciseRepo.save()
