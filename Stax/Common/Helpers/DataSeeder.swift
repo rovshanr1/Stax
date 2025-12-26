@@ -28,13 +28,13 @@ struct DataSeeder{
             print("Failed to fetch count of Exercise")
         }
         
-        
+       
     }
     
     func seed(){
         //UserDefaults control
-//        let userDefaults = UserDefaults.standard
-//        if userDefaults.bool(forKey: "seeded") == true { return }
+        let userDefaults = UserDefaults.standard
+        if userDefaults.bool(forKey: "seeded") == true { return }
         
         //Finding json data
         guard let url = Bundle.main.url(forResource: "exercises_seed", withExtension: "json"),
@@ -47,13 +47,14 @@ struct DataSeeder{
         exerciseDTOs?.forEach { dto in
             let newExercise = Exercise(context: context)
             newExercise.name = dto.name
+            newExercise.targetMuscle = dto.targetMuscle
             newExercise.id = UUID()
         }
         
         //Saving
         do{
             try context.save()
-//            userDefaults.set(true, forKey: "seeded")
+            userDefaults.set(true, forKey: "seeded")
             print("Seeding data complated")
         } catch{
             print("Error\(DatabaseError.unknown(error.localizedDescription))")

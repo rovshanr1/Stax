@@ -12,6 +12,7 @@ import CoreData
 enum WorkoutSessionEvent{
     case addExercise
     case finishWorkout
+    case exerciseMenuButtonTapped
 }
 
 final class WorkoutSessionCoordinator: Coordinator{
@@ -59,6 +60,8 @@ final class WorkoutSessionCoordinator: Coordinator{
             self.showExerciseList()
         case .finishWorkout:
             self.finish()
+        case .exerciseMenuButtonTapped:
+            print("Button Tapped")
         }
     }
     
@@ -80,6 +83,13 @@ final class WorkoutSessionCoordinator: Coordinator{
         exerciseCoordinator.start()
         
         navigationController.present(listNav, animated: true)
+    }
+    
+    private func showExerciseMenu(){
+        let listNav = UINavigationController()
+        listNav.modalPresentationStyle = .pageSheet
+        
+        
     }
 }
 

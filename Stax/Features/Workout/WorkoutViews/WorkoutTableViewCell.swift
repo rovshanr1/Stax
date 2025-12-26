@@ -22,6 +22,6 @@ final class WorkoutTableViewCell: UITableViewCell {
     }
     
     private func setupUI(){
-        
+        selectionStyle = .none
     }
 }

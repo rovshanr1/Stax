@@ -44,13 +44,14 @@ class ExerciseListVC: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = .systemBackground
-        view.addSubview(contentView)
-        
+
         setupNavbar()
         setupConstraints()
     }
     
     private func setupConstraints() {
+        view.addSubview(contentView)
+        
         contentView.snp.makeConstraints { (make) in
             make.edges.equalTo(self.view).inset(0)
         }
@@ -67,17 +68,12 @@ class ExerciseListVC: UIViewController {
             guard let self else {return nil}
             
             guard let exercise = self.allExercises.first(where: { $0.objectID == id }) else {
-                return UITableViewCell()
+                return ExerciseListCell()
             }
             
-            let cell = tableView.dequeueReusableCell(withIdentifier: ExerciseListCell.reuseIdentifier, for: indexPath)
             
-            var content = cell.defaultContentConfiguration()
-            content.text = exercise.name
-            content.secondaryText = exercise.category
-            cell.contentConfiguration = content
-            cell.accessoryType = .disclosureIndicator
-            
+            let cell = tableView.dequeueReusableCell(withIdentifier: ExerciseListCell.reuseIdentifier, for: indexPath) as? ExerciseListCell
+            cell?.configure(with: exercise)
             return cell
         })
     }
@@ -91,9 +87,9 @@ class ExerciseListVC: UIViewController {
             .sink { [weak self] exercise in
                 guard let self else {return}
                 
-                print("exercises: \(exercise.count)")
-                
                 self.allExercises = exercise
+
+                print("exercises: \(exercise.count)")
                 
                 var snapshot = Snapshot()
                 snapshot.appendSections([.main])
