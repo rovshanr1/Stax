@@ -95,4 +95,26 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
             cacheName: nil
         )
     }
+    
+    
+    func update(id: NSManagedObjectID, configure: @escaping (T) -> Void) -> AnyPublisher<Void, Error> {
+        return Future { promise in
+            self.context.perform {
+                do{
+                    let object = try self.context.existingObject(with: id) as! T
+                    
+                    configure(object)
+                    
+                    if self.context.hasChanges {
+                        try self.context.save()
+                    }
+                    
+                    promise(.success(()))
+                } catch {
+                    promise(.failure(error))
+                }
+            }
+        }
+        .eraseToAnyPublisher()
+    }
 }

@@ -40,6 +40,7 @@ class WorkoutView: UIView {
     }
     
     private func setupTableView(){
+        
         addSubview(tableView)
         
         tableView.delegate = self

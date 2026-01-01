@@ -21,7 +21,8 @@ class ExerciseListView: UIView {
         var tableView = UITableView()
         tableView.register(ExerciseListCell.self, forCellReuseIdentifier: ExerciseListCell.reuseIdentifier)
         tableView.keyboardDismissMode = .onDrag
-        tableView.rowHeight = 60
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 80
         return tableView
     }()
 

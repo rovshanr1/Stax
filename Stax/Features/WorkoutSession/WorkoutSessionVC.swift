@@ -8,8 +8,29 @@
 import UIKit
 import SnapKit
 import Combine
+import CoreData
 
-class WorkoutSessionVC: UIViewController {    
+
+class WorkoutSessionVC: UIViewController {
+    //MARK: - Diffable DataSource Types
+    enum Section: String, CaseIterable{
+        case duration
+        case exercises
+        case actions
+    }
+    
+    nonisolated enum RowItem: Hashable, Sendable{
+        case duration
+        case divider
+        case exercise(NSManagedObjectID)
+        case empty
+        case addButton
+    }
+    
+    //Typealiases
+    typealias DataSource = UITableViewDiffableDataSource<Section, RowItem>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, RowItem>
+    
     //Internal Properties
     var didSendEventClosure: ((WorkoutSessionEvent) -> Void)?
     var viewModel: WorkoutSessionViewModel!
@@ -17,21 +38,24 @@ class WorkoutSessionVC: UIViewController {
     //Private Properties
     private var cancellables = Set<AnyCancellable>()
     private let contentView = WorkoutSessionView()
+    private var dataSource: DataSource!
+    private var sessionExercise: [WorkoutExercise] = []
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         setupUI()
+        bindVM()
+        bindEvents()
+        configureDataSource()
     }
     
-    //MARK: - Setup UI Method
+    //MARK: - Setup UI
     private func setupUI(){
         view.backgroundColor = .systemBackground
         
         setupNavbar()
         constraints()
-        bindVM()
-        bindEvents()
     }
     
     //MARK: - Constraints
@@ -50,6 +74,67 @@ class WorkoutSessionVC: UIViewController {
         }
     }
     
+    //MARK: - Diffable DataSource Configuration
+    private func configureDataSource(){
+        contentView.tableView.delegate = self
+        
+        dataSource = DataSource(tableView: contentView.tableView, cellProvider: { [weak self] tableView, indexPath, itemIdentifier in
+            
+            guard let self else {return nil}
+            
+            switch itemIdentifier {
+            case .duration:
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionTableViewCell.reuseIdentifier, for: indexPath) as? WorkoutSessionTableViewCell else {
+                    return UITableViewCell()
+                }
+                return cell
+            case .divider:
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: DividerCell.reuseIdentifier, for: indexPath) as? DividerCell else{
+                    return UITableViewCell()
+                }
+                return cell
+            case .empty:
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: EmptyWorkoutTableViewCell.reuseIdentifier, for: indexPath) as? EmptyWorkoutTableViewCell else{
+                    return UITableViewCell()
+                }
+                return cell
+            case .exercise(let id):
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionExerciseListCell.reuseIdentifier, for: indexPath) as? WorkoutSessionExerciseListCell else {
+                    return UITableViewCell()
+                }
+                
+                if let exerciseItem = self.sessionExercise.first(where: { $0.objectID == id}){
+                    cell.configureExerciseCell(with: exerciseItem.exercise!)
+                    
+                    
+                    cell.configureTextView(with: exerciseItem.note)
+                    
+                    cell.onNoteChange = { [weak self] newNote in
+                        self?.viewModel.input.updateExerciseNote.send((id, newNote))
+                    }
+                    
+                    cell.onNotesHeightChange = { [weak self]  in
+                        self?.contentView.tableView.beginUpdates()
+                        self?.contentView.tableView.endUpdates()
+                    }
+                    
+                    cell.exerciseMenuOnTapped = { [weak self] in
+                        self?.didSendEventClosure?(.exerciseMenuButtonTapped)
+                    }
+                    
+                }
+                return cell
+                
+            case .addButton:
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: AddExerciseButtonTableViewCell.reuseIdentifier, for: indexPath) as? AddExerciseButtonTableViewCell else {return UITableViewCell()}
+                cell.onTapAddExerciseButton = {[weak self] in
+                    self?.didSendEventClosure?(.addExercise)
+                }
+                return cell
+            }
+        })
+    }
+
     
     //MARK: - ViewModel Binding
     private func bindVM(){
@@ -69,9 +154,48 @@ class WorkoutSessionVC: UIViewController {
             .store(in: &cancellables)
         
         viewModel.input.viewDidLoad.send()
+        
+        viewModel.output.exercises
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] exercises in
+                guard let self else {return}
+                
+                self.sessionExercise = exercises
+                self.updateSnapshot(with: exercises)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func updateSnapshot(with exercises: [WorkoutExercise]){
+        var snapshot = dataSource.snapshot()
+        
+        let isInitialLoad = snapshot.sectionIdentifiers.isEmpty
+        
+        if isInitialLoad{
+            snapshot.appendSections(Section.allCases)
+            snapshot.appendItems([.duration, .divider], toSection: .duration)
+            snapshot.appendItems([.addButton], toSection: .actions)
+        }
+        
+        let oldItems = snapshot.itemIdentifiers(inSection: .exercises)
+        snapshot.deleteItems(oldItems)
+        
+        if exercises.isEmpty{
+            snapshot.appendItems([.empty], toSection: .exercises)
+        }else{
+            let items = exercises.map {RowItem.exercise($0.objectID)}
+            snapshot.appendItems(items, toSection: .exercises)
+        }
+        
+        dataSource.apply(snapshot, animatingDifferences: false)
     }
     
 }
+
+
+
+//MARK: - TableViewDelegate
+extension WorkoutSessionVC: UITableViewDelegate{ }
 
 //MARK: - NavigationBarItems
 extension WorkoutSessionVC{
@@ -125,3 +249,4 @@ extension WorkoutSessionVC{
         
     }
 }
+

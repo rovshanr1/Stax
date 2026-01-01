@@ -12,6 +12,7 @@ import CoreData
 enum WorkoutSessionEvent{
     case addExercise
     case finishWorkout
+    case exerciseMenuButtonTapped
 }
 
 final class WorkoutSessionCoordinator: Coordinator{
@@ -46,7 +47,9 @@ final class WorkoutSessionCoordinator: Coordinator{
         //VM Injection
         let workoutRepo = DataRepository<Workout>(context: context)
         let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
-        self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo)
+        let exerciseSetsRepo = DataRepository<WorkoutSet>(context: context)
+        
+        self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo, workoutSets: exerciseSetsRepo)
 
         sessionVC.viewModel = self.vm
         
@@ -59,6 +62,8 @@ final class WorkoutSessionCoordinator: Coordinator{
             self.showExerciseList()
         case .finishWorkout:
             self.finish()
+        case .exerciseMenuButtonTapped:
+            print("Button Tapped")
         }
     }
     
@@ -80,6 +85,13 @@ final class WorkoutSessionCoordinator: Coordinator{
         exerciseCoordinator.start()
         
         navigationController.present(listNav, animated: true)
+    }
+    
+    private func showExerciseMenu(){
+        let listNav = UINavigationController()
+        listNav.modalPresentationStyle = .pageSheet
+        
+        
     }
 }
 

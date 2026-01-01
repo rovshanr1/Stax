@@ -46,6 +46,7 @@ final class ExerciseListVM{
         input.viewDidLoad
             .sink { [weak self] _ in
                 self?.fetchExercise(with: nil)
+                
             }
             .store(in: &cancellables)
         

@@ -9,14 +9,19 @@ import UIKit
 import SnapKit
 
 class WorkoutSessionView: UIView {
+    
     var addExerciseButtonTapped: (() -> Void)?
     
-    
-    private var tableView: UITableView = {
+    var tableView: UITableView = {
        let uiTableView = UITableView()
         uiTableView.register(WorkoutSessionTableViewCell.self, forCellReuseIdentifier: WorkoutSessionTableViewCell.reuseIdentifier)
-        uiTableView.register(WorkoutSessionButtonsTableViewCell.self, forCellReuseIdentifier: WorkoutSessionButtonsTableViewCell.reuseIdentifier)
+        uiTableView.register(DividerCell.self, forCellReuseIdentifier: DividerCell.reuseIdentifier)
+        uiTableView.register(EmptyWorkoutTableViewCell.self, forCellReuseIdentifier: EmptyWorkoutTableViewCell.reuseIdentifier)
+        uiTableView.register(WorkoutSessionExerciseListCell.self, forCellReuseIdentifier: WorkoutSessionExerciseListCell.reuseIdentifier)
+        uiTableView.register(AddExerciseButtonTableViewCell.self, forCellReuseIdentifier: AddExerciseButtonTableViewCell.reuseIdentifier)
         uiTableView.allowsSelection = false
+        uiTableView.rowHeight = UITableView.automaticDimension
+        uiTableView.estimatedRowHeight = 100
         return uiTableView
     }()
     
@@ -34,9 +39,7 @@ class WorkoutSessionView: UIView {
 
     private func setupUI(){
         addSubview(tableView)
-        
-        tableView.delegate = self
-        tableView.dataSource = self
+        tableView.separatorStyle = .none
         
         tableView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
@@ -49,39 +52,6 @@ class WorkoutSessionView: UIView {
         
         if let cell = tableView.cellForRow(at: indexPath) as? WorkoutSessionTableViewCell {
             cell.configureTime(with: currentTimerString)
-        }
-    }
-}
-
-
-
-extension WorkoutSessionView: UITableViewDataSource, UITableViewDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 2
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        switch indexPath.row {
-        case 0:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionTableViewCell.reuseIdentifier, for: indexPath) as? WorkoutSessionTableViewCell else {
-                fatalError("Unable to dequeue WorkoutSessionTableViewCell")
-            }
-            
-            cell.configureTime(with: currentTimerString)
-            return cell
-        case 1:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionButtonsTableViewCell.reuseIdentifier, for: indexPath) as? WorkoutSessionButtonsTableViewCell else {
-                fatalError("Unable to dequeue WorkoutSessionTableViewCell")
-                
-            }
-            
-            cell.onTapAddExerciseButton = {[weak self] in
-                self?.addExerciseButtonTapped?()
-            }
-            return cell
-        default:
-            return UITableViewCell()
         }
     }
 }
