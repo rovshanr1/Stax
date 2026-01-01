@@ -9,6 +9,7 @@ import UIKit
 import SnapKit
 
 class WorkoutSessionView: UIView {
+    
     var addExerciseButtonTapped: (() -> Void)?
     
     var tableView: UITableView = {
@@ -19,6 +20,8 @@ class WorkoutSessionView: UIView {
         uiTableView.register(WorkoutSessionExerciseListCell.self, forCellReuseIdentifier: WorkoutSessionExerciseListCell.reuseIdentifier)
         uiTableView.register(AddExerciseButtonTableViewCell.self, forCellReuseIdentifier: AddExerciseButtonTableViewCell.reuseIdentifier)
         uiTableView.allowsSelection = false
+        uiTableView.rowHeight = UITableView.automaticDimension
+        uiTableView.estimatedRowHeight = 100
         return uiTableView
     }()
     
@@ -52,4 +55,3 @@ class WorkoutSessionView: UIView {
         }
     }
 }
-

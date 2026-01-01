@@ -106,5 +106,9 @@ class WorkoutSessionTableViewCell: UITableViewCell {
     func configureTime(with time: String) {
         timer.text = time
     }
+    
+    //TODO: - volume and set lable changes is here
+    
+    
 }
 

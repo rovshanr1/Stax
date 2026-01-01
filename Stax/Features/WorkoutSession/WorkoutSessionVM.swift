@@ -18,6 +18,8 @@ final class WorkoutSessionViewModel: NSObject{
         let didTapCancel: PassthroughSubject<Void, Never>
         let didTapCheckout: PassthroughSubject<Void, Never>
         let addExercise: PassthroughSubject<Exercise, Never>
+        let addSet: PassthroughSubject<WorkoutSet, Never>
+        let updateExerciseNote: PassthroughSubject<(NSManagedObjectID, String), Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -25,6 +27,7 @@ final class WorkoutSessionViewModel: NSObject{
         let timerSubject: CurrentValueSubject<String, Never>
         let dismissEvent: PassthroughSubject<Void, Never>
         let exercises: CurrentValueSubject<[WorkoutExercise], Never>
+        let workoutSets: CurrentValueSubject<[WorkoutSet], Never>
     }
     
     //MARK: - Properties
@@ -32,6 +35,7 @@ final class WorkoutSessionViewModel: NSObject{
     let output: Output
     
     private let exerciseRepo: DataRepository<WorkoutExercise>
+    private let workoutSets: DataRepository<WorkoutSet>
     
     private let workoutRepo: DataRepository<Workout>
     public private(set) var currentWorkout: Workout?
@@ -45,20 +49,24 @@ final class WorkoutSessionViewModel: NSObject{
     
     
     //MARK: - Initializer
-    init(workoutRepo: DataRepository<Workout>, exerciseRepo: DataRepository<WorkoutExercise>) {
+    init(workoutRepo: DataRepository<Workout>, exerciseRepo: DataRepository<WorkoutExercise>, workoutSets: DataRepository<WorkoutSet>) {
         self.workoutRepo = workoutRepo
         self.exerciseRepo = exerciseRepo
+        self.workoutSets = workoutSets
         
         self.input = .init(viewDidLoad: .init(),
                            didTapFinish: .init(),
                            didTapCancel: .init(),
                            didTapCheckout: .init(),
-                           addExercise: .init()
+                           addExercise: .init(),
+                           addSet: .init(),
+                           updateExerciseNote: .init(),
         )
         
         self.output = .init(timerSubject: .init("0s"),
                             dismissEvent: .init(),
-                            exercises: .init([])
+                            exercises: .init([]),
+                            workoutSets: .init([])
                             
         )
         
@@ -131,6 +139,13 @@ final class WorkoutSessionViewModel: NSObject{
             }
             .store(in: &cancellables)
         
+        input.updateExerciseNote
+            .debounce(for: .seconds(0.5), scheduler: DispatchQueue.main)
+            .sink { [weak self] (objectId, noteText) in
+                
+                self?.updateNote(for: objectId, text: noteText)
+            }
+            .store(in: &cancellables)
     }
     
     private func startTimer() {
@@ -173,13 +188,27 @@ final class WorkoutSessionViewModel: NSObject{
         
         let newIndex = output.exercises.value.count
         newSet.orderIndex = Int16(newIndex)
-        newSet.createdAt = Date()
+        
         
         exerciseRepo.save()
             .sink(receiveCompletion: {_ in}) { _ in
                 print("Exercise added")
             }
             .store(in: &cancellables)
+    }
+    
+    private func updateNote(for id: NSManagedObjectID, text: String){
+        exerciseRepo.update(id: id) { exercise in
+            exercise.note = text
+        }
+        .sink { complation in
+            if case .failure(let error) = complation {
+                print("Note updates error: \(error)")
+            }
+        } receiveValue: {
+            print("Note updated successfully for id: \(id)")
+        }
+        .store(in: &cancellables)
     }
     
     private func startFetchExercises() {

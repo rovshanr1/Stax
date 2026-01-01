@@ -47,7 +47,9 @@ final class WorkoutSessionCoordinator: Coordinator{
         //VM Injection
         let workoutRepo = DataRepository<Workout>(context: context)
         let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
-        self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo)
+        let exerciseSetsRepo = DataRepository<WorkoutSet>(context: context)
+        
+        self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo, workoutSets: exerciseSetsRepo)
 
         sessionVC.viewModel = self.vm
         

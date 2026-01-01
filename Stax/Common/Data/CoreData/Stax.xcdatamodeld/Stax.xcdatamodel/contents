@@ -4,7 +4,7 @@
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="targetMuscle" optional="YES" attributeType="String"/>
-        <attribute name="vieoURL" optional="YES" attributeType="String"/>
+        <attribute name="videoURL" optional="YES" attributeType="String"/>
         <relationship name="workoutExercises" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WorkoutExercise" inverseName="exercise" inverseEntity="WorkoutExercise"/>
     </entity>
     <entity name="Workout" representedClassName="Workout" syncable="YES" codeGenerationType="class">
@@ -12,23 +12,21 @@
         <attribute name="duration" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
-        <relationship name="workoutExercises" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WorkoutExercise" inverseName="workout" inverseEntity="WorkoutExercise"/>
+        <relationship name="workoutExercises" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WorkoutExercise" inverseName="workout" inverseEntity="WorkoutExercise"/>
     </entity>
     <entity name="WorkoutExercise" representedClassName="WorkoutExercise" syncable="YES" codeGenerationType="class">
-        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="note" optional="YES" attributeType="String"/>
         <attribute name="orderIndex" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <relationship name="exercise" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Exercise" inverseName="workoutExercises" inverseEntity="Exercise"/>
-        <relationship name="workout" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Workout" inverseName="workoutExercises" inverseEntity="Workout"/>
-        <relationship name="workoutSets" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WorkoutSets" inverseName="workoutExercise" inverseEntity="WorkoutSets"/>
+        <relationship name="workout" maxCount="1" deletionRule="Nullify" destinationEntity="Workout" inverseName="workoutExercises" inverseEntity="Workout"/>
+        <relationship name="workoutSets" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WorkoutSet" inverseName="workoutExercise" inverseEntity="WorkoutSet"/>
     </entity>
-    <entity name="WorkoutSets" representedClassName="WorkoutSets" syncable="YES" codeGenerationType="class">
-        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="duration" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+    <entity name="WorkoutSet" representedClassName="WorkoutSet" syncable="YES" codeGenerationType="class">
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="reps" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="restTime" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
-        <attribute name="weight" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
-        <relationship name="workoutExercise" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WorkoutExercise" inverseName="workoutSets" inverseEntity="WorkoutExercise"/>
+        <attribute name="weight" optional="YES" attributeType="String"/>
+        <relationship name="workoutExercise" maxCount="1" deletionRule="Nullify" destinationEntity="WorkoutExercise" inverseName="workoutSets" inverseEntity="WorkoutExercise"/>
     </entity>
 </model>

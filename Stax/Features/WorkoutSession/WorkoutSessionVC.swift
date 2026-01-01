@@ -105,9 +105,23 @@ class WorkoutSessionVC: UIViewController {
                 
                 if let exerciseItem = self.sessionExercise.first(where: { $0.objectID == id}){
                     cell.configureExerciseCell(with: exerciseItem.exercise!)
-                    cell.exerciseMenuTapped = { [weak self] in
+                    
+                    
+                    cell.configureTextView(with: exerciseItem.note)
+                    
+                    cell.onNoteChange = { [weak self] newNote in
+                        self?.viewModel.input.updateExerciseNote.send((id, newNote))
+                    }
+                    
+                    cell.onNotesHeightChange = { [weak self]  in
+                        self?.contentView.tableView.beginUpdates()
+                        self?.contentView.tableView.endUpdates()
+                    }
+                    
+                    cell.exerciseMenuOnTapped = { [weak self] in
                         self?.didSendEventClosure?(.exerciseMenuButtonTapped)
                     }
+                    
                 }
                 return cell
                 
@@ -181,10 +195,7 @@ class WorkoutSessionVC: UIViewController {
 
 
 //MARK: - TableViewDelegate
-extension WorkoutSessionVC: UITableViewDelegate{
-    
-    
-}
+extension WorkoutSessionVC: UITableViewDelegate{ }
 
 //MARK: - NavigationBarItems
 extension WorkoutSessionVC{
@@ -238,3 +249,4 @@ extension WorkoutSessionVC{
         
     }
 }
+
