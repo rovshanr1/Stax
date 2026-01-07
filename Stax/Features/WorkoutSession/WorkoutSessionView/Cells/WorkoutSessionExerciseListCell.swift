@@ -73,6 +73,8 @@ class WorkoutSessionExerciseListCell: UITableViewCell {
         return label
     }()
     
+    private var setsView = WorkoutSetsView()
+    
     //MARK: - Stack Views
     private lazy var exerciseHeadingStackLeft: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [exerciseImageView, exerciseName])
@@ -109,7 +111,7 @@ class WorkoutSessionExerciseListCell: UITableViewCell {
     }()
     
     private lazy var mainStack: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [exerciseHeadingStack, adNoteAndRestTimeStack])
+        let stackView = UIStackView(arrangedSubviews: [exerciseHeadingStack, adNoteAndRestTimeStack, setsView])
         stackView.axis = .vertical
         stackView.spacing = 16
         return stackView
