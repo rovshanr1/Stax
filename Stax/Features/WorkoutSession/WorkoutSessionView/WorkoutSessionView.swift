@@ -14,11 +14,13 @@ class WorkoutSessionView: UIView {
     
     var tableView: UITableView = {
        let uiTableView = UITableView()
+        
         uiTableView.register(WorkoutSessionTableViewCell.self, forCellReuseIdentifier: WorkoutSessionTableViewCell.reuseIdentifier)
         uiTableView.register(DividerCell.self, forCellReuseIdentifier: DividerCell.reuseIdentifier)
         uiTableView.register(EmptyWorkoutTableViewCell.self, forCellReuseIdentifier: EmptyWorkoutTableViewCell.reuseIdentifier)
         uiTableView.register(WorkoutSessionExerciseListCell.self, forCellReuseIdentifier: WorkoutSessionExerciseListCell.reuseIdentifier)
         uiTableView.register(AddExerciseButtonTableViewCell.self, forCellReuseIdentifier: AddExerciseButtonTableViewCell.reuseIdentifier)
+        
         uiTableView.allowsSelection = false
         uiTableView.rowHeight = UITableView.automaticDimension
         uiTableView.estimatedRowHeight = 100

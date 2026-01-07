@@ -63,7 +63,7 @@ final class WorkoutSessionCoordinator: Coordinator{
         case .finishWorkout:
             self.finish()
         case .exerciseMenuButtonTapped:
-            print("Button Tapped")
+            self.showExerciseMenu()
         }
     }
     
@@ -88,10 +88,28 @@ final class WorkoutSessionCoordinator: Coordinator{
     }
     
     private func showExerciseMenu(){
-        let listNav = UINavigationController()
-        listNav.modalPresentationStyle = .pageSheet
+        let sheetNav = ExerciseMenuSheet()
+        sheetNav.modalPresentationStyle = .pageSheet
         
+        if let sheet = sheetNav.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
         
+        sheetNav.onActionSelected = { [weak self] action in
+            self?.hanleExerciseMenuAction(action)
+        }
+        
+        navigationController.present(sheetNav, animated: true)
+    }
+    
+    private func hanleExerciseMenuAction(_ action: ExerciseMenuSheet.Action){
+        switch action{
+        case .deleteExercise:
+            print("exercesie removed")
+        case .replaceExercise:
+            print("exercise replaced")
+        }
     }
 }
 
