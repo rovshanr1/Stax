@@ -38,6 +38,7 @@ class TextView: UITextView {
         textColor = .label
         isScrollEnabled = false
         textContainerInset = .zero
+        textContainer.lineFragmentPadding = 0
         textContainer.lineBreakMode = .byWordWrapping
         keyboardDismissMode = .interactive
         
@@ -49,7 +50,10 @@ class TextView: UITextView {
         addSubview(placeholderLabel)
         
         placeholderLabel.snp.makeConstraints { (make) in
-            make.edges.equalTo(frameLayoutGuide).inset(UIEdgeInsets(top: 0, left: 4, bottom: 12, right: 0))
+            make.edges.equalTo(frameLayoutGuide).inset(UIEdgeInsets(top: 0,
+                                                                    left: 0,
+                                                                    bottom: 12,
+                                                                    right: 0))
         }
         
     }
