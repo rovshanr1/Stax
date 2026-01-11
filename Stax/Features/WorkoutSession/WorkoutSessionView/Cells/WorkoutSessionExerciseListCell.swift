@@ -155,7 +155,10 @@ class WorkoutSessionExerciseListCell: UITableViewCell {
         contentView.addSubview(mainStack)
         
         mainStack.snp.makeConstraints { (make) in
-            make.edges.equalTo(contentView).inset(16).priority(999)
+            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 0,
+                                                               left: 12,
+                                                               bottom: 0,
+                                                               right: 12)).priority(999)
         }
         
         exerciseMenuButton.snp.makeConstraints { (make) in

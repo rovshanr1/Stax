@@ -3,24 +3,95 @@
 ```
 Stax/
 
-├── Application
-│   ├── AppDelegate.swift
-│   ├── Coordinator.swift
-│   └── SceneDelegate.swift
+├── Application/
+│   ├── AppDelegate.swift
+│   ├── MainCoordinator.swift
+│   └── SceneDelegate.swift
+├── Base.lproj/
+├── Common/
+│   ├── Data/
+│   │   ├── CoreData/
+│   │   │   ├── ExerciseDTO.swift
+│   │   │   └── Stax.xcdatamodeld/
+│   │   │       └── Stax.xcdatamodel/
+│   │   │           └── contents
+│   │   └── Repository/
+│   │       ├── Core/
+│   │       │   └── GenericRepository.swift
+│   │       └── DataRepository.swift
+│   ├── Errors/
+│   │   ├── DatabaseError.swift
+│   │   └── WorkoutSessionError.swift
+│   ├── Helpers/
+│   │   ├── AlertManager.swift
+│   │   └── DataSeeder.swift
+│   ├── Resources/
+│   │   └── exercises_seed.json
+│   ├── UIHelpers/
+│   │   ├── DividerCell.swift
+│   │   └── TextView.swift
+│   └── Utilities/
+│       └── Base/
+│           └── Coordinator.swift
+├── Features/
+│   ├── ExerciseList/
+│   │   ├── ExerciseListCoordinator.swift
+│   │   ├── ExerciseListVC.swift
+│   │   ├── ExerciseListVM.swift
+│   │   └── ExerciseListView/
+│   │       ├── ExerciseListCell.swift
+│   │       └── ExerciseListView.swift
+│   ├── Home/
+│   │   ├── HomeCoordinator.swift
+│   │   ├── HomeVC.swift
+│   │   ├── HomeVM.swift
+│   │   └── HomeViews/
+│   │       └── HomeView.swift
+│   ├── Profile/
+│   │   ├── ProfileCoordinator.swift
+│   │   ├── ProfileVC.swift
+│   │   ├── ProfileVM.swift
+│   │   └── ProfileViews/
+│   │       └── ProfileView.swift
+│   ├── Workout/
+│   │   ├── WorkoutCoordinator.swift
+│   │   ├── WorkoutVC.swift
+│   │   ├── WorkoutVM.swift
+│   │   └── WorkoutViews/
+│   │       ├── TableViewHeader.swift
+│   │       ├── WorkoutTableViewCell.swift
+│   │       └── WorkoutView.swift
+│   └── WorkoutSession/
+│       ├── WorkoutSessionCoordinator.swift
+│       ├── WorkoutSessionVC.swift
+│       ├── WorkoutSessionVM.swift
+│       ├── Sheets/
+│       │   └── ExerciseMenuSheet.swift
+│       └── WorkoutSessionView/
+│           ├── WorkoutSessionView.swift
+│           ├── WorkoutSetsView.swift
+│           └── Cells/
+│               ├── AddExerciseButtonTableViewCell.swift
+│               ├── EmptyWorkoutTableViewCell.swift
+│               ├── WorkoutSessionExerciseListCell.swift
+│               └── WorkoutSessionTableViewCell.swift
 ├── Info.plist
-├── Models
-│   └── ExampleModels.swift
-├── Stax.xcdatamodeld
-│   └── Stax.xcdatamodel
-├── Support
-│   ├── Assets.xcassets
-│   └── Base.lproj
-├── UI
-│   ├── ExerciseView
-│   ├── HomeView
-│   ├── MainTabView
-│   └── ProfileView
-└── ViewModels
+├── MainTabCoordinator/
+│   ├── TabBarPage.swift
+│   └── TabCoordinator.swift
+└── Support/
+    ├── Assets.xcassets/
+    │   ├── AccentColor.colorset/
+    │   ├── AppColors/
+    │   │   ├── ActiveItemsColor.colorset/
+    │   │   ├── MainBackground.colorset/
+    │   │   └── Contents.json
+    │   ├── AppIcon.appiconset/
+    │   │   ├── Contents.json
+    │   │   └── StaxIcon.png
+    │   └── Contents.json
+    └── Base.lproj/
+        └── LaunchScreen.storyboard
 ```
 
 ---

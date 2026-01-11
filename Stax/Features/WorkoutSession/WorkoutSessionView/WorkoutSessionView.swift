@@ -12,6 +12,16 @@ class WorkoutSessionView: UIView {
     
     var addExerciseButtonTapped: (() -> Void)?
     
+    private lazy var footerView: WorkoutSessionFooterView = {
+        let view = WorkoutSessionFooterView(frame: CGRect(x: 0, y: 0, width: frame.width, height: 100))
+        
+        view.onTapAddExerciseButton = { [weak self] in
+            self?.addExerciseButtonTapped?()
+        }
+        
+        return view
+    }()
+    
     var tableView: UITableView = {
        let uiTableView = UITableView()
         
@@ -19,7 +29,6 @@ class WorkoutSessionView: UIView {
         uiTableView.register(DividerCell.self, forCellReuseIdentifier: DividerCell.reuseIdentifier)
         uiTableView.register(EmptyWorkoutTableViewCell.self, forCellReuseIdentifier: EmptyWorkoutTableViewCell.reuseIdentifier)
         uiTableView.register(WorkoutSessionExerciseListCell.self, forCellReuseIdentifier: WorkoutSessionExerciseListCell.reuseIdentifier)
-        uiTableView.register(AddExerciseButtonTableViewCell.self, forCellReuseIdentifier: AddExerciseButtonTableViewCell.reuseIdentifier)
         
         uiTableView.allowsSelection = false
         uiTableView.rowHeight = UITableView.automaticDimension
@@ -38,13 +47,35 @@ class WorkoutSessionView: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layoutFooterView()
+    }
 
     private func setupUI(){
         addSubview(tableView)
         tableView.separatorStyle = .none
         
+        tableView.tableFooterView = footerView
+        
+        layoutFooterView()
+        
         tableView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
+        }
+    }
+    
+    private func layoutFooterView(){
+        guard let footerView = tableView.tableFooterView else {return}
+        
+        let width = tableView.bounds.width
+        let size = footerView.systemLayoutSizeFitting(CGSize(width: width, height: UIView.layoutFittingCompressedSize.height)
+        )
+        
+        if footerView.frame.size.height != size.height {
+            footerView.frame.size.height = size.height
+            tableView.tableFooterView = footerView
         }
     }
     

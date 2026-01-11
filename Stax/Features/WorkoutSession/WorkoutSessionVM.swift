@@ -20,6 +20,8 @@ final class WorkoutSessionViewModel: NSObject{
         let addExercise: PassthroughSubject<Exercise, Never>
         let addSet: PassthroughSubject<WorkoutSet, Never>
         let updateExerciseNote: PassthroughSubject<(NSManagedObjectID, String), Never>
+        let replaceExercise: PassthroughSubject<(WorkoutExercise, Exercise), Never>
+        let deleteExercise: PassthroughSubject<WorkoutExercise, Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -61,6 +63,8 @@ final class WorkoutSessionViewModel: NSObject{
                            addExercise: .init(),
                            addSet: .init(),
                            updateExerciseNote: .init(),
+                           replaceExercise: .init(),
+                           deleteExercise: .init()
         )
         
         self.output = .init(timerSubject: .init("0s"),
@@ -146,6 +150,19 @@ final class WorkoutSessionViewModel: NSObject{
                 self?.updateNote(for: objectId, text: noteText)
             }
             .store(in: &cancellables)
+        
+        input.replaceExercise
+            .sink(receiveValue: {[weak self] (existingExercise, newExerciseDefinition) in
+                self?.replaceExercise(existing: existingExercise, with: newExerciseDefinition)
+            })
+            .store(in: &cancellables)
+        
+        input.deleteExercise
+            .sink (receiveValue: { [weak self] exercise in
+                self?.deleteExercise(exercise)
+            })
+            .store(in: &cancellables)
+
     }
     
     private func startTimer() {
@@ -211,6 +228,33 @@ final class WorkoutSessionViewModel: NSObject{
         .store(in: &cancellables)
     }
     
+    private func replaceExercise(existing: WorkoutExercise, with newDEfinition: Exercise){
+        existing.exercise = newDEfinition
+        
+        exerciseRepo.save()
+            .sink(receiveCompletion: {_ in }, receiveValue: {_ in})
+            .store(in: &cancellables)
+    }
+    
+    private func deleteExercise(_ exercise: WorkoutExercise) {
+        exerciseRepo.delete(exercise)
+            .flatMap({ [weak self]  _ -> AnyPublisher<Void, Error> in
+                guard let self else { return Fail(error: NSError(domain: "SelfDeallocated", code: -1)).eraseToAnyPublisher()
+                }
+                
+                self.reindexExercise()
+                
+                return self.exerciseRepo.save()
+            })
+            .sink(receiveCompletion: { complation in
+                if case .failure(let failure) = complation {
+                    print("delete reindex error: \(failure)")
+                }
+            }, receiveValue: { _ in })
+            .store(in: &cancellables)
+    }
+    
+    
     private func startFetchExercises() {
         guard let workout = currentWorkout else { return }
         
@@ -227,6 +271,19 @@ final class WorkoutSessionViewModel: NSObject{
             output.exercises.send(frc?.fetchedObjects ?? [])
         }catch {
             print("FRC Error: \(error)")
+        }
+    }
+    
+    
+}
+
+//MARK: - Helper Methods
+extension WorkoutSessionViewModel {
+    private func reindexExercise(){
+        guard let exercises = frc?.fetchedObjects else {return}
+        
+        for(index, exercise) in exercises.enumerated() {
+            exercise.orderIndex = Int16(index)
         }
     }
 }

@@ -16,7 +16,6 @@ class WorkoutSessionVC: UIViewController {
     enum Section: String, CaseIterable{
         case duration
         case exercises
-        case actions
     }
     
     nonisolated enum RowItem: Hashable, Sendable{
@@ -24,7 +23,6 @@ class WorkoutSessionVC: UIViewController {
         case divider
         case exercise(NSManagedObjectID)
         case empty
-        case addButton
     }
     
     //Typealiases
@@ -119,16 +117,9 @@ class WorkoutSessionVC: UIViewController {
                     }
                     
                     cell.exerciseMenuOnTapped = { [weak self] in
-                        self?.didSendEventClosure?(.exerciseMenuButtonTapped)
+                        self?.didSendEventClosure?(.exerciseMenuButtonTapped(exerciseItem))
                     }
                     
-                }
-                return cell
-                
-            case .addButton:
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: AddExerciseButtonTableViewCell.reuseIdentifier, for: indexPath) as? AddExerciseButtonTableViewCell else {return UITableViewCell()}
-                cell.onTapAddExerciseButton = {[weak self] in
-                    self?.didSendEventClosure?(.addExercise)
                 }
                 return cell
             }
@@ -174,7 +165,6 @@ class WorkoutSessionVC: UIViewController {
         if isInitialLoad{
             snapshot.appendSections(Section.allCases)
             snapshot.appendItems([.duration, .divider], toSection: .duration)
-            snapshot.appendItems([.addButton], toSection: .actions)
         }
         
         let oldItems = snapshot.itemIdentifiers(inSection: .exercises)

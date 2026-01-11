@@ -8,9 +8,7 @@
 import UIKit
 import SnapKit
 
-class AddExerciseButtonTableViewCell: UITableViewCell {
-    
-    static let reuseIdentifier  = "AddExerciseButtonTableViewCell"
+class WorkoutSessionFooterView: UIView {
     
     var onTapAddExerciseButton: (() -> Void)?
     
@@ -27,10 +25,9 @@ class AddExerciseButtonTableViewCell: UITableViewCell {
         return button
     }()
     
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        selectionStyle = .none
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
         setupUI()
     }
     
@@ -39,12 +36,15 @@ class AddExerciseButtonTableViewCell: UITableViewCell {
     }
     
     private func setupUI(){
-        contentView.addSubview(addExerciseButton)
+        addSubview(addExerciseButton)
         
         //AddExerciseButton Height
         addExerciseButton.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(24).priority(999)
+            make.leading.equalToSuperview().offset(16).priority(999)
+            make.trailing.equalToSuperview().offset(-16).priority(999)
+            make.bottom.equalToSuperview().offset(-24).priority(999)
             make.height.equalTo(48)
-            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 24, left: 16, bottom: 12, right: 16)).priority(999)
         }
         
         addExerciseButton.addTarget(self, action: #selector(onTapAddExerciseButtonTapped), for: .touchUpInside)
