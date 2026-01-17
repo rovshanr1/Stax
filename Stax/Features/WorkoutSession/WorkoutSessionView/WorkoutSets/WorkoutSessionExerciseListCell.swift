@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class WorkoutSessionExerciseListCell: UITableViewCell {
+final class WorkoutSessionExerciseListCell: UITableViewCell {
     static let reuseIdentifier = "WorkoutSessionExerciseListCell"
     
     var exerciseMenuOnTapped: (() -> Void)?
@@ -16,6 +16,9 @@ class WorkoutSessionExerciseListCell: UITableViewCell {
     
     var onNoteChange: ((String) -> Void)?
     var onNotesHeightChange: (() -> Void)?
+    
+    var addSetTapped: ((WorkoutExercise) -> Void)?
+    
     //MARK: - UI Elements
     private var addNotesTextView = TextView()
     
@@ -158,7 +161,8 @@ class WorkoutSessionExerciseListCell: UITableViewCell {
             make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 0,
                                                                left: 12,
                                                                bottom: 0,
-                                                               right: 12)).priority(999)
+                                                               right: 12)
+            ).priority(999)
         }
         
         exerciseMenuButton.snp.makeConstraints { (make) in
@@ -175,8 +179,18 @@ class WorkoutSessionExerciseListCell: UITableViewCell {
     }
     
     //MARK: - Public method for configure cell
-    func configureExerciseCell(with exercise: Exercise){
-        exerciseName.text = exercise.name
+    func configureExerciseCell(with exercise: WorkoutExercise){
+        exerciseName.text = exercise.exercise?.name
+        
+        if let setsSet = exercise.workoutSets as? Set<WorkoutSet>{
+            let sortedSets = setsSet.sorted { $0.orederIndex < $1.orederIndex }
+            
+            setsView.configuartionSets(with: sortedSets)
+        }
+        
+        setsView.addSetButtonTapped = { [weak self] in
+            self?.addSetTapped?(exercise)
+        }
         
         restTimeLabel.text = "Rest Time:"
         restTimeNumber.text = "0:00"

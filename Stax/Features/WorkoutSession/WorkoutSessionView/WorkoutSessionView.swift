@@ -8,12 +8,12 @@
 import UIKit
 import SnapKit
 
-class WorkoutSessionView: UIView {
+final class WorkoutSessionView: UIView {
     
     var addExerciseButtonTapped: (() -> Void)?
     
     private lazy var footerView: WorkoutSessionFooterView = {
-        let view = WorkoutSessionFooterView(frame: CGRect(x: 0, y: 0, width: frame.width, height: 100))
+        let view = WorkoutSessionFooterView()
         
         view.onTapAddExerciseButton = { [weak self] in
             self?.addExerciseButtonTapped?()
@@ -64,6 +64,7 @@ class WorkoutSessionView: UIView {
         tableView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
         }
+        
     }
     
     private func layoutFooterView(){

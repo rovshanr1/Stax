@@ -46,6 +46,8 @@ class WorkoutSessionVC: UIViewController {
         bindVM()
         bindEvents()
         configureDataSource()
+        
+        contentView.tableView.keyboardDismissMode = .onDrag
     }
     
     //MARK: - Setup UI
@@ -102,7 +104,7 @@ class WorkoutSessionVC: UIViewController {
                 }
                 
                 if let exerciseItem = self.sessionExercise.first(where: { $0.objectID == id}){
-                    cell.configureExerciseCell(with: exerciseItem.exercise!)
+                    cell.configureExerciseCell(with: exerciseItem)
                     
                     
                     cell.configureTextView(with: exerciseItem.note)
@@ -118,6 +120,10 @@ class WorkoutSessionVC: UIViewController {
                     
                     cell.exerciseMenuOnTapped = { [weak self] in
                         self?.didSendEventClosure?(.exerciseMenuButtonTapped(exerciseItem))
+                    }
+                    
+                    cell.addSetTapped = { [weak self] exercise in
+                        self?.viewModel.input.addSet.send(exercise)
                     }
                     
                 }
@@ -157,24 +163,27 @@ class WorkoutSessionVC: UIViewController {
             .store(in: &cancellables)
     }
     
+    //MARK: - Update Snapshot
     private func updateSnapshot(with exercises: [WorkoutExercise]){
-        var snapshot = dataSource.snapshot()
+        var snapshot = Snapshot()
         
-        let isInitialLoad = snapshot.sectionIdentifiers.isEmpty
+        snapshot.appendSections(Section.allCases)
         
-        if isInitialLoad{
-            snapshot.appendSections(Section.allCases)
-            snapshot.appendItems([.duration, .divider], toSection: .duration)
-        }
+        snapshot.appendItems([.duration, .divider], toSection: .duration)
         
-        let oldItems = snapshot.itemIdentifiers(inSection: .exercises)
-        snapshot.deleteItems(oldItems)
         
         if exercises.isEmpty{
             snapshot.appendItems([.empty], toSection: .exercises)
         }else{
             let items = exercises.map {RowItem.exercise($0.objectID)}
             snapshot.appendItems(items, toSection: .exercises)
+            
+            let existingItem = dataSource.snapshot().itemIdentifiers
+            let itemsToReconfigure = items.filter { existingItem.contains($0) }
+            
+            if !itemsToReconfigure.isEmpty {
+                snapshot.reconfigureItems(itemsToReconfigure)
+            }
         }
         
         dataSource.apply(snapshot, animatingDifferences: false)
