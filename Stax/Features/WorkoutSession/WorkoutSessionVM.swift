@@ -18,7 +18,7 @@ final class WorkoutSessionViewModel: NSObject{
         let didTapCancel: PassthroughSubject<Void, Never>
         let didTapCheckout: PassthroughSubject<Void, Never>
         let addExercise: PassthroughSubject<Exercise, Never>
-        let addSet: PassthroughSubject<WorkoutSet, Never>
+        let addSet: PassthroughSubject<WorkoutExercise, Never>
         let updateExerciseNote: PassthroughSubject<(NSManagedObjectID, String), Never>
         let replaceExercise: PassthroughSubject<(WorkoutExercise, Exercise), Never>
         let deleteExercise: PassthroughSubject<WorkoutExercise, Never>
@@ -162,6 +162,12 @@ final class WorkoutSessionViewModel: NSObject{
                 self?.deleteExercise(exercise)
             })
             .store(in: &cancellables)
+        
+        input.addSet
+            .sink(receiveValue: { [weak self] exercise in
+                self?.addNewSet(to: exercise)
+            })
+            .store(in: &cancellables)
 
     }
     
@@ -254,6 +260,29 @@ final class WorkoutSessionViewModel: NSObject{
             .store(in: &cancellables)
     }
     
+    private func addNewSet(to parentExercise: WorkoutExercise){
+        let newSet = workoutSets.create()
+        
+        newSet.workoutExercise = parentExercise
+        
+        let currentSets = parentExercise.workoutSets?.count ?? 0
+        newSet.orederIndex = Int16(currentSets)
+        
+        newSet.reps = 0
+        newSet.weight = 0.0
+        newSet.isComplated = false
+        
+        workoutSets.save()
+            .sink(receiveCompletion: { complation in
+                if case .failure(let failure) = complation {
+                    print("add new set error: \(failure)")
+                }
+            }, receiveValue: {_ in
+                print("new set added successfully: \(newSet.orederIndex)")
+            })
+            .store(in: &cancellables)
+        
+    }
     
     private func startFetchExercises() {
         guard let workout = currentWorkout else { return }

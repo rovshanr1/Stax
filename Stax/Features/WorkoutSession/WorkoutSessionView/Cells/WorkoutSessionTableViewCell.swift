@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class WorkoutSessionTableViewCell: UITableViewCell {
+final class WorkoutSessionTableViewCell: UITableViewCell {
     static let reuseIdentifier: String = "WorkoutSessionTableViewCell"
     
     private let duration: UILabel = {

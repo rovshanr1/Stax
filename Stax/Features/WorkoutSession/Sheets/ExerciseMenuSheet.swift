@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class ExerciseMenuSheet: UIViewController {
+final class ExerciseMenuSheet: UIViewController {
     enum Action {
         case deleteExercise
         case replaceExercise

@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class SheetView: UIView {
+final class SheetView: UIView {
     
     var replaceExerciseOnTap: (() -> Void)?
     var removeExerciseOnTap: (() -> Void)?

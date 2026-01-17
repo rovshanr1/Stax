@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class EmptyWorkoutTableViewCell: UITableViewCell {
+final class EmptyWorkoutTableViewCell: UITableViewCell {
 
     static let reuseIdentifier: String = "EmptyWorkoutTableViewCell"
     
