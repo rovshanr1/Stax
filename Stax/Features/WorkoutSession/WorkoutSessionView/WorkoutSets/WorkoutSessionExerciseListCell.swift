@@ -18,6 +18,9 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     var onNotesHeightChange: (() -> Void)?
     
     var addSetTapped: ((WorkoutExercise) -> Void)?
+    var onToggleSetDone: ((UUID, Bool) -> Void)?
+    
+    private var currentExerciseID: UUID?
     
     //MARK: - UI Elements
     private var addNotesTextView = TextView()
@@ -135,6 +138,13 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        currentExerciseID = nil
+        setsView.onTogleSetDone = nil
+        setsView.addSetButtonTapped = nil
+    }
+    
     //MARK: - Setup UI
     private func setupUI(){
         constraints()
@@ -181,15 +191,22 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     //MARK: - Public method for configure cell
     func configureExerciseCell(with exercise: WorkoutExercise){
         exerciseName.text = exercise.exercise?.name
+        currentExerciseID = exercise.id
         
         if let setsSet = exercise.workoutSets as? Set<WorkoutSet>{
-            let sortedSets = setsSet.sorted { $0.orederIndex < $1.orederIndex }
+            let sortedSets = setsSet.sorted { $0.orderIndex < $1.orderIndex }
             
             setsView.configuartionSets(with: sortedSets)
         }
         
         setsView.addSetButtonTapped = { [weak self] in
             self?.addSetTapped?(exercise)
+        }
+        
+        setsView.onTogleSetDone = { [weak self] setID, isDone in
+            guard let self else {return}
+            
+            self.onToggleSetDone?(setID, isDone)
         }
         
         restTimeLabel.text = "Rest Time:"

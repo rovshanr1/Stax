@@ -126,6 +126,11 @@ class WorkoutSessionVC: UIViewController {
                         self?.viewModel.input.addSet.send(exercise)
                     }
                     
+                    cell.onToggleSetDone = { [weak self] setID, isDone in
+                        guard let self else {return}
+                        self.viewModel.input.toggleSetDone.send((setID, isDone))
+                    }
+                
                 }
                 return cell
             }

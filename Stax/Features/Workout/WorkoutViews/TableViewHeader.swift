@@ -43,11 +43,7 @@ class TableViewHeader: UIView {
         addSubview(button)
         
         button.snp.makeConstraints { (make) in
-            make.top.equalTo(self).inset(8)
-            make.left.equalTo(self).inset(8)
-            make.bottom.equalTo(self).inset(8)
-            make.right.equalTo(self).inset(12).priority(999)
-            
+            make.edges.equalTo(self).inset(UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 12)).priority(999)
         }
         
         

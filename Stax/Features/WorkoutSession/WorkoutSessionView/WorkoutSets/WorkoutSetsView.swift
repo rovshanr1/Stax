@@ -8,9 +8,11 @@
 import UIKit
 import SnapKit
 
+
 class WorkoutSetsView: UIView {
     
     var addSetButtonTapped: (() -> Void)?
+    var onTogleSetDone: ((UUID, Bool) -> Void)?
     
     private var headerView = SetsHeaderView()
     private var footerView = SetsFooterView()
@@ -18,7 +20,7 @@ class WorkoutSetsView: UIView {
     private let setsContainerStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
-        stackView.spacing = 0
+        stackView.spacing = 4
         stackView.alignment = .fill
         return stackView
     }()
@@ -26,7 +28,7 @@ class WorkoutSetsView: UIView {
     private lazy var mainStack: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [headerView, setsContainerStackView, footerView])
         stackView.axis = .vertical
-        stackView.spacing = 0
+        stackView.spacing = 4
         return stackView
     }()
     
@@ -49,12 +51,17 @@ class WorkoutSetsView: UIView {
         footerView.onTapAddSetButton = { [weak self] in
             self?.addSetButtonTapped?()
         }
+        
+        
     }
     
     //MARK: - Configuration
     
     func configuartionSets(with sets: [WorkoutSet]) {
-        setsContainerStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        setsContainerStackView.arrangedSubviews.forEach {
+            setsContainerStackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
         
         for (index, set) in sets.enumerated() {
             let rowView = SetRowView()
@@ -71,6 +78,19 @@ class WorkoutSetsView: UIView {
             rowView.snp.makeConstraints { make in
                 make.height.equalTo(34)
             }
+            
+            rowView.checkboxOnTapped = { [weak self] isDone in
+                guard let self else { return }
+                
+                if let setID = set.id {
+                    self.onTogleSetDone?(setID, isDone)
+                }else{
+                    print("Something went wrong, Set id is nil")
+                }
+                
+                
+            }
+            
         }
         
     }
