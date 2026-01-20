@@ -10,7 +10,9 @@ import SnapKit
 
 final class SetRowView: UIView {
     
-    var checkboxOnTapped: (() -> Void)?
+    let impactGenerator = UIImpactFeedbackGenerator(style: .medium)
+    
+    var checkboxOnTapped: ((Bool) -> Void)?
     
     private var setNumberLabel: UILabel = {
         let label = UILabel()
@@ -58,7 +60,7 @@ final class SetRowView: UIView {
         let button = UIButton(type: .custom)
         
         let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .medium)
-        button.setImage(UIImage(systemName: "checkmark.square.fill", withConfiguration: config), for: .normal)
+        button.setImage(UIImage(systemName: "checkmark.square", withConfiguration: config), for: .normal)
         
         button.setImage(UIImage(systemName: "checkmark.square.fill", withConfiguration: config), for: .selected)
         button.tintColor = .systemGray
@@ -69,7 +71,7 @@ final class SetRowView: UIView {
     private lazy var mainStackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [setNumberLabel, previousSets, currentWeight, currentReps, checkmarkBox])
         stackView.axis = .horizontal
-        stackView.spacing = 20
+        stackView.spacing = 0
         stackView.distribution = .fill
         return stackView
     }()
@@ -77,6 +79,7 @@ final class SetRowView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
+        buttonsActions()
     }
     
     required init?(coder: NSCoder) {
@@ -85,6 +88,9 @@ final class SetRowView: UIView {
     
     
     private func setupUI(){
+        self.layer.cornerRadius = 12
+        self.clipsToBounds = true
+        
         addSubview(mainStackView)
         
         mainStackView.snp.makeConstraints { (make) in
@@ -92,7 +98,7 @@ final class SetRowView: UIView {
         }
         
         setNumberLabel.snp.makeConstraints { make in
-            make.width.equalToSuperview().multipliedBy(0.12)
+            make.width.equalToSuperview().multipliedBy(0.15)
         }
         
         previousSets.snp.makeConstraints { make in
@@ -107,14 +113,11 @@ final class SetRowView: UIView {
             make.width.equalToSuperview().multipliedBy(0.20)
         }
 
-        
         checkmarkBox.snp.makeConstraints { make in
             make.height.equalTo(40).priority(999)
-            make.width.equalToSuperview().multipliedBy(0.15)
+            make.width.equalToSuperview().multipliedBy(0.20)
         }
         
-        
-        buttonsActions()
         
     }
     
@@ -124,6 +127,8 @@ final class SetRowView: UIView {
         currentWeight.text = weight
         currentReps.text = reps
         checkmarkBox.isSelected = isDone
+        
+        updateAppearance(isDone: isDone)
     }
     
     private func buttonsActions(){
@@ -132,11 +137,26 @@ final class SetRowView: UIView {
     
     @objc func checkmarkTapped(){
         checkmarkBox.isSelected.toggle()
+        let isDone = checkmarkBox.isSelected
         
-        if checkmarkBox.isSelected{
-            checkboxOnTapped?()
-        }else{
-            
+        updateAppearance(isDone: isDone)
+        
+        impactGenerator.prepare()
+        impactGenerator.impactOccurred()
+        
+        checkboxOnTapped?(isDone)
+    }
+    
+    private func updateAppearance(isDone: Bool){
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            guard let self else {return}
+            if isDone{
+                self.backgroundColor = .systemGreen.withAlphaComponent(0.5)
+                self.checkmarkBox.tintColor = .systemGreen.withAlphaComponent(0.5)
+            }else{
+                self.backgroundColor = .clear
+                self.checkmarkBox.tintColor = .systemGray
+            }
         }
     }
 }

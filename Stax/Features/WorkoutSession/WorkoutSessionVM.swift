@@ -22,6 +22,7 @@ final class WorkoutSessionViewModel: NSObject{
         let updateExerciseNote: PassthroughSubject<(NSManagedObjectID, String), Never>
         let replaceExercise: PassthroughSubject<(WorkoutExercise, Exercise), Never>
         let deleteExercise: PassthroughSubject<WorkoutExercise, Never>
+        let toggleSetDone: PassthroughSubject<(UUID, Bool), Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -64,7 +65,8 @@ final class WorkoutSessionViewModel: NSObject{
                            addSet: .init(),
                            updateExerciseNote: .init(),
                            replaceExercise: .init(),
-                           deleteExercise: .init()
+                           deleteExercise: .init(),
+                           toggleSetDone: .init()
         )
         
         self.output = .init(timerSubject: .init("0s"),
@@ -168,6 +170,13 @@ final class WorkoutSessionViewModel: NSObject{
                 self?.addNewSet(to: exercise)
             })
             .store(in: &cancellables)
+        
+        input.toggleSetDone
+            .sink(receiveValue: { [weak self] setID, isDone in
+                self?.setIsDone(setID: setID, isDone: isDone)
+            })
+            .store(in: &cancellables)
+                
 
     }
     
@@ -266,8 +275,9 @@ final class WorkoutSessionViewModel: NSObject{
         newSet.workoutExercise = parentExercise
         
         let currentSets = parentExercise.workoutSets?.count ?? 0
-        newSet.orederIndex = Int16(currentSets)
+        newSet.orderIndex = Int16(currentSets)
         
+        newSet.id = UUID()
         newSet.reps = 0
         newSet.weight = 0.0
         newSet.isComplated = false
@@ -278,10 +288,31 @@ final class WorkoutSessionViewModel: NSObject{
                     print("add new set error: \(failure)")
                 }
             }, receiveValue: {_ in
-                print("new set added successfully: \(newSet.orederIndex)")
+                print("new set added successfully: \(newSet.orderIndex)")
             })
             .store(in: &cancellables)
         
+    }
+    
+    private func setIsDone(setID: UUID, isDone: Bool) {
+        guard let targetSet = output.exercises.value
+            .flatMap({ $0.workoutSets as? Set<WorkoutSet> ?? [] })
+            .first(where: { $0.id == setID }) else{
+            print("error: no set found: \(setID) ")
+            return
+        }
+        
+        workoutSets.update(id: targetSet.objectID) { set in
+            set.isComplated = isDone
+        }
+        .sink { completion in
+            if case .failure(let error) = completion {
+                print("Set update error: \(error)")
+            }
+        } receiveValue: {
+            print("Set updated: \(isDone)")
+        }
+        .store(in: &cancellables)
     }
     
     private func startFetchExercises() {
