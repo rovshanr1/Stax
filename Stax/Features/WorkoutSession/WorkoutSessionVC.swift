@@ -43,9 +43,11 @@ class WorkoutSessionVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        configureDataSource()
         bindVM()
         bindEvents()
-        configureDataSource()
+        setupKeyboardObserver() 
+        
         
         contentView.tableView.keyboardDismissMode = .onDrag
     }
@@ -87,6 +89,9 @@ class WorkoutSessionVC: UIViewController {
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionTableViewCell.reuseIdentifier, for: indexPath) as? WorkoutSessionTableViewCell else {
                     return UITableViewCell()
                 }
+                
+                
+                
                 return cell
             case .divider:
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: DividerCell.reuseIdentifier, for: indexPath) as? DividerCell else{
@@ -126,12 +131,41 @@ class WorkoutSessionVC: UIViewController {
                         self?.viewModel.input.addSet.send(exercise)
                     }
                     
+                    cell.onToggleSetDone = { [weak self] setID, weight, reps, isDone in
+                        guard let self else {return}
+                        self.viewModel.input.updateSet.send((setID,weight, reps, isDone))
+                    }
+                    
+                    cell.onInputFieldFocusChange = {[weak self] inputView in
+                        guard let self else {return}
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            let tableView = self.contentView.tableView
+                            
+                            let inputFrame = inputView.convert(inputView.bounds, to: tableView)
+                            
+                            let visibleHeight = tableView.bounds.height - tableView.contentInset.bottom
+                            let targetY = inputFrame.origin.y - (visibleHeight / 2) + (inputFrame.height / 2)
+                            
+                            let maxScrollY = tableView.contentSize.height - visibleHeight + tableView.contentInset.bottom
+                            
+                            let clampedY = max(0, min(targetY, maxScrollY))
+                            
+                            tableView.setContentOffset(CGPoint(x: 0, y: clampedY), animated: true)
+                        }
+                    }
+                    
+                    cell.deleteSetTapped = { [weak self] setID in
+                        self?.viewModel.input.deleteSet.send(setID)
+                    }
+
+                    
                 }
                 return cell
             }
         })
     }
-
+    
     
     //MARK: - ViewModel Binding
     private func bindVM(){
@@ -150,7 +184,9 @@ class WorkoutSessionVC: UIViewController {
             }
             .store(in: &cancellables)
         
-        viewModel.input.viewDidLoad.send()
+        DispatchQueue.main.async { [weak self] in
+            self?.viewModel.input.viewDidLoad.send()
+        }
         
         viewModel.output.exercises
             .receive(on: DispatchQueue.main)
@@ -161,6 +197,23 @@ class WorkoutSessionVC: UIViewController {
                 self.updateSnapshot(with: exercises)
             }
             .store(in: &cancellables)
+        
+        viewModel.output.sessionStats
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] stats in
+                guard let self else {return}
+                self.updateDurationCell(stats: stats)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func updateDurationCell(stats: (volume: Double, sets: Int)? = nil){
+        guard let indexPath = dataSource.indexPath(for: .duration) else {return}
+        guard let cell = contentView.tableView.cellForRow(at: indexPath) as? WorkoutSessionTableViewCell else {return}
+        
+        if let stats{
+            cell.updateStats(volume: stats.volume, sets: stats.sets)
+        }
     }
     
     //MARK: - Update Snapshot
@@ -249,3 +302,36 @@ extension WorkoutSessionVC{
     }
 }
 
+//MARK: - Keyboard Handling
+extension WorkoutSessionVC {
+    private func setupKeyboardObserver() {
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
+    @objc private func keyboardWillShow(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        
+        let extraBuffer: CGFloat = 50
+        let bottomPadding = keyboardFrame.height + extraBuffer
+        
+        var contentInset = contentView.tableView.contentInset
+        contentInset.bottom = bottomPadding
+        
+        var scrollIndicatorInsets = contentView.tableView.verticalScrollIndicatorInsets
+        scrollIndicatorInsets.bottom = bottomPadding
+        
+        UIView.animate(withDuration: 0.3) {
+            self.contentView.tableView.contentInset = contentInset
+            self.contentView.tableView.verticalScrollIndicatorInsets = scrollIndicatorInsets
+        }
+    }
+    
+    @objc private func keyboardWillHide(_ notification: Notification) {
+        let contentInset = UIEdgeInsets.zero
+        contentView.tableView.contentInset = contentInset
+        contentView.tableView.verticalScrollIndicatorInsets = contentInset
+    }
+    
+}

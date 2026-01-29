@@ -8,17 +8,22 @@
 import UIKit
 import SnapKit
 
+
 class WorkoutSetsView: UIView {
     
     var addSetButtonTapped: (() -> Void)?
     
+    var onUpdateSet: ((UUID, Double, Int, Bool) -> Void)?
+    var onInputFieldFocus: ((UIView) -> Void)?
+    var onDeleteSet: ((UUID) -> Void)?
+    
     private var headerView = SetsHeaderView()
     private var footerView = SetsFooterView()
-
+    
     private let setsContainerStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
-        stackView.spacing = 0
+        stackView.spacing = 4
         stackView.alignment = .fill
         return stackView
     }()
@@ -26,7 +31,7 @@ class WorkoutSetsView: UIView {
     private lazy var mainStack: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [headerView, setsContainerStackView, footerView])
         stackView.axis = .vertical
-        stackView.spacing = 0
+        stackView.spacing = 4
         return stackView
     }()
     
@@ -49,20 +54,25 @@ class WorkoutSetsView: UIView {
         footerView.onTapAddSetButton = { [weak self] in
             self?.addSetButtonTapped?()
         }
+        
+        
     }
     
     //MARK: - Configuration
     
     func configuartionSets(with sets: [WorkoutSet]) {
-        setsContainerStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        setsContainerStackView.arrangedSubviews.forEach {
+            setsContainerStackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
         
         for (index, set) in sets.enumerated() {
             let rowView = SetRowView()
-                
+            
             rowView.configure(setNumber: index + 1,
                               previous: "-",
-                              weight: set.weight > 0 ? "\(set.weight)kg" : "",
-                              reps: set.reps > 0 ? "\(set.reps)" : "",
+                              weight: set.weight,
+                              reps: Int(set.reps),
                               isDone: set.isComplated
             )
             
@@ -71,7 +81,25 @@ class WorkoutSetsView: UIView {
             rowView.snp.makeConstraints { make in
                 make.height.equalTo(34)
             }
+            
+            
+            rowView.onUpdateState = { [weak self] (weight, reps, isDone) in
+                guard let self, let setID = set.id else { return }
+                
+                self.onUpdateSet?(setID, weight, reps, isDone)
+            }
+            
+            rowView.onInputDidBegin = { [weak self] inputView in
+                self?.onInputFieldFocus?(inputView)
+            }
+            
+            rowView.onDelete = { [weak self] in
+                guard let self,
+                      let setID = set.id
+                else { return }
+                self.onDeleteSet?(setID)
+            }
+            
         }
-        
     }
 }

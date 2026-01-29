@@ -18,6 +18,12 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     var onNotesHeightChange: (() -> Void)?
     
     var addSetTapped: ((WorkoutExercise) -> Void)?
+    var onToggleSetDone: ((UUID, Double, Int, Bool) -> Void)?
+    var deleteSetTapped: ((UUID) -> Void)?
+    
+    var onInputFieldFocusChange: ((UIView) -> Void)?
+    
+    private var currentExerciseID: UUID?
     
     //MARK: - UI Elements
     private var addNotesTextView = TextView()
@@ -28,14 +34,14 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         imageView.clipsToBounds = true
         let config = UIImage.SymbolConfiguration(pointSize: 36, weight: .regular)
         imageView.image = UIImage(systemName: "dumbbell", withConfiguration: config)
-        imageView.tintColor = .label
+        imageView.tintColor = .systemGray2
         return imageView
     }()
     
     private var exerciseName: UILabel = {
        let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .semibold)
-        label.textColor = .label
+        label.textColor = .tertiaryLabel
         return label
     }()
     
@@ -135,6 +141,13 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        currentExerciseID = nil
+        setsView.onUpdateSet = nil
+        setsView.addSetButtonTapped = nil
+    }
+    
     //MARK: - Setup UI
     private func setupUI(){
         constraints()
@@ -181,9 +194,10 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     //MARK: - Public method for configure cell
     func configureExerciseCell(with exercise: WorkoutExercise){
         exerciseName.text = exercise.exercise?.name
+        currentExerciseID = exercise.id
         
         if let setsSet = exercise.workoutSets as? Set<WorkoutSet>{
-            let sortedSets = setsSet.sorted { $0.orederIndex < $1.orederIndex }
+            let sortedSets = setsSet.sorted { $0.orderIndex < $1.orderIndex }
             
             setsView.configuartionSets(with: sortedSets)
         }
@@ -191,6 +205,22 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         setsView.addSetButtonTapped = { [weak self] in
             self?.addSetTapped?(exercise)
         }
+        
+        setsView.onUpdateSet = { [weak self] setID, weight, reps, isDone in
+            guard let self else {return}
+            
+            self.onToggleSetDone?(setID, weight, reps, isDone)
+        }
+        
+        setsView.onInputFieldFocus = { [weak self] inputView in
+            self?.onInputFieldFocusChange?(inputView)
+        }
+        
+        setsView.onDeleteSet = { [weak self] setID in
+            self?.deleteSetTapped?(setID)
+        }
+        
+        
         
         restTimeLabel.text = "Rest Time:"
         restTimeNumber.text = "0:00"
@@ -208,6 +238,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
             self.onNotesHeightChange?()
         }
         
+       
         
     }
     

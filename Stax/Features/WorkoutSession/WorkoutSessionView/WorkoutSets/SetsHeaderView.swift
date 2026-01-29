@@ -66,7 +66,7 @@ final class SetsHeaderView: UIView {
         stackView.alignment = .fill
         stackView.distribution = .fill
         stackView.axis = .horizontal
-        stackView.spacing = 20
+        stackView.spacing = 0
         return stackView
     }()
     
@@ -80,6 +80,8 @@ final class SetsHeaderView: UIView {
     }
     
     private func setupUI() {
+     
+        
         addSubview(mainStackView)
         
         mainStackView.snp.makeConstraints { (make) in
@@ -87,7 +89,7 @@ final class SetsHeaderView: UIView {
         }
         
         setLabel.snp.makeConstraints { make in
-            make.width.equalToSuperview().multipliedBy(0.12)
+            make.width.equalToSuperview().multipliedBy(0.15)
         }
         
         previousSetsLabel.snp.makeConstraints { make in
@@ -97,15 +99,15 @@ final class SetsHeaderView: UIView {
         weightLabel.snp.makeConstraints { make in
             make.width.equalToSuperview().multipliedBy(0.20)
         }
+        
         repsLabel.snp.makeConstraints { make in
             make.width.equalToSuperview().multipliedBy(0.20)
         }
-        checkmarkHeaderIcon.snp.makeConstraints { make in
-            make.width.equalToSuperview().multipliedBy(0.15)
-        }
         
+        checkmarkHeaderIcon.snp.makeConstraints { make in
+            make.width.equalToSuperview().multipliedBy(0.20)
+        }
     }
-  
 }
     
   
