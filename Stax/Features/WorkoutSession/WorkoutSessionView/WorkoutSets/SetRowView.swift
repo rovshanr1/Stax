@@ -96,6 +96,14 @@ final class SetRowView: UIView {
         return view
     }()
     
+    private let doneOverlayView: UIView = {
+        let v = UIView()
+        v.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.15)
+        v.isUserInteractionEnabled = false
+        v.alpha = 0
+        return v
+    }()
+    
     private lazy var mainStackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [setNumberLabel, previousSets, currentWeight, currentReps, checkmarkBox])
         stackView.axis = .horizontal
@@ -125,8 +133,10 @@ final class SetRowView: UIView {
         
         addSubview(deleteBackgorundView)
         deleteBackgorundView.addSubview(deleteIcon)
+        deleteBackgorundView.isHidden = true
         
         addSubview(contentContainerView)
+        contentContainerView.addSubview(doneOverlayView)
         contentContainerView.addSubview(mainStackView)
         
         deleteBackgorundView.snp.makeConstraints { (make) in
@@ -142,6 +152,7 @@ final class SetRowView: UIView {
         contentContainerView.snp.makeConstraints { make in make.edges.equalToSuperview() }
         
         mainStackView.snp.makeConstraints { make in make.edges.equalToSuperview() }
+        doneOverlayView.snp.makeConstraints { make in make.edges.equalToSuperview() }
         
         setNumberLabel.snp.makeConstraints { make in make.width.equalToSuperview().multipliedBy(0.15) }
         
@@ -206,14 +217,9 @@ final class SetRowView: UIView {
     private func updateAppearance(isDone: Bool){
         UIView.animate(withDuration: 0.2) { [weak self] in
             guard let self else {return}
-            if isDone{
-                self.contentContainerView.backgroundColor = .systemGreen.withAlphaComponent(0.5)
-                self.checkmarkBox.tintColor = .systemGreen.withAlphaComponent(0.5)
-            }else{
-                self.contentContainerView.backgroundColor = .secondarySystemBackground
-                self.checkmarkBox.tintColor = .systemGray
-            }
-        }
+            self.contentContainerView.backgroundColor = .secondarySystemBackground 
+            self.doneOverlayView.alpha = isDone ? 1 : 0
+            self.checkmarkBox.tintColor = isDone ? .systemGreen : .systemGray        }
     }
     
     private func triggerUpdate(){
@@ -249,7 +255,7 @@ final class SetRowView: UIView {
         switch gesture.state {
         case .began:
             originalCenter = contentContainerView.center
-            
+            deleteBackgorundView.isHidden = false
         case .changed:
             if translation.x < 0 {
                 contentContainerView.center = CGPoint(x: originalCenter.x + translation.x, y: originalCenter.y)
@@ -270,7 +276,9 @@ final class SetRowView: UIView {
             }else{
                 UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.5, options: .curveEaseOut, animations:  {
                     self.contentContainerView.center = self.originalCenter
-                }, completion: nil)
+                }, completion: { _ in
+                    self.deleteBackgorundView.isHidden = true
+                })
                 
             }
         default:

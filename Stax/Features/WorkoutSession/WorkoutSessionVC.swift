@@ -43,9 +43,11 @@ class WorkoutSessionVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        configureDataSource()
         bindVM()
         bindEvents()
-        configureDataSource()
+        setupKeyboardObserver() 
+        
         
         contentView.tableView.keyboardDismissMode = .onDrag
     }
@@ -311,7 +313,7 @@ extension WorkoutSessionVC {
         guard let userInfo = notification.userInfo,
               let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
         
-        let extraBuffer: CGFloat = 100
+        let extraBuffer: CGFloat = 50
         let bottomPadding = keyboardFrame.height + extraBuffer
         
         var contentInset = contentView.tableView.contentInset

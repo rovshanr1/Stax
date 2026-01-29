@@ -34,14 +34,14 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         imageView.clipsToBounds = true
         let config = UIImage.SymbolConfiguration(pointSize: 36, weight: .regular)
         imageView.image = UIImage(systemName: "dumbbell", withConfiguration: config)
-        imageView.tintColor = .label
+        imageView.tintColor = .systemGray2
         return imageView
     }()
     
     private var exerciseName: UILabel = {
        let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .semibold)
-        label.textColor = .label
+        label.textColor = .tertiaryLabel
         return label
     }()
     
