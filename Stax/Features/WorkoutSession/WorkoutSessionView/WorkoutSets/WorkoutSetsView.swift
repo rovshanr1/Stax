@@ -12,11 +12,14 @@ import SnapKit
 class WorkoutSetsView: UIView {
     
     var addSetButtonTapped: (() -> Void)?
-    var onTogleSetDone: ((UUID, Bool) -> Void)?
+    
+    var onUpdateSet: ((UUID, Double, Int, Bool) -> Void)?
+    var onInputFieldFocus: ((UIView) -> Void)?
+    var onDeleteSet: ((UUID) -> Void)?
     
     private var headerView = SetsHeaderView()
     private var footerView = SetsFooterView()
-
+    
     private let setsContainerStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -65,11 +68,11 @@ class WorkoutSetsView: UIView {
         
         for (index, set) in sets.enumerated() {
             let rowView = SetRowView()
-                
+            
             rowView.configure(setNumber: index + 1,
                               previous: "-",
-                              weight: set.weight > 0 ? "\(set.weight)kg" : "",
-                              reps: set.reps > 0 ? "\(set.reps)" : "",
+                              weight: set.weight,
+                              reps: Int(set.reps),
                               isDone: set.isComplated
             )
             
@@ -79,19 +82,24 @@ class WorkoutSetsView: UIView {
                 make.height.equalTo(34)
             }
             
-            rowView.checkboxOnTapped = { [weak self] isDone in
-                guard let self else { return }
+            
+            rowView.onUpdateState = { [weak self] (weight, reps, isDone) in
+                guard let self, let setID = set.id else { return }
                 
-                if let setID = set.id {
-                    self.onTogleSetDone?(setID, isDone)
-                }else{
-                    print("Something went wrong, Set id is nil")
-                }
-                
-                
+                self.onUpdateSet?(setID, weight, reps, isDone)
+            }
+            
+            rowView.onInputDidBegin = { [weak self] inputView in
+                self?.onInputFieldFocus?(inputView)
+            }
+            
+            rowView.onDelete = { [weak self] in
+                guard let self,
+                      let setID = set.id
+                else { return }
+                self.onDeleteSet?(setID)
             }
             
         }
-        
     }
 }

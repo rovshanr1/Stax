@@ -18,7 +18,10 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     var onNotesHeightChange: (() -> Void)?
     
     var addSetTapped: ((WorkoutExercise) -> Void)?
-    var onToggleSetDone: ((UUID, Bool) -> Void)?
+    var onToggleSetDone: ((UUID, Double, Int, Bool) -> Void)?
+    var deleteSetTapped: ((UUID) -> Void)?
+    
+    var onInputFieldFocusChange: ((UIView) -> Void)?
     
     private var currentExerciseID: UUID?
     
@@ -141,7 +144,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         currentExerciseID = nil
-        setsView.onTogleSetDone = nil
+        setsView.onUpdateSet = nil
         setsView.addSetButtonTapped = nil
     }
     
@@ -203,11 +206,21 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
             self?.addSetTapped?(exercise)
         }
         
-        setsView.onTogleSetDone = { [weak self] setID, isDone in
+        setsView.onUpdateSet = { [weak self] setID, weight, reps, isDone in
             guard let self else {return}
             
-            self.onToggleSetDone?(setID, isDone)
+            self.onToggleSetDone?(setID, weight, reps, isDone)
         }
+        
+        setsView.onInputFieldFocus = { [weak self] inputView in
+            self?.onInputFieldFocusChange?(inputView)
+        }
+        
+        setsView.onDeleteSet = { [weak self] setID in
+            self?.deleteSetTapped?(setID)
+        }
+        
+        
         
         restTimeLabel.text = "Rest Time:"
         restTimeNumber.text = "0:00"
@@ -225,6 +238,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
             self.onNotesHeightChange?()
         }
         
+       
         
     }
     

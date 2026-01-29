@@ -12,7 +12,12 @@ final class SetRowView: UIView {
     
     let impactGenerator = UIImpactFeedbackGenerator(style: .medium)
     
-    var checkboxOnTapped: ((Bool) -> Void)?
+    private var panGesture: UIPanGestureRecognizer!
+    private var originalCenter: CGPoint = .zero
+    
+    var onUpdateState: ((Double, Int, Bool) -> Void)?
+    var onInputDidBegin: ((UIView) -> Void)?
+    var onDelete: (() -> Void)?
     
     private var setNumberLabel: UILabel = {
         let label = UILabel()
@@ -67,7 +72,30 @@ final class SetRowView: UIView {
         return button
     }()
     
- 
+    private let deleteBackgorundView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemRed
+        view.layer.cornerRadius = 12
+        view.clipsToBounds = true
+        return view
+    }()
+    
+    private let deleteIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "trash")
+        imageView.tintColor = .white
+        imageView.contentMode = .scaleAspectFit
+        return imageView
+    }()
+    
+    private let contentContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .secondarySystemGroupedBackground
+        view.layer.cornerRadius = 12
+        view.clipsToBounds = true
+        return view
+    }()
+    
     private lazy var mainStackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [setNumberLabel, previousSets, currentWeight, currentReps, checkmarkBox])
         stackView.axis = .horizontal
@@ -76,10 +104,13 @@ final class SetRowView: UIView {
         return stackView
     }()
     
+    
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
-        buttonsActions()
+        setupAction()
+        setupGestures()
     }
     
     required init?(coder: NSCoder) {
@@ -90,29 +121,36 @@ final class SetRowView: UIView {
     private func setupUI(){
         self.layer.cornerRadius = 12
         self.clipsToBounds = true
+        self.backgroundColor = .clear
         
-        addSubview(mainStackView)
+        addSubview(deleteBackgorundView)
+        deleteBackgorundView.addSubview(deleteIcon)
         
-        mainStackView.snp.makeConstraints { (make) in
+        addSubview(contentContainerView)
+        contentContainerView.addSubview(mainStackView)
+        
+        deleteBackgorundView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
         }
         
-        setNumberLabel.snp.makeConstraints { make in
-            make.width.equalToSuperview().multipliedBy(0.15)
+        deleteIcon.snp.makeConstraints { make in
+            make.right.equalToSuperview().inset(16)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(16)
         }
         
-        previousSets.snp.makeConstraints { make in
-            make.width.equalToSuperview().multipliedBy(0.25)
-        }
+        contentContainerView.snp.makeConstraints { make in make.edges.equalToSuperview() }
         
-        currentWeight.snp.makeConstraints { make in
-            make.width.equalToSuperview().multipliedBy(0.20)
-        }
+        mainStackView.snp.makeConstraints { make in make.edges.equalToSuperview() }
         
-        currentReps.snp.makeConstraints { make in
-            make.width.equalToSuperview().multipliedBy(0.20)
-        }
-
+        setNumberLabel.snp.makeConstraints { make in make.width.equalToSuperview().multipliedBy(0.15) }
+        
+        previousSets.snp.makeConstraints { make in make.width.equalToSuperview().multipliedBy(0.25) }
+        
+        currentWeight.snp.makeConstraints { make in make.width.equalToSuperview().multipliedBy(0.20) }
+        
+        currentReps.snp.makeConstraints { make in make.width.equalToSuperview().multipliedBy(0.20) }
+        
         checkmarkBox.snp.makeConstraints { make in
             make.height.equalTo(40).priority(999)
             make.width.equalToSuperview().multipliedBy(0.20)
@@ -121,21 +159,126 @@ final class SetRowView: UIView {
         
     }
     
-    func configure(setNumber: Int, previous: String, weight: String?, reps: String?, isDone: Bool){
+    func configure(setNumber: Int, previous: String, weight: Double, reps: Int, isDone: Bool){
         setNumberLabel.text = "\(setNumber)"
         previousSets.text = previous
-        currentWeight.text = weight
-        currentReps.text = reps
+        
+        if weight == 0  {
+            currentWeight.text = ""
+        }else{
+            let isInteger = floor(weight) == weight
+            currentWeight.text = isInteger ? "\(Int(weight))" : "\(weight)"
+        }
+        
+        if reps == 0 {
+            currentReps.text = ""
+        }else{
+            currentReps.text = "\(reps)"
+        }
+        
         checkmarkBox.isSelected = isDone
         
         updateAppearance(isDone: isDone)
+        
+        contentContainerView.snp.remakeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        
+        deleteIcon.alpha = 0
     }
     
-    private func buttonsActions(){
+    private func setupGestures() {
+        panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleTapGesture(_:)))
+        panGesture.delegate = self
+        contentContainerView.addGestureRecognizer(panGesture)
+    }
+    
+    private func setupAction(){
         checkmarkBox.addTarget(self, action: #selector(checkmarkTapped), for: .touchUpInside)
+        
+        currentWeight.addTarget(self, action: #selector(handleTextChange), for: .editingDidEnd)
+        currentReps.addTarget(self, action: #selector(handleTextChange), for: .editingDidEnd)
+        
+        currentWeight.addTarget(self, action: #selector(handleInputFocus), for: .editingDidBegin)
+        currentReps.addTarget(self, action: #selector(handleInputFocus), for: .editingDidBegin)
     }
     
-    @objc func checkmarkTapped(){
+    private func updateAppearance(isDone: Bool){
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            guard let self else {return}
+            if isDone{
+                self.contentContainerView.backgroundColor = .systemGreen.withAlphaComponent(0.5)
+                self.checkmarkBox.tintColor = .systemGreen.withAlphaComponent(0.5)
+            }else{
+                self.contentContainerView.backgroundColor = .secondarySystemBackground
+                self.checkmarkBox.tintColor = .systemGray
+            }
+        }
+    }
+    
+    private func triggerUpdate(){
+        let weightText = currentWeight.text?.replacingOccurrences(of: ",", with: ".") ?? ""
+        let repsText = currentReps.text ?? ""
+        
+        let weight = Double(weightText) ?? 0.0
+        let reps = Int(repsText) ?? 0
+        
+        if weight == 0{
+            currentWeight.text = ""
+           
+        } else {
+            let isInteger = floor(weight) == weight
+            currentWeight.text = isInteger ? "\(Int(weight))" : "\(weight)"
+        }
+        
+        if reps == 0 {
+            currentReps.text = ""
+        } else {
+            currentReps.text = "\(reps)"
+        }
+        
+        let isDone = checkmarkBox.isSelected
+        
+        onUpdateState?(weight, reps, isDone)
+    }
+    
+    
+    @objc private func handleTapGesture(_ gesture: UIPanGestureRecognizer){
+        let translation = gesture.translation(in: self)
+        
+        switch gesture.state {
+        case .began:
+            originalCenter = contentContainerView.center
+            
+        case .changed:
+            if translation.x < 0 {
+                contentContainerView.center = CGPoint(x: originalCenter.x + translation.x, y: originalCenter.y)
+                
+                let progress = min(1, abs(translation.x) / 100)
+                deleteIcon.alpha = progress
+            }
+            
+        case .ended:
+            if translation.x < -80 {
+                
+                UIView.animate(withDuration: 0.2, animations: {
+                    self.contentContainerView.center = CGPoint(x: -self.bounds.width, y: self.originalCenter.y)
+                }) { _ in
+                    
+                    self.onDelete?()
+                }
+            }else{
+                UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.5, options: .curveEaseOut, animations:  {
+                    self.contentContainerView.center = self.originalCenter
+                }, completion: nil)
+                
+            }
+        default:
+            break
+        }
+    }
+    
+    @objc private func checkmarkTapped(){
         checkmarkBox.isSelected.toggle()
         let isDone = checkmarkBox.isSelected
         
@@ -144,19 +287,26 @@ final class SetRowView: UIView {
         impactGenerator.prepare()
         impactGenerator.impactOccurred()
         
-        checkboxOnTapped?(isDone)
+        triggerUpdate()
     }
     
-    private func updateAppearance(isDone: Bool){
-        UIView.animate(withDuration: 0.2) { [weak self] in
-            guard let self else {return}
-            if isDone{
-                self.backgroundColor = .systemGreen.withAlphaComponent(0.5)
-                self.checkmarkBox.tintColor = .systemGreen.withAlphaComponent(0.5)
-            }else{
-                self.backgroundColor = .clear
-                self.checkmarkBox.tintColor = .systemGray
-            }
+    @objc private func handleTextChange(){
+        triggerUpdate()
+    }
+    
+    @objc private func handleInputFocus(_ textField: UITextField){
+        onInputDidBegin?(textField)
+    }
+    
+}
+
+
+extension SetRowView: UIGestureRecognizerDelegate {
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if let panGesture = gestureRecognizer as? UIPanGestureRecognizer{
+            let translation = panGesture.translation(in: self)
+            return abs(translation.x) > abs(translation.y)
         }
+        return true
     }
 }

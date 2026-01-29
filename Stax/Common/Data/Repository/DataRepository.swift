@@ -20,6 +20,24 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
         self.context = context
     }
     
+    func fetch(predicate: NSPredicate? = nil, sortDescirptors: [NSSortDescriptor]? = nil, fetchLimit: Int? = nil) -> [T]{
+        guard let entityName = T.entity().name else { return []}
+        
+        let request = NSFetchRequest<T>(entityName: entityName)
+        request.predicate = predicate
+        request.sortDescriptors = sortDescirptors
+        
+        if let limit = fetchLimit{
+            request.fetchLimit = limit
+        }
+        
+        do {
+            return try context.fetch(request)
+        }catch{
+            print("❌ Repository Fetch Error: \(error)")
+            return []
+        }
+    }
     
     func fetchAll() -> AnyPublisher<[T], Error> {
         let request = T.fetchRequest()
