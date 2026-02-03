@@ -86,7 +86,7 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
         }.eraseToAnyPublisher()
     }
     
-   
+    
     
     func save() -> AnyPublisher<Void, Error> {
         return Future { promise in
@@ -136,3 +136,29 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
         .eraseToAnyPublisher()
     }
 }
+
+
+extension DataRepository where T == WorkoutExercise {
+    func fetchPreviousSession(for exerciseDef: Exercise, currentWorkout: Workout) -> WorkoutExercise? {
+        let request: NSFetchRequest<WorkoutExercise> = WorkoutExercise.fetchRequest()
+        
+        let cutoffDate: Date = currentWorkout.date ?? Date()
+        request.predicate = NSPredicate(
+            format: "exercise == %@ AND workout != %@ AND workout.date < %@",
+            argumentArray: [exerciseDef, currentWorkout, cutoffDate as NSDate]
+        )
+        
+        request.sortDescriptors = [NSSortDescriptor(key: "workout.date", ascending: false)]
+        
+        request.fetchLimit = 1
+        
+        do {
+            let results = try context.fetch(request)
+            return results.first
+        }catch{
+            print("Error fetching previous session for exercise: \(exerciseDef.name ?? "Unknown Exercise")")
+            return nil
+        }
+    }
+}
+

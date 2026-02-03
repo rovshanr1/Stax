@@ -48,7 +48,6 @@ class WorkoutSessionVC: UIViewController {
         bindEvents()
         setupKeyboardObserver() 
         
-        
         contentView.tableView.keyboardDismissMode = .onDrag
     }
     
@@ -133,7 +132,7 @@ class WorkoutSessionVC: UIViewController {
                     
                     cell.onToggleSetDone = { [weak self] setID, weight, reps, isDone in
                         guard let self else {return}
-                        self.viewModel.input.updateSet.send((setID,weight, reps, isDone))
+                        self.viewModel.input.updateSet.send((setID, weight, reps, isDone))
                     }
                     
                     cell.onInputFieldFocusChange = {[weak self] inputView in
@@ -174,13 +173,6 @@ class WorkoutSessionVC: UIViewController {
             .sink { [weak self] timerString in
                 self?.contentView.updateTimer(timerString)
                 
-            }
-            .store(in: &cancellables)
-        
-        viewModel.output.dismissEvent
-            .receive(on: DispatchQueue.main)
-            .sink {[weak self] _ in
-                self?.didSendEventClosure?(.finishWorkout)
             }
             .store(in: &cancellables)
         
@@ -275,16 +267,9 @@ extension WorkoutSessionVC{
     
     //MARK: - Action
     @objc private func finishSession() {
-        AlertManager.showConfirmationAlert(
-            on: self,
-            title: "Finish Workout",
-            message: "Do you want to save and end this workout?",
-            confirmTitle: "Save & Finish",
-            cancelTitle: "Continue Workout"
-        ){[weak self] in
-            guard let self else{return}
-            self.viewModel.input.didTapFinish.send(())
-        }
+        
+        viewModel.input.didTapFinish.send()
+        didSendEventClosure?(.finishWorkout)
     }
     
     @objc private func cancelSession(){
@@ -295,7 +280,8 @@ extension WorkoutSessionVC{
                                            cancelTitle: "No")
         { [weak self] in
             guard let self else { return }
-            didSendEventClosure?(.finishWorkout)
+            self.viewModel.input.didTapCancel.send()
+            didSendEventClosure?(.cancelWorkout)
         }
         
         
