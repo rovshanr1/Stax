@@ -20,7 +20,6 @@ class WorkoutSessionVC: UIViewController {
     
     nonisolated enum RowItem: Hashable, Sendable{
         case duration
-        case divider
         case exercise(NSManagedObjectID)
         case empty
     }
@@ -97,11 +96,6 @@ class WorkoutSessionVC: UIViewController {
                 
                 
                 
-                return cell
-            case .divider:
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: DividerCell.reuseIdentifier, for: indexPath) as? DividerCell else{
-                    return UITableViewCell()
-                }
                 return cell
             case .empty:
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: EmptyWorkoutTableViewCell.reuseIdentifier, for: indexPath) as? EmptyWorkoutTableViewCell else{
@@ -220,7 +214,7 @@ class WorkoutSessionVC: UIViewController {
         
         snapshot.appendSections(Section.allCases)
         
-        snapshot.appendItems([.duration, .divider], toSection: .duration)
+        snapshot.appendItems([.duration], toSection: .duration)
         
         
         if exercises.isEmpty{
