@@ -26,7 +26,6 @@ final class WorkoutSessionView: UIView {
        let uiTableView = UITableView()
         
         uiTableView.register(WorkoutSessionTableViewCell.self, forCellReuseIdentifier: WorkoutSessionTableViewCell.reuseIdentifier)
-        uiTableView.register(DividerCell.self, forCellReuseIdentifier: DividerCell.reuseIdentifier)
         uiTableView.register(EmptyWorkoutTableViewCell.self, forCellReuseIdentifier: EmptyWorkoutTableViewCell.reuseIdentifier)
         uiTableView.register(WorkoutSessionExerciseListCell.self, forCellReuseIdentifier: WorkoutSessionExerciseListCell.reuseIdentifier)
         
