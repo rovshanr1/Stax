@@ -9,6 +9,8 @@ import UIKit
 
 class WorkoutSummaryMainCell: UITableViewCell {
     static let reuseIdentifier: String = "WorkoutSummaryMainCell"
+    
+    private let informationView = InformationView()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)

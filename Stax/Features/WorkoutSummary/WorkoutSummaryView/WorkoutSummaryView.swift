@@ -9,6 +9,7 @@ import UIKit
 import SnapKit
 
 final class WorkoutSummaryView: UIView {
+    var titleOnChanged: ((String) -> Void)?
     
     var tableView: UITableView = {
         let tableView = UITableView()
@@ -50,7 +51,12 @@ final class WorkoutSummaryView: UIView {
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
+     
         
+        headerView.titleOnChanged = { [weak self] title in
+            guard let self else {return}
+            
+            self.titleOnChanged?(title)
+        }
     }
-    
 }

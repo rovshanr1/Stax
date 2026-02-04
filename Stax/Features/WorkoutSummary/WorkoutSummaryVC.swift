@@ -11,10 +11,12 @@ import SnapKit
 
 class WorkoutSummaryVC: UIViewController {
     
-    //CallBakc
+    //Callbakc
     var onDeinit: (() -> Void)?
     
-
+    //Content View Callback
+    var headerTitleOnChanged: ((String) -> Void)?
+    
     //Internal Properties
     var didSendEventClosure: ((WorkoutSummaryEvent) -> Void)?
     var viewModel: WorkoutSummaryViewModel!
@@ -27,6 +29,7 @@ class WorkoutSummaryVC: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
+        callbacked()
         
     }
     deinit{
@@ -42,17 +45,44 @@ class WorkoutSummaryVC: UIViewController {
         contentView.snp.makeConstraints { (make) in
             make.edges.equalTo(self.view).inset(0)
         }
+        
+        
     }
-
+    
+    private func callbacked(){
+        //Header View Callback
+        contentView.titleOnChanged = {[weak self] title in
+            guard let self else {return}
+            
+            viewModel?.input.updateTitle.send(title)
+        }
+    }
+    
 }
 
 //MARK: - NavigationBarItems
 extension WorkoutSummaryVC{
     private func setupNavigationBar(){
         title = "Save Workout"
+        
+        let saveButton = UIButton(type: .system)
+        var config = UIButton.Configuration.plain()
+        config.baseForegroundColor = .label
+        config.cornerStyle = .large
+        config.baseBackgroundColor = .clear
+        config.title = "Save"
+        saveButton.configuration = config
+        saveButton.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: saveButton)
+    }
+    
+    //Actions
+    @objc private func saveButtonTapped(){
+        didSendEventClosure?(.saveWorkout)
     }
 }
 
+//MARK: - Table View Delegate
 extension WorkoutSummaryVC: UITableViewDelegate, UITableViewDataSource{
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return 1
@@ -62,6 +92,6 @@ extension WorkoutSummaryVC: UITableViewDelegate, UITableViewDataSource{
         guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSummaryMainCell.reuseIdentifier) as? WorkoutSummaryMainCell else { return UITableViewCell()}
         
         return cell
-    
+        
     }
 }

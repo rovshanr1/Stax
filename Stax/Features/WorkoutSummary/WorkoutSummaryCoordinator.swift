@@ -9,7 +9,7 @@ import UIKit
 import Combine
 import CoreData
 enum WorkoutSummaryEvent{
-    case save
+    case saveWorkout
 }
 
 final class WorkoutSummaryCoordinator: Coordinator {
@@ -59,8 +59,14 @@ final class WorkoutSummaryCoordinator: Coordinator {
     
     private func handle(_ event: WorkoutSummaryEvent) {
         switch event {
-        case .save:
+        case .saveWorkout:
             print("save button tapped")
+//            vm?.input.saveWorkout.send()
         }
+    }
+    
+    
+    private func handleSaveWorkout() {
+        
     }
 }

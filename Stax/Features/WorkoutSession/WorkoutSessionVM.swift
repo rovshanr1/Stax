@@ -14,6 +14,7 @@ final class WorkoutSessionViewModel: NSObject{
     ///Input: "Orders" fromd the VC (Orders)
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
+        let viewDidAppear: PassthroughSubject<Void, Never>
         let didTapFinish: PassthroughSubject<Void, Never>
         let didTapCancel: PassthroughSubject<Void, Never>
         let addExercise: PassthroughSubject<Exercise, Never>
@@ -67,6 +68,7 @@ final class WorkoutSessionViewModel: NSObject{
         self.timerService = timerService
         
         self.input = .init(viewDidLoad: .init(),
+                           viewDidAppear: .init(),
                            didTapFinish: .init(),
                            didTapCancel: .init(),
                            addExercise: .init(),
@@ -103,6 +105,13 @@ final class WorkoutSessionViewModel: NSObject{
                 guard let self else { return }
                 
                 self.createWorkoutSession()
+            }
+            .store(in: &cancellables)
+        
+        input.viewDidAppear
+            .sink { [weak self] in
+                guard let self else {return}
+                
                 self.timerService.start()
             }
             .store(in: &cancellables)

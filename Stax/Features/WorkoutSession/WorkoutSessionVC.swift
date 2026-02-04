@@ -51,6 +51,12 @@ class WorkoutSessionVC: UIViewController {
         contentView.tableView.keyboardDismissMode = .onDrag
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        viewModel?.input.viewDidAppear.send()
+    }
+    
     //MARK: - Setup UI
     private func setupUI(){
         view.backgroundColor = .systemBackground
@@ -255,7 +261,7 @@ extension WorkoutSessionVC{
         finishBtn.configuration = config
         finishBtn.addTarget(self, action: #selector(finishSession), for: .touchUpInside)
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: finishBtn)
-        navigationItem.rightBarButtonItem?.hidesSharedBackground = true
+        
         
         let cancelBtn = UIButton(type: .system)
         cancelBtn.setImage(UIImage(systemName: "chevron.down"), for: .normal)
