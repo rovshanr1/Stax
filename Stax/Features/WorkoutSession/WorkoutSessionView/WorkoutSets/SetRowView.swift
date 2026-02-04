@@ -170,7 +170,7 @@ final class SetRowView: UIView {
         
     }
     
-    func configure(setNumber: Int, previous: String, weight: Double, reps: Int, isDone: Bool){
+    func configureSetRow(setNumber: Int, previous: String, weight: Double, reps: Int, isDone: Bool){
         setNumberLabel.text = "\(setNumber)"
         previousSets.text = previous
         

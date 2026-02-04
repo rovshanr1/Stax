@@ -14,9 +14,9 @@ final class WorkoutSessionViewModel: NSObject{
     ///Input: "Orders" fromd the VC (Orders)
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
+        let viewDidAppear: PassthroughSubject<Void, Never>
         let didTapFinish: PassthroughSubject<Void, Never>
         let didTapCancel: PassthroughSubject<Void, Never>
-        let didTapCheckout: PassthroughSubject<Void, Never>
         let addExercise: PassthroughSubject<Exercise, Never>
         let addSet: PassthroughSubject<WorkoutExercise, Never>
         let updateExerciseNote: PassthroughSubject<(NSManagedObjectID, String), Never>
@@ -31,7 +31,6 @@ final class WorkoutSessionViewModel: NSObject{
         let timerSubject: CurrentValueSubject<String, Never>
         let dismissEvent: PassthroughSubject<Void, Never>
         let exercises: CurrentValueSubject<[WorkoutExercise], Never>
-        let workoutSets: CurrentValueSubject<[WorkoutSet], Never>
         let sessionStats: CurrentValueSubject<(volume: Double, sets: Int), Never>
     }
     
@@ -39,12 +38,16 @@ final class WorkoutSessionViewModel: NSObject{
     let input: Input
     let output: Output
     
+    //Repositorys
     private let exerciseRepo: DataRepository<WorkoutExercise>
     private let workoutSets: DataRepository<WorkoutSet>
-    
     private let workoutRepo: DataRepository<Workout>
-    public private(set) var currentWorkout: Workout?
     
+    //Services
+    private let timerService: WorkoutTimerServiceProtocol
+    
+    //State
+    public private(set) var currentWorkout: Workout?
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
     private var secondsElapsed: Int = 0
@@ -54,15 +57,20 @@ final class WorkoutSessionViewModel: NSObject{
     
     
     //MARK: - Initializer
-    init(workoutRepo: DataRepository<Workout>, exerciseRepo: DataRepository<WorkoutExercise>, workoutSets: DataRepository<WorkoutSet>) {
+    init(workoutRepo: DataRepository<Workout>,
+         exerciseRepo: DataRepository<WorkoutExercise>,
+         workoutSets: DataRepository<WorkoutSet>,
+         timerService: WorkoutTimerServiceProtocol = WorkoutTimerService()
+    ){
         self.workoutRepo = workoutRepo
         self.exerciseRepo = exerciseRepo
         self.workoutSets = workoutSets
+        self.timerService = timerService
         
         self.input = .init(viewDidLoad: .init(),
+                           viewDidAppear: .init(),
                            didTapFinish: .init(),
                            didTapCancel: .init(),
-                           didTapCheckout: .init(),
                            addExercise: .init(),
                            addSet: .init(),
                            updateExerciseNote: .init(),
@@ -75,7 +83,6 @@ final class WorkoutSessionViewModel: NSObject{
         self.output = .init(timerSubject: .init("0s"),
                             dismissEvent: .init(),
                             exercises: .init([]),
-                            workoutSets: .init([]),
                             sessionStats: .init((volume: 0.0, sets: 0))
                             
         )
@@ -87,52 +94,44 @@ final class WorkoutSessionViewModel: NSObject{
     
     //MARK: - Transform method
     private func transform() {
-        input.viewDidLoad
-            .sink { [weak self] in
-                guard let self else { return }
-                self.startTimer( )
-                
-                self.currentWorkout = self.workoutRepo.create()
-                self.currentWorkout?.date = Date()
-                self.currentWorkout?.id = UUID()
-                
-                self.startFetchExercises()
+        timerService.timerPublisher
+            .sink { [weak self] time in
+                self?.output.timerSubject.send(time)
             }
             .store(in: &cancellables)
         
-        input.didTapCheckout
+        input.viewDidLoad
             .sink { [weak self] in
                 guard let self else { return }
                 
-                print(self.input.didTapCheckout)
+                self.createWorkoutSession()
+            }
+            .store(in: &cancellables)
+        
+        input.viewDidAppear
+            .sink { [weak self] in
+                guard let self else {return}
                 
+                self.timerService.start()
             }
             .store(in: &cancellables)
         
         input.didTapFinish
-            .sink { [weak self] workout in
+            .sink { [weak self] _ in
                 guard let self, let workout = self.currentWorkout else {return}
                 
-                workout.duration = Int32(self.secondsElapsed)
+                self.timerService.stop()
                 
-                self.workoutRepo.save()
-                    .sink(receiveCompletion: { complation in
-                        if case .failure(let failure) = complation {
-                            print(failure)
-                        }
-                    }, receiveValue: { _ in
-                        print("Workout Saved: \(workout.duration) seconds")
-                        self.output.dismissEvent.send()
-                    })
-                    .store(in: &self.cancellables)
+                workout.duration = Int32(self.timerService.seconsElapsed)
                 
+                self.output.dismissEvent.send()
             }
             .store(in: &cancellables)
         
         input.didTapCancel
             .sink { [weak self] in
                 guard let self else {return}
-                self.stopTimer()
+                self.timerService.stop()
                 
                 if let workoutToDelete = self.currentWorkout {
                     self.workoutRepo.delete(workoutToDelete)
@@ -143,6 +142,11 @@ final class WorkoutSessionViewModel: NSObject{
             }
             .store(in: &cancellables)
         
+        
+        setupExerciseBindings()
+    }
+  
+    private func setupExerciseBindings(){
         input.addExercise
             .sink { [weak self] exercise in
                 self?.addExercise(exercise)
@@ -186,38 +190,15 @@ final class WorkoutSessionViewModel: NSObject{
                 self?.deleteSet(setID: setID)
             })
             .store(in: &cancellables)
-            
-
     }
     
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [weak self] _ in
-            guard let self else { return }
-            self.secondsElapsed += 1
-            let formatted = self.formatTime(self.secondsElapsed)
-            
-            self.output.timerSubject.send(formatted)
-        })
-    }
-    
-    
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-    
-    private func formatTime(_ totalSeconds: Int) -> String {
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
+    //MARK: - Logic Helpers
+    private func createWorkoutSession() {
+        self.currentWorkout = self.workoutRepo.create()
+        self.currentWorkout?.date = Date()
+        self.currentWorkout?.id = UUID()
         
-        if hours > 0 {
-            return String(format: "%2dh %2dm %2ds", hours, minutes, seconds)
-        }else if minutes > 0 {
-            return String(format: "%2dm %2ds", minutes, seconds)
-        }else {
-            return String(format: "%2ds", seconds)
-        }
+        self.startFetchExercises()
     }
     
     private func addExercise(_ exerciseDefinition: Exercise) {
@@ -280,6 +261,8 @@ final class WorkoutSessionViewModel: NSObject{
     }
     
     private func addNewSet(to parentExercise: WorkoutExercise){
+        guard let exerciseDef = parentExercise.exercise else { return }
+        
         let newSet = workoutSets.create()
         
         newSet.workoutExercise = parentExercise
@@ -292,6 +275,7 @@ final class WorkoutSessionViewModel: NSObject{
         newSet.orderIndex = Int16(currentSets)
         
         newSet.id = UUID()
+        newSet.previous = self.getPreviousHistory(for: exerciseDef, setIndex: Int(currentSets))
         newSet.reps = 0
         newSet.weight = 0.0
         newSet.isComplated = false
@@ -333,25 +317,7 @@ final class WorkoutSessionViewModel: NSObject{
         .store(in: &cancellables)
     }
     
-    private func calculateTotalStats(){
-        let allExercise = output.exercises.value
-        
-        var totalVolume: Double = 0.0
-        var totalCompletedSets: Int = 0
-        
-        for exercise in allExercise {
-            if let sets = exercise.workoutSets as? Set<WorkoutSet> {
-                for set in sets where set.isComplated {
-                    let volume = set.weight * Double(set.reps)
-                    
-                    totalVolume += volume
-                    totalCompletedSets += 1
-                }
-            }
-        }
-        
-        output.sessionStats.send((volume: totalVolume, sets: totalCompletedSets))
-    }
+    
     
     private func deleteSet(setID: UUID){
         
@@ -385,6 +351,27 @@ final class WorkoutSessionViewModel: NSObject{
             })
             .store(in: &cancellables)
         
+    }
+    
+    //MARK: - Stats & Fetching
+    private func calculateTotalStats(){
+        let allExercise = output.exercises.value
+        
+        var totalVolume: Double = 0.0
+        var totalCompletedSets: Int = 0
+        
+        for exercise in allExercise {
+            if let sets = exercise.workoutSets as? Set<WorkoutSet> {
+                for set in sets where set.isComplated {
+                    let volume = set.weight * Double(set.reps)
+                    
+                    totalVolume += volume
+                    totalCompletedSets += 1
+                }
+            }
+        }
+        
+        output.sessionStats.send((volume: totalVolume, sets: totalCompletedSets))
     }
     
     private func startFetchExercises() {
@@ -444,5 +431,28 @@ extension WorkoutSessionViewModel: NSFetchedResultsControllerDelegate {
         output.exercises.send(exercise)
         
         calculateTotalStats()
+    }
+}
+
+//MARK: - History Logic
+extension WorkoutSessionViewModel {
+    private func getPreviousHistory(for exerciseDef: Exercise, setIndex: Int) -> String{
+        guard let currentWorkout = currentWorkout else { return "-" }
+        
+        guard let lastSessionExercise = exerciseRepo.fetchPreviousSession(for: exerciseDef, currentWorkout: currentWorkout),
+              let lastSets = lastSessionExercise.workoutSets as? Set<WorkoutSet> else{
+            return "-"
+        }
+        
+        let sortedLastSets = lastSets.sorted { $0.orderIndex < $1.orderIndex }
+        
+        if setIndex < sortedLastSets.count {
+            let pastSet = sortedLastSets[setIndex]
+            
+            let weightString = floor(pastSet.weight) == pastSet.weight ? "\(Int(pastSet.weight))" : String(format: "%.1f", pastSet.weight)
+            return "\(weightString)kg x \(pastSet.reps)"
+        }
+        
+        return "-"
     }
 }

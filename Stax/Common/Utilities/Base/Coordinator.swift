@@ -8,7 +8,7 @@
 import UIKit
 //MARK: - CoordinatorType
 enum CoordinatorType{
-    case app, login, tab, page, workoutSession, exerciseList
+    case app, login, tab, page, workoutSession, exerciseList, workoutSummary
 }
 
 //MARK: - Coordinator

@@ -69,11 +69,12 @@ class WorkoutSetsView: UIView {
         for (index, set) in sets.enumerated() {
             let rowView = SetRowView()
             
-            rowView.configure(setNumber: index + 1,
-                              previous: "-",
-                              weight: set.weight,
-                              reps: Int(set.reps),
-                              isDone: set.isComplated
+            rowView.configureSetRow(
+                setNumber: index + 1,
+                previous: set.previous ?? "-",
+                weight: set.weight,
+                reps: Int(set.reps),
+                isDone: set.isComplated
             )
             
             setsContainerStackView.addArrangedSubview(rowView)

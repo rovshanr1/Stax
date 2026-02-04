@@ -12,6 +12,7 @@ import CoreData
 enum WorkoutSessionEvent{
     case addExercise
     case finishWorkout
+    case cancelWorkout
     case exerciseMenuButtonTapped(WorkoutExercise)
 }
 
@@ -44,11 +45,12 @@ final class WorkoutSessionCoordinator: Coordinator{
             self?.handle(event)
         }
         
-        //VM Injection
+        //Ropsiotory Injection
         let workoutRepo = DataRepository<Workout>(context: context)
         let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
         let exerciseSetsRepo = DataRepository<WorkoutSet>(context: context)
         
+        //VM Injection
         self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo, workoutSets: exerciseSetsRepo)
 
         sessionVC.viewModel = self.vm
@@ -60,8 +62,10 @@ final class WorkoutSessionCoordinator: Coordinator{
         switch event {
         case .addExercise:
             self.showExerciseList()
-        case .finishWorkout:
+        case .cancelWorkout:
             self.finish()
+        case .finishWorkout:
+            self.showWorkoutSummary()
         case .exerciseMenuButtonTapped(let exerciseToEdit):
             self.showExerciseMenu(for: exerciseToEdit)
         }
@@ -90,6 +94,17 @@ final class WorkoutSessionCoordinator: Coordinator{
         exerciseCoordinator.start()
         
         navigationController.present(listNav, animated: true)
+    }
+    
+    private func showWorkoutSummary(){
+        
+        guard let currentWorkout = vm?.currentWorkout else {return}
+        
+        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout)
+        summaryCoordinator.finishDelegate = self
+        
+        childCoordinators.append(summaryCoordinator)
+        summaryCoordinator.start()
     }
     
     private func showExerciseMenu(for exercise: WorkoutExercise){
@@ -139,6 +154,8 @@ extension WorkoutSessionCoordinator: CoordinatorFinishDelegate {
         switch childCoordinator.type {
         case .exerciseList:
             navigationController.dismiss(animated: true)
+        case .workoutSummary:
+            print("WorkoutSummary finished")
         default:
             break
         }
