@@ -61,46 +61,67 @@ class WorkoutSetsView: UIView {
     //MARK: - Configuration
     
     func configuartionSets(with sets: [WorkoutSet]) {
-        setsContainerStackView.arrangedSubviews.forEach {
-            setsContainerStackView.removeArrangedSubview($0)
-            $0.removeFromSuperview()
+        
+        let existingRows = setsContainerStackView.arrangedSubviews.compactMap { $0 as? SetRowView}
+        
+        if existingRows.count == sets.count {
+            for (index, set) in sets.enumerated() {
+                let row = existingRows[index]
+                
+                row.configureSetRow(
+                    setNumber: index + 1,
+                    previous: set.previous ?? "-",
+                    weight: set.weight,
+                    reps: Int(set.reps),
+                    isDone: set.isComplated
+                )
+                
+                bindRowClosures(row, set: set)
+                
+            }
+        }else{
+            
+            setsContainerStackView.arrangedSubviews.forEach {
+                setsContainerStackView.removeArrangedSubview($0)
+                $0.removeFromSuperview()
+            }
+            
+            for (index, set) in sets.enumerated() {
+                let rowView = SetRowView()
+                
+                rowView.configureSetRow(
+                    setNumber: index + 1,
+                    previous: set.previous ?? "-",
+                    weight: set.weight,
+                    reps: Int(set.reps),
+                    isDone: set.isComplated
+                )
+                
+                setsContainerStackView.addArrangedSubview(rowView)
+                
+                rowView.snp.makeConstraints { make in
+                    make.height.equalTo(34)
+                }
+            }
+        }
+    }
+    
+    private func bindRowClosures(_ rowView: SetRowView, set: WorkoutSet){
+        rowView.onUpdateState = { [weak self] (weight, reps, isDone) in
+            guard let self, let setID = set.id else { return }
+            
+            self.onUpdateSet?(setID, weight, reps, isDone)
         }
         
-        for (index, set) in sets.enumerated() {
-            let rowView = SetRowView()
-            
-            rowView.configureSetRow(
-                setNumber: index + 1,
-                previous: set.previous ?? "-",
-                weight: set.weight,
-                reps: Int(set.reps),
-                isDone: set.isComplated
-            )
-            
-            setsContainerStackView.addArrangedSubview(rowView)
-            
-            rowView.snp.makeConstraints { make in
-                make.height.equalTo(34)
-            }
-            
-            
-            rowView.onUpdateState = { [weak self] (weight, reps, isDone) in
-                guard let self, let setID = set.id else { return }
-                
-                self.onUpdateSet?(setID, weight, reps, isDone)
-            }
-            
-            rowView.onInputDidBegin = { [weak self] inputView in
-                self?.onInputFieldFocus?(inputView)
-            }
-            
-            rowView.onDelete = { [weak self] in
-                guard let self,
-                      let setID = set.id
-                else { return }
-                self.onDeleteSet?(setID)
-            }
-            
+        rowView.onInputDidBegin = { [weak self] inputView in
+            self?.onInputFieldFocus?(inputView)
+        }
+        
+        rowView.onDelete = { [weak self] in
+            guard let self,
+                  let setID = set.id
+            else { return }
+            self.onDeleteSet?(setID)
         }
     }
 }

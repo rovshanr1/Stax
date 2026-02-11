@@ -50,7 +50,14 @@ class WorkoutSummaryVC: UIViewController {
         //Header View Callback
         contentView.titleOnChanged = {[weak self] title in
             guard let self else {return}
-            viewModel?.input.updateTitle.send(title)
+            self.viewModel?.input.updateTitle.send(title)
+        }
+        
+        
+        //Description View Callback
+        contentView.descriptionOnChange = { [weak self] description in
+            guard let self else { return }
+            self.viewModel?.input.updateDescription.send(description)
         }
     }
     
