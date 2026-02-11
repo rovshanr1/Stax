@@ -14,6 +14,7 @@ final class WorkoutSummaryViewModel{
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
         let updateTitle: PassthroughSubject<String, Never>
+        let updateDescription: PassthroughSubject<String, Never>
         let saveWorkout: PassthroughSubject<Void, Never>
     }
     
@@ -36,6 +37,7 @@ final class WorkoutSummaryViewModel{
         self.input = Input(
             viewDidLoad: .init(),
             updateTitle: .init(),
+            updateDescription: .init(),
             saveWorkout: .init()
         )
         
@@ -51,21 +53,55 @@ final class WorkoutSummaryViewModel{
     
     private func transform(){
         input.saveWorkout
-            .sink { [weak self] _ in
-                guard let self else { return }
+            .flatMap{ [weak self] _ -> AnyPublisher<Void, Error> in
+                guard let self else {return Empty().eraseToAnyPublisher()}
                 
                 self.workout.date = Date()
                 
-                self.workoutRepository.save()
-                    .sink(receiveCompletion: { completion in
-                        if case .failure(let error) = completion {
-                            print("Failed to save workout: \(error)")
-                        }
-                    }, receiveValue: { _ in
-                        self.output.finished.send()
-                    })
-                    .store(in: &cancellables)
+                return self.workoutRepository.save()
             }
+            .sink(receiveCompletion: { completion in
+                if case .failure(let failure) = completion {
+                    print(failure)
+                }
+            }, receiveValue: { [weak self] _ in
+                self?.output.finished.send()
+            })
             .store(in: &self.cancellables)
+        
+        input.updateTitle
+            .sink { [weak self] newTitle in
+                guard let self else { return }
+                self.updateWorkoutName(newTitle)
+            }
+            .store(in: &cancellables)
+        
+        input.updateDescription
+            .sink { [weak self] newDescription in
+                guard let self else { return }
+                self.updateWorkoutDescription(newDescription)
+            }
+            .store(in: &cancellables)
+    }
+    
+    
+    private func updateWorkoutName(_ newTitle: String){
+        let cleanTitle = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if cleanTitle.isEmpty {
+            workout.name = "New Workout"
+        }else{
+            workout.name = cleanTitle
+        }
+    }
+    
+    private func updateWorkoutDescription(_ newDescription: String){
+        let cleanDescription = newDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if cleanDescription.isEmpty{
+            workout.workoutDescription = ""
+        }else{
+            workout.workoutDescription = cleanDescription
+        }
     }
 }

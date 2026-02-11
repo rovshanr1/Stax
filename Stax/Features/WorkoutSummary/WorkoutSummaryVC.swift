@@ -29,7 +29,7 @@ class WorkoutSummaryVC: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
-        callbacked()
+        bindEvent()
         
     }
     deinit{
@@ -39,22 +39,25 @@ class WorkoutSummaryVC: UIViewController {
     private func setupUI(){
         view.addSubview(contentView)
         
-        contentView.tableView.delegate = self
-        contentView.tableView.dataSource = self
         
         contentView.snp.makeConstraints { (make) in
             make.edges.equalTo(self.view).inset(0)
         }
         
-        
     }
     
-    private func callbacked(){
+    private func bindEvent(){
         //Header View Callback
         contentView.titleOnChanged = {[weak self] title in
             guard let self else {return}
-            
-            viewModel?.input.updateTitle.send(title)
+            self.viewModel?.input.updateTitle.send(title)
+        }
+        
+        
+        //Description View Callback
+        contentView.descriptionOnChange = { [weak self] description in
+            guard let self else { return }
+            self.viewModel?.input.updateDescription.send(description)
         }
     }
     
@@ -79,19 +82,5 @@ extension WorkoutSummaryVC{
     //Actions
     @objc private func saveButtonTapped(){
         didSendEventClosure?(.saveWorkout)
-    }
-}
-
-//MARK: - Table View Delegate
-extension WorkoutSummaryVC: UITableViewDelegate, UITableViewDataSource{
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSummaryMainCell.reuseIdentifier) as? WorkoutSummaryMainCell else { return UITableViewCell()}
-        
-        return cell
-        
     }
 }

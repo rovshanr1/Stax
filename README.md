@@ -28,7 +28,6 @@ Stax/
 │   ├── Resources/
 │   │   └── exercises_seed.json
 │   ├── UIHelpers/
-│   │   ├── DividerCell.swift
 │   │   └── TextView.swift
 │   └── Utilities/
 │       └── Base/
@@ -38,7 +37,7 @@ Stax/
 │   │   ├── ExerciseListCoordinator.swift
 │   │   ├── ExerciseListVC.swift
 │   │   ├── ExerciseListVM.swift
-│   │   └── ExerciseListView/
+│   │   └── ExerciseListViews/
 │   │       ├── ExerciseListCell.swift
 │   │       └── ExerciseListView.swift
 │   ├── Home/
@@ -61,37 +60,41 @@ Stax/
 │   │       ├── TableViewHeader.swift
 │   │       ├── WorkoutTableViewCell.swift
 │   │       └── WorkoutView.swift
-│   └── WorkoutSession/
-│       ├── WorkoutSessionCoordinator.swift
-│       ├── WorkoutSessionVC.swift
-│       ├── WorkoutSessionVM.swift
-│       ├── Sheets/
-│       │   └── ExerciseMenuSheet.swift
-│       └── WorkoutSessionView/
-│           ├── WorkoutSessionView.swift
-│           ├── WorkoutSetsView.swift
-│           └── Cells/
-│               ├── AddExerciseButtonTableViewCell.swift
-│               ├── EmptyWorkoutTableViewCell.swift
-│               ├── WorkoutSessionExerciseListCell.swift
-│               └── WorkoutSessionTableViewCell.swift
+│   ├── WorkoutSession/
+│   │   ├── WorkoutSessionCoordinator.swift
+│   │   ├── WorkoutSessionVC.swift
+│   │   ├── WorkoutSessionVM.swift
+│   │   ├── Services/
+│   │   │   └── WorkoutTimerService.swift
+│   │   ├── Sheets/
+│   │   │   ├── ExerciseMenuSheet.swift
+│   │   │   └── SheetView.swift
+│   │   └── WorkoutSessionView/
+│   │       ├── WorkoutSessionView.swift
+│   │       ├── Cells/
+│   │       │   ├── EmptyWorkoutTableViewCell.swift
+│   │       │   ├── WorkoutSessionFooterView.swift
+│   │       │   └── WorkoutSessionTableViewCell.swift
+│   │       └── WorkoutSets/
+│   │           ├── SetRowView.swift
+│   │           ├── SetsFooterView.swift
+│   │           ├── SetsHeaderView.swift
+│   │           ├── WorkoutSessionExerciseListCell.swift
+│   │           └── WorkoutSetsView.swift
+│   └── WorkoutSummary/
+│       ├── WorkoutSummaryCoordinator.swift
+│       ├── WorkoutSummaryVC.swift
+│       ├── WorkoutSummaryViewModel.swift
+│       └── WorkoutSummaryView/
+│           ├── WorkoutSummaryView.swift
+│           └── UIVIews/
+│               ├── DescriptionView.swift
+│               ├── InformationView.swift
+│               └── WorkoutSummaryHeaderView.swift
 ├── Info.plist
 ├── MainTabCoordinator/
 │   ├── TabBarPage.swift
 │   └── TabCoordinator.swift
-└── Support/
-    ├── Assets.xcassets/
-    │   ├── AccentColor.colorset/
-    │   ├── AppColors/
-    │   │   ├── ActiveItemsColor.colorset/
-    │   │   ├── MainBackground.colorset/
-    │   │   └── Contents.json
-    │   ├── AppIcon.appiconset/
-    │   │   ├── Contents.json
-    │   │   └── StaxIcon.png
-    │   └── Contents.json
-    └── Base.lproj/
-        └── LaunchScreen.storyboard
 ```
 
 ---

@@ -42,6 +42,8 @@ class TextView: UITextView {
         textContainer.lineBreakMode = .byWordWrapping
         keyboardDismissMode = .interactive
         
+        self.delegate = self
+        
         placeholderLabel.font = font
         placeholderLabel.textColor = .placeholderText
         placeholderLabel.numberOfLines = 0
@@ -64,3 +66,11 @@ class TextView: UITextView {
     }
 }
 
+
+
+extension TextView: UITextViewDelegate{
+    func textViewDidChange(_ textView: UITextView) {
+        updatePlaceholder()
+        onHeightChange?()
+    }
+}

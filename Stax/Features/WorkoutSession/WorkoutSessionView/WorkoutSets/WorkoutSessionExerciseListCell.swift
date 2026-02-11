@@ -163,7 +163,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         
         addNotesTextView.isEditable = true
         addNotesTextView.isSelectable = true
-        addNotesTextView.delegate = self
+        
     }
     
     //MARK: - Constriants
@@ -235,11 +235,12 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
             guard let self else {return}
             
             self.onNoteChange?(text)
-            self.onNotesHeightChange?()
+            
         }
         
-       
-        
+        addNotesTextView.onHeightChange = { [weak self] in
+            self?.onNotesHeightChange?()
+        }
     }
     
     //MARK: - Actions
@@ -251,11 +252,3 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
 }
 
 
-extension WorkoutSessionExerciseListCell: UITextViewDelegate{
-    func textViewDidChange(_ textView: UITextView) {
-        addNotesTextView.updatePlaceholder()
-        addNotesTextView.onHeightChange? = { [weak self] in
-            self?.onNotesHeightChange?()
-        }
-    }
-}

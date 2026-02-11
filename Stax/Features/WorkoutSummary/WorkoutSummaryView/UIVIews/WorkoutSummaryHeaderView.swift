@@ -26,6 +26,7 @@ final class WorkoutSummaryHeaderView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
+        actions()
     }
     
     required init?(coder: NSCoder) {
@@ -38,7 +39,7 @@ final class WorkoutSummaryHeaderView: UIView {
         summaryTitle.delegate = self
         
         summaryTitle.snp.makeConstraints { (make) in
-            make.edges.equalToSuperview().inset(12)
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16))
         }
     }
     

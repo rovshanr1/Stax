@@ -191,10 +191,6 @@ final class SetRowView: UIView {
         
         updateAppearance(isDone: isDone)
         
-        contentContainerView.snp.remakeConstraints { make in
-            make.edges.equalToSuperview()
-        }
-        
         deleteIcon.alpha = 0
     }
     
