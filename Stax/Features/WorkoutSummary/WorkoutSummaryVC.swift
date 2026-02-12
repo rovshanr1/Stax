@@ -30,8 +30,9 @@ class WorkoutSummaryVC: UIViewController {
         setupUI()
         setupNavigationBar()
         bindEvent()
-        
+        bindViewModel()
     }
+    
     deinit{
         onDeinit?()
     }
@@ -57,8 +58,31 @@ class WorkoutSummaryVC: UIViewController {
         //Description View Callback
         contentView.descriptionOnChange = { [weak self] description in
             guard let self else { return }
-            self.viewModel?.input.updateDescription.send(description)
+            self.viewModel.input.updateDescription.send(description)
         }
+    }
+    
+    private func bindViewModel(){
+        
+        print("This method working")
+        
+        viewModel?.output.workoutStats
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] stats in
+                print("received stats: \(stats)")
+                
+                guard let self else { return }
+                
+                let formatter = DateComponentsFormatter()
+                formatter.allowedUnits = [.hour, .minute, .second]
+                formatter.unitsStyle = .abbreviated
+                let durationString = formatter.string(from: stats.duration) ?? "0s"
+                
+                print("Configuring View with: \(durationString)")
+                
+                self.contentView.informationView.configureInformations(duration: durationString, volume: stats.volume, sets: stats.totalSets, date: self.viewModel.workout.date ?? Date())
+            }
+            .store(in: &cancellables)
     }
     
 }

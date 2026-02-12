@@ -41,9 +41,8 @@ class InformationView: UIView {
     
     private let dateValue: UILabel = {
         let label = UILabel()
-        label.textColor = .label
+        label.textColor = .label.withAlphaComponent(0.7)
         label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textAlignment = .right
         return label
         
     }()
@@ -74,8 +73,8 @@ class InformationView: UIView {
     
     private lazy var dateStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [whenLabel, dateValue])
-        stack.axis = .horizontal
-        stack.distribution = .fill
+        stack.axis = .vertical
+        stack.spacing = 4
         return stack
     }()
     

@@ -98,9 +98,18 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     private func showWorkoutSummary(){
         
-        guard let currentWorkout = vm?.currentWorkout else {return}
+        guard let currentWorkout = vm?.currentWorkout,
+              let stats = vm?.currentStats,
+              let duration = vm?.timerService.seconsElapsed
+        else {return}
         
-        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout)
+        let summaryStats = WorkoutStats(
+            duration: TimeInterval(duration),
+            volume: stats.volume,
+            totalSets: stats.sets
+        )
+        
+        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout, stats: summaryStats)
         summaryCoordinator.finishDelegate = self
         
         childCoordinators.append(summaryCoordinator)
