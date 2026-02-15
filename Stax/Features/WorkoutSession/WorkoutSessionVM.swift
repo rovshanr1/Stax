@@ -44,10 +44,12 @@ final class WorkoutSessionViewModel: NSObject{
     private let workoutRepo: DataRepository<Workout>
     
     //Services
-    private let timerService: WorkoutTimerServiceProtocol
+    public private(set) var timerService: WorkoutTimerServiceProtocol
     
     //State
     public private(set) var currentWorkout: Workout?
+    public private(set) var currentStats: (volume: Double, sets: Int) = (0, 0)
+    
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
     private var secondsElapsed: Int = 0
@@ -285,8 +287,11 @@ final class WorkoutSessionViewModel: NSObject{
                 if case .failure(let failure) = complation {
                     print("add new set error: \(failure)")
                 }
-            }, receiveValue: {_ in
+            }, receiveValue: {[weak self] _ in
                 print("new set added successfully: \(newSet.orderIndex)")
+                               
+                self?.refreshExercisesFromFRC()
+                self?.calculateTotalStats()
             })
             .store(in: &cancellables)
         
@@ -371,6 +376,8 @@ final class WorkoutSessionViewModel: NSObject{
             }
         }
         
+        self.currentStats = (volume: totalVolume, sets: totalCompletedSets)
+        
         output.sessionStats.send((volume: totalVolume, sets: totalCompletedSets))
     }
     
@@ -393,7 +400,8 @@ final class WorkoutSessionViewModel: NSObject{
         }
     }
     
-    
+
+   
 }
 
 //MARK: - Helper Methods

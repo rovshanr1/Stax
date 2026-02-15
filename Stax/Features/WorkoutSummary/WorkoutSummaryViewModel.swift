@@ -21,18 +21,25 @@ final class WorkoutSummaryViewModel{
     struct Output{
         let defaultTitle: CurrentValueSubject<String, Never>
         let finished: PassthroughSubject<Void, Never>
+        let workoutStats: CurrentValueSubject<WorkoutStats, Never>
     }
-    
+    //MARK: - Properties
     let input: Input
     let output: Output
     
-    private let workout: Workout
+    //Repositorys
+    public private(set) var workout: Workout
     private let workoutRepository: DataRepository<Workout>
+    
+    //Stats
+    private let stats: WorkoutStats
+    
     private var cancellables: Set<AnyCancellable> = []
     
-    init(workout: Workout, workoutRepository: DataRepository<Workout>){
+    init(workout: Workout, workoutRepository: DataRepository<Workout>, stats: WorkoutStats){
         self.workout = workout
         self.workoutRepository = workoutRepository
+        self.stats = stats
         
         self.input = Input(
             viewDidLoad: .init(),
@@ -45,7 +52,8 @@ final class WorkoutSummaryViewModel{
         
         self.output = Output(
             defaultTitle: .init(currentTitle),
-            finished: .init()
+            finished: .init(),
+            workoutStats: .init(stats)
         )
         
         self.transform()

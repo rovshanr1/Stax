@@ -28,11 +28,13 @@ final class WorkoutSummaryCoordinator: Coordinator {
     var vm: WorkoutSummaryViewModel?
     
     private let workout: Workout
+    private let stats: WorkoutStats
     
-    init(navigationController: UINavigationController, context: NSManagedObjectContext, workout: Workout) {
+    init(navigationController: UINavigationController, context: NSManagedObjectContext, workout: Workout, stats: WorkoutStats) {
         self.navigationController = navigationController
         self.context = context
         self.workout = workout
+        self.stats = stats
     }
     
     func start() {
@@ -42,9 +44,10 @@ final class WorkoutSummaryCoordinator: Coordinator {
         let repo = DataRepository<Workout>(context: context)
         
         //VM Injection 
-        self.vm = WorkoutSummaryViewModel(workout: workout, workoutRepository: repo)
+        self.vm = WorkoutSummaryViewModel(workout: workout, workoutRepository: repo, stats: stats)
         
-    
+        summaryVC.viewModel = self.vm
+        
         summaryVC.onDeinit = {[weak self] in
             guard let self else {return}
             self.finishDelegate?.coordinatorDidFinish(childCoordinator: self)
