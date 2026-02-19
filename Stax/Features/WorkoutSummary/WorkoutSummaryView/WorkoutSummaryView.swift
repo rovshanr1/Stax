@@ -11,6 +11,7 @@ import SnapKit
 final class WorkoutSummaryView: UIView {
     var titleOnChanged: ((String) -> Void)?
     var descriptionOnChange: ((String) -> Void)?
+    var syncButtonOnTapped: (() -> Void)?
     
     private let scrollView = UIScrollView()
     
@@ -19,17 +20,20 @@ final class WorkoutSummaryView: UIView {
         stack.axis = .vertical
         stack.spacing = 24
         stack.isLayoutMarginsRelativeArrangement = true
+        stack.layoutMargins = UIEdgeInsets(top: 16, left: 0, bottom: 40, right: 0)
         return stack
     }()
     
     let headerView = WorkoutSummaryHeaderView()
     let informationView = InformationView()
     let descriptionView = DescriptionView()
+    let footerView = WorkoutSummaryFooterView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
         bind()
+        setupKeyboardHandling()
     }
     
     required init?(coder: NSCoder) {
@@ -47,15 +51,15 @@ final class WorkoutSummaryView: UIView {
         }
      
         containerStackView.snp.makeConstraints { (make) in
-            make.edges.equalToSuperview()
-            make.width.equalToSuperview()
+            make.edges.equalTo(scrollView.contentLayoutGuide)
+            make.width.equalTo(scrollView.frameLayoutGuide)
         }
         
         containerStackView.addArrangedSubview(headerView)
         containerStackView.addArrangedSubview(informationView)
         containerStackView.addArrangedSubview(descriptionView)
-        
-       
+        containerStackView.addArrangedSubview(footerView)
+            
     }
     
     //MARK: - Binding events
@@ -68,6 +72,11 @@ final class WorkoutSummaryView: UIView {
         descriptionView.descriptionOnChange = { [weak self] description in
             guard let self else {return}
             self.descriptionOnChange?(description)
+        }
+        
+        footerView.syncWithOnTapped = { [weak self] in
+            guard let self else {return}
+            self.syncButtonOnTapped?()
         }
     }
     
@@ -93,6 +102,11 @@ final class WorkoutSummaryView: UIView {
     
     deinit {
             NotificationCenter.default.removeObserver(self)
+    }
+    
+    //MARK: - ConfigureMethods
+    func configureSyncButton(isEnabled: Bool){
+        footerView.configureSyncStatus(isEnabled: isEnabled)
     }
 }
 

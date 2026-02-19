@@ -60,6 +60,11 @@ class WorkoutSummaryVC: UIViewController {
             guard let self else { return }
             self.viewModel.input.updateDescription.send(description)
         }
+        
+        contentView.syncButtonOnTapped = { [weak self] in
+            guard let self else {return}
+            self.didSendEventClosure?(.syncButtpPressed)
+        }
     }
     
     private func bindViewModel(){

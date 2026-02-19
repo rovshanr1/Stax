@@ -30,15 +30,22 @@ class DescriptionView: UIView {
         return tv
     }()
     
+    private let separatorView: UIView = {
+        let view  = UIView()
+        view.backgroundColor = .separator
+        return view
+    }()
+    
     //MARK: - Stack
     private lazy var stackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [descriptionLabel, descriptionTextField])
+        let stackView = UIStackView(arrangedSubviews: [descriptionLabel, descriptionTextField, separatorView])
         stackView.axis = .vertical
         stackView.spacing = 4
         stackView.distribution = .fill
         return stackView
     }()
     
+   
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -57,7 +64,11 @@ class DescriptionView: UIView {
         descriptionTextField.isSelectable = true
         
         stackView.snp.makeConstraints { (make) in
-            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 0, left: 16, bottom: 4, right: 16))
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16))
+        }
+        
+        separatorView.snp.makeConstraints { (make) in
+            make.height.equalTo(1)
         }
     }
     
