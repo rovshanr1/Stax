@@ -69,23 +69,23 @@ class WorkoutSummaryVC: UIViewController {
     
     private func bindViewModel(){
         
-        print("This method working")
         
         viewModel?.output.workoutStats
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] stats in
-                print("received stats: \(stats)")
-                
+            .sink { [weak self] presentation in
                 guard let self else { return }
                 
-                let formatter = DateComponentsFormatter()
-                formatter.allowedUnits = [.hour, .minute, .second]
-                formatter.unitsStyle = .abbreviated
-                let durationString = formatter.string(from: stats.duration) ?? "0s"
+                print("\(presentation)")
                 
-                print("Configuring View with: \(durationString)")
-                
-                self.contentView.informationView.configureInformations(duration: durationString, volume: stats.volume, sets: stats.totalSets, date: self.viewModel.workout.date ?? Date())
+                self.contentView.informationView.configureInformations(duration: presentation.duration, volume: presentation.volume, sets: presentation.sets, date: self.viewModel.workout.date ?? Date())
+            }
+            .store(in: &cancellables)
+        
+        
+        viewModel?.output.isHealthKitSyncEnabled
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isEnabled in
+                self?.contentView.configureSyncButton(isEnabled: isEnabled)
             }
             .store(in: &cancellables)
     }

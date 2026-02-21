@@ -16,12 +16,14 @@ final class WorkoutSummaryViewModel{
         let updateTitle: PassthroughSubject<String, Never>
         let updateDescription: PassthroughSubject<String, Never>
         let saveWorkout: PassthroughSubject<Void, Never>
+        let toggleHealthKitSync: PassthroughSubject<Bool, Never>
     }
     
     struct Output{
         let defaultTitle: CurrentValueSubject<String, Never>
         let finished: PassthroughSubject<Void, Never>
-        let workoutStats: CurrentValueSubject<WorkoutStats, Never>
+        let workoutStats: CurrentValueSubject<WorkoutSummaryPresentation, Never>
+        let isHealthKitSyncEnabled: CurrentValueSubject<Bool, Never>
     }
     //MARK: - Properties
     let input: Input
@@ -34,26 +36,46 @@ final class WorkoutSummaryViewModel{
     //Stats
     private let stats: WorkoutStats
     
+    //Preferance Service
+    private var preferacesService: AppPreferencesServiceInterface
+    
     private var cancellables: Set<AnyCancellable> = []
     
-    init(workout: Workout, workoutRepository: DataRepository<Workout>, stats: WorkoutStats){
+    init(workout: Workout,
+         workoutRepository: DataRepository<Workout>,
+         stats: WorkoutStats, preferancesService: AppPreferencesServiceInterface = AppPreferencesService()
+    ){
         self.workout = workout
         self.workoutRepository = workoutRepository
         self.stats = stats
+        self.preferacesService = preferancesService
         
         self.input = Input(
             viewDidLoad: .init(),
             updateTitle: .init(),
             updateDescription: .init(),
-            saveWorkout: .init()
+            saveWorkout: .init(),
+            toggleHealthKitSync: .init()
         )
         
         let currentTitle = workout.name ?? "New Workout"
         
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .abbreviated
+        let durationString = formatter.string(from: stats.duration) ?? "0s"
+        
+        let presentation = WorkoutSummaryPresentation(duration: durationString,
+                                        volume: stats.volume,
+                                        sets: stats.totalSets,
+                                        date: workout.date ?? Date()
+        )
+        
         self.output = Output(
             defaultTitle: .init(currentTitle),
             finished: .init(),
-            workoutStats: .init(stats)
+            workoutStats: .init(presentation),
+            isHealthKitSyncEnabled: .init(preferacesService.isHealthKitSyncEnabled)
         )
         
         self.transform()
@@ -88,6 +110,17 @@ final class WorkoutSummaryViewModel{
             .sink { [weak self] newDescription in
                 guard let self else { return }
                 self.updateWorkoutDescription(newDescription)
+            }
+            .store(in: &cancellables)
+        
+        input.toggleHealthKitSync
+            .sink { [weak self] isEnabled in
+                guard let self else{ return }
+                
+                self.preferacesService.isHealthKitSyncEnabled = isEnabled
+                self.output.isHealthKitSyncEnabled.send(isEnabled)
+                
+                print("\(preferacesService)")
             }
             .store(in: &cancellables)
     }

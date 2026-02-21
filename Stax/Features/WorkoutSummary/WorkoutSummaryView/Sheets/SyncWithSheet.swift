@@ -10,6 +10,20 @@ import SnapKit
 
 class SyncWithSheet: UIViewController {
     
+    var syncWithHealth: ((Bool) -> Void)?
+    
+    private let initialSyncState: Bool
+    
+    init(initialSyncState: Bool){
+        self.initialSyncState = initialSyncState
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     private var healthLabel: UILabel = {
        let label = UILabel()
         label.text = "Health"
@@ -45,10 +59,12 @@ class SyncWithSheet: UIViewController {
         view.addSubview(mainContainer)
         
         mainContainer.snp.makeConstraints { (make) in
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(16)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(32)
             make.leading.trailing.equalToSuperview().inset(16)
         }
         
+        syncSwitch.isOn = initialSyncState
+        healthLabel.textColor = initialSyncState ? .label : .secondaryLabel
         
         
         syncSwitch.addTarget(self, action: #selector(handleSwitchTapped(_:)), for: .valueChanged)
@@ -56,9 +72,9 @@ class SyncWithSheet: UIViewController {
     
     @objc private func handleSwitchTapped(_ sender: UISwitch){
         if sender.isOn{
-            healthLabel.textColor = .label
+            syncWithHealth?(true)
         }else{
-            healthLabel.textColor = .secondaryLabel
+            syncWithHealth?(false)
         }
     }
 }

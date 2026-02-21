@@ -73,7 +73,9 @@ final class WorkoutSummaryCoordinator: Coordinator {
     
     
     private func showSyncHealthVC() {
-        let sheetNav = SyncWithSheet()
+        let currentState = vm?.output.isHealthKitSyncEnabled.value ?? false
+        
+        let sheetNav = SyncWithSheet(initialSyncState: currentState)
         sheetNav.modalPresentationStyle = .pageSheet
         
         if let sheet = sheetNav.sheetPresentationController{
@@ -82,6 +84,12 @@ final class WorkoutSummaryCoordinator: Coordinator {
             }) ]
             
             sheet.prefersGrabberVisible = true
+        }
+        
+        
+        sheetNav.syncWithHealth = {[weak self] isEnable in
+            guard let self else {return}
+            self.vm?.input.toggleHealthKitSync.send(isEnable)
         }
         
         navigationController.present(sheetNav, animated: true)

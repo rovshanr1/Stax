@@ -20,7 +20,6 @@ class SyncWithButton: UIButton {
 
     private var syncWithHealth: UILabel = {
         let label = UILabel()
-        label.text = "Health"
         label.textColor = .secondaryLabel
         label.font = .systemFont(ofSize: 16, weight: .regular)
         return label
