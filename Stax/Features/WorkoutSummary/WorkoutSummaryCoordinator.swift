@@ -87,9 +87,15 @@ final class WorkoutSummaryCoordinator: Coordinator {
         }
         
         
-        sheetNav.syncWithHealth = {[weak self] isEnable in
-            guard let self else {return}
+        sheetNav.syncWithHealth = {[weak self] (isEnable, completion) in
+           guard let self else {return}
+            
             self.vm?.input.toggleHealthKitSync.send(isEnable)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+             let actualState = self.vm?.output.isHealthKitSyncEnabled.value ?? false
+                completion(actualState)
+            }
         }
         
         navigationController.present(sheetNav, animated: true)

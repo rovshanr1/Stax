@@ -10,7 +10,7 @@ import SnapKit
 
 class SyncWithSheet: UIViewController {
     
-    var syncWithHealth: ((Bool) -> Void)?
+    var syncWithHealth: ((Bool, @escaping (Bool) -> Void) -> Void)?
     
     private let initialSyncState: Bool
     
@@ -64,17 +64,23 @@ class SyncWithSheet: UIViewController {
         }
         
         syncSwitch.isOn = initialSyncState
-        healthLabel.textColor = initialSyncState ? .label : .secondaryLabel
-        
         
         syncSwitch.addTarget(self, action: #selector(handleSwitchTapped(_:)), for: .valueChanged)
     }
     
     @objc private func handleSwitchTapped(_ sender: UISwitch){
-        if sender.isOn{
-            syncWithHealth?(true)
-        }else{
-            syncWithHealth?(false)
+        let desiredState = sender.isOn
+        
+        healthLabel.textColor = desiredState ? .label: .secondaryLabel
+        
+        syncWithHealth?(desiredState) { [weak self] actualState in
+            guard let self else { return }
+            
+            if desiredState != actualState {
+                self.syncSwitch.setOn(actualState, animated: true)
+                self.healthLabel.textColor = desiredState ? .label: .secondaryLabel
+            }
         }
+       
     }
 }
