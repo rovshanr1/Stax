@@ -27,7 +27,7 @@ final class ExerciseMenuSheet: UIViewController {
     
     private func setupSheetUI(){
         view.addSubview(contentView)
-      
+        view.backgroundColor = .systemBackground
     }
     
     private func setupConstraints(){

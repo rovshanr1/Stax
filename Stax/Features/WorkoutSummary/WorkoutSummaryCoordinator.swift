@@ -10,6 +10,7 @@ import Combine
 import CoreData
 enum WorkoutSummaryEvent{
     case saveWorkout
+    case syncButtpPressed
 }
 
 final class WorkoutSummaryCoordinator: Coordinator {
@@ -65,11 +66,38 @@ final class WorkoutSummaryCoordinator: Coordinator {
         case .saveWorkout:
             print("save button tapped")
 //            vm?.input.saveWorkout.send()
+        case .syncButtpPressed:
+            self.showSyncHealthVC()
         }
     }
     
     
-    private func handleSaveWorkout() {
+    private func showSyncHealthVC() {
+        let currentState = vm?.output.isHealthKitSyncEnabled.value ?? false
         
+        let sheetNav = SyncWithSheet(initialSyncState: currentState)
+        sheetNav.modalPresentationStyle = .pageSheet
+        
+        if let sheet = sheetNav.sheetPresentationController{
+            sheet.detents = [ .custom(identifier: .init("small"), resolver: { context in
+                return 150
+            }) ]
+            
+            sheet.prefersGrabberVisible = true
+        }
+        
+        
+        sheetNav.syncWithHealth = {[weak self] (isEnable, completion) in
+           guard let self else {return}
+            
+            self.vm?.input.toggleHealthKitSync.send(isEnable)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+             let actualState = self.vm?.output.isHealthKitSyncEnabled.value ?? false
+                completion(actualState)
+            }
+        }
+        
+        navigationController.present(sheetNav, animated: true)
     }
 }
