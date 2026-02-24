@@ -49,6 +49,15 @@ final class WorkoutSummaryCoordinator: Coordinator {
         
         summaryVC.viewModel = self.vm
         
+        vm?.output.finished
+            .receive(on: DispatchQueue.main)
+            .sink(receiveValue: { [weak self] in
+                guard let self else {return}
+                self.finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+            })
+            .store(in: &cancellables)
+        
+        
         summaryVC.onDeinit = {[weak self] in
             guard let self else {return}
             self.finishDelegate?.coordinatorDidFinish(childCoordinator: self)
@@ -64,8 +73,7 @@ final class WorkoutSummaryCoordinator: Coordinator {
     private func handle(_ event: WorkoutSummaryEvent) {
         switch event {
         case .saveWorkout:
-            print("save button tapped")
-//            vm?.input.saveWorkout.send()
+            vm?.input.saveWorkout.send()
         case .syncButtpPressed:
             self.showSyncHealthVC()
         }

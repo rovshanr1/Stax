@@ -164,7 +164,7 @@ extension WorkoutSessionCoordinator: CoordinatorFinishDelegate {
         case .exerciseList:
             navigationController.dismiss(animated: true)
         case .workoutSummary:
-            print("WorkoutSummary finished")
+            self.finish()
         default:
             break
         }
