@@ -65,11 +65,14 @@ class WorkoutSummaryVC: UIViewController {
             guard let self else {return}
             self.didSendEventClosure?(.syncButtpPressed)
         }
+        
+        contentView.discardButtonOnTapped = { [weak self] in
+            guard let self else {return}
+            self.didSendEventClosure?(.discardWokrout)
+        }
     }
     
     private func bindViewModel(){
-        
-        
         viewModel?.output.workoutStats
             .receive(on: DispatchQueue.main)
             .sink { [weak self] presentation in

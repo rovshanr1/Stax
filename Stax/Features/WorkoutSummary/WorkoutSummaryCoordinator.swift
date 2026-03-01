@@ -11,10 +11,15 @@ import CoreData
 enum WorkoutSummaryEvent{
     case saveWorkout
     case syncButtpPressed
+    case discardWokrout
 }
 
 final class WorkoutSummaryCoordinator: Coordinator {
     weak var finishDelegate: CoordinatorFinishDelegate?
+    
+    //Closures
+    var onWorkoutSaved: (() -> Void)?
+    var onWorkoutDiscarded: (() -> Void)?
     
     var childCoordinators: [Coordinator] = []
     
@@ -53,7 +58,7 @@ final class WorkoutSummaryCoordinator: Coordinator {
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { [weak self] in
                 guard let self else {return}
-                self.finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+                self.onWorkoutSaved?()
             })
             .store(in: &cancellables)
         
@@ -75,7 +80,9 @@ final class WorkoutSummaryCoordinator: Coordinator {
         case .saveWorkout:
             vm?.input.saveWorkout.send()
         case .syncButtpPressed:
-            self.showSyncHealthVC()
+            showSyncHealthVC()
+        case .discardWokrout:
+            discardedWorkout()
         }
     }
     
@@ -107,5 +114,24 @@ final class WorkoutSummaryCoordinator: Coordinator {
         }
         
         navigationController.present(sheetNav, animated: true)
+    }
+    
+    private func discardedWorkout() {
+        guard let currentVC = navigationController.topViewController else {return}
+        
+        AlertManager.showConfirmationAlert(on: currentVC,
+                                           title: nil,
+                                           message: "Are you sure you want to discard this wokrout?",
+                                           confirmTitle: "Discard Workout",
+                                           cancelTitle: "Cancel") { [weak self ] in
+            guard let self else {return}
+            if let woroutToDelete = self.vm?.workout{
+                self.context.delete(woroutToDelete)
+                try? self.context.save()
+                
+                onWorkoutDiscarded?()
+            }
+        }
+        
     }
 }

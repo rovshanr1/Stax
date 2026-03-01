@@ -12,6 +12,7 @@ final class WorkoutSummaryView: UIView {
     var titleOnChanged: ((String) -> Void)?
     var descriptionOnChange: ((String) -> Void)?
     var syncButtonOnTapped: (() -> Void)?
+    var discardButtonOnTapped: (() -> Void)?
     
     private let scrollView = UIScrollView()
     
@@ -77,6 +78,11 @@ final class WorkoutSummaryView: UIView {
         footerView.syncWithOnTapped = { [weak self] in
             guard let self else {return}
             self.syncButtonOnTapped?()
+        }
+        
+        footerView.discardWorkoutTapped = { [weak self] in
+            guard let self else {return}
+            self.discardButtonOnTapped?()
         }
     }
     

@@ -11,7 +11,7 @@ import SnapKit
 class WorkoutView: UIView {
     var didTapStartButton: (() -> Void)?
     
-    private var tableView: UITableView = {
+    var tableView: UITableView = {
         let tableView = UITableView()
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
@@ -40,26 +40,10 @@ class WorkoutView: UIView {
     }
     
     private func setupTableView(){
-        
         addSubview(tableView)
-        
-        tableView.delegate = self
-        tableView.dataSource = self
         
         tableView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
         }
-    }
-}
-
-//MARK: - TableViewDelegate and DataSource
-extension WorkoutView: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell: WorkoutTableViewCell = tableView.dequeueReusableCell(withIdentifier: WorkoutTableViewCell.reuseIdentifier, for: indexPath) as! WorkoutTableViewCell
-        return cell
     }
 }

@@ -112,6 +112,14 @@ final class WorkoutSessionCoordinator: Coordinator{
         let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout, stats: summaryStats)
         summaryCoordinator.finishDelegate = self
         
+        summaryCoordinator.onWorkoutSaved = {[weak self] in
+            self?.finish()
+        }
+        
+        summaryCoordinator.onWorkoutDiscarded = {[weak self] in
+            self?.finish()
+        }
+        
         childCoordinators.append(summaryCoordinator)
         summaryCoordinator.start()
     }
@@ -163,8 +171,6 @@ extension WorkoutSessionCoordinator: CoordinatorFinishDelegate {
         switch childCoordinator.type {
         case .exerciseList:
             navigationController.dismiss(animated: true)
-        case .workoutSummary:
-            self.finish()
         default:
             break
         }
