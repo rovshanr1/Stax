@@ -31,13 +31,14 @@ final class WorkoutCoordinator: Coordinator{
     
     
     func start() {
-        let exerciseVC = WorkoutVC()
+        let workoutVC = WorkoutVC()
         
-        exerciseVC.didSendEventClosure = {[weak self] event in
+        workoutVC.didSendEventClosure = {[weak self] event in
             self?.handle(event)
         }
+        workoutVC.navigationItem.largeTitleDisplayMode = .always
         
-        navigationController.pushViewController(exerciseVC, animated: true)
+        navigationController.setViewControllers([workoutVC], animated: false)
     }
     
     

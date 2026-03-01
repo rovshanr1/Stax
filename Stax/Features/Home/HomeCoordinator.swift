@@ -32,8 +32,9 @@ final class HomeCoordinator: Coordinator{
 //        homeVC.didSendEventClosure = { [weak self] event in
 //
 //        }
+        homeVC.navigationItem.largeTitleDisplayMode = .always
         
-        navigationController.pushViewController(homeVC, animated: true)
+        navigationController.setViewControllers([homeVC], animated: false)
         
     }
     
