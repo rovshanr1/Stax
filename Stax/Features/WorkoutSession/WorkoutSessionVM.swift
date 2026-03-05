@@ -298,12 +298,8 @@ final class WorkoutSessionViewModel: NSObject{
     }
     
     private func updateSetData(setID: UUID, weight: Double, reps: Int, isDone: Bool) {
-        guard let targetSet = output.exercises.value
-            .flatMap({ $0.workoutSets as? Set<WorkoutSet> ?? [] })
-            .first(where: { $0.id == setID }) else{
-            print("error: no set found: \(setID) ")
-            return
-        }
+       let predicate = NSPredicate(format: "id == %@", setID as CVarArg)
+        guard let targetSet = workoutSets.fetch(predicate: predicate, fetchLimit: 1).first else {return}
         
         workoutSets.update(id: targetSet.objectID) { set in
             set.weight = weight
