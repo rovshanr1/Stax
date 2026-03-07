@@ -22,7 +22,7 @@ final class SetsHeaderView: UIView {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .bold)
         label.textColor = .secondaryLabel
-        label.text = "PREVIUOS"
+        label.text = "PREVIOUS"
         label.textAlignment = .center
         label.setContentCompressionResistancePriority(.required, for: .horizontal)
         return label

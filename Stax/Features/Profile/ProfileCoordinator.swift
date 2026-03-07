@@ -31,8 +31,8 @@ final class ProfileCoordinator: Coordinator{
 //        profileVC.didSendEventClosure = { [weak self] event in
 //            
 //        }
-        
-        navigationController.pushViewController(profileVC, animated: true)
+        profileVC.navigationItem.largeTitleDisplayMode = .always
+        navigationController.setViewControllers([profileVC], animated: false)
     }
     
     private func handle(_ event: ProfileEvent) {

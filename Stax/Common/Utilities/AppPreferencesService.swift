@@ -28,6 +28,4 @@ class AppPreferencesService: AppPreferencesServiceInterface{
             defaults.set(newValue, forKey: healthKitKey)
         }
     }
-    
-    
 }

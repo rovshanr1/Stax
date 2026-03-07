@@ -18,6 +18,7 @@ class WorkoutVC: UIViewController {
         navigationItem.title = "Workout"
         bindEvent()
         setupUI()
+        setupTableView()
     }
     
     private func bindEvent(){
@@ -36,4 +37,20 @@ class WorkoutVC: UIViewController {
         }
     }
     
+    private func setupTableView(){
+        contentView.tableView.delegate = self
+        contentView.tableView.dataSource = self
+    }
+}
+
+
+extension WorkoutVC: UITableViewDelegate, UITableViewDataSource{
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 10
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell: WorkoutTableViewCell = tableView.dequeueReusableCell(withIdentifier: WorkoutTableViewCell.reuseIdentifier, for: indexPath) as! WorkoutTableViewCell
+        return cell
+    }
 }

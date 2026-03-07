@@ -10,7 +10,7 @@ import UIKit
 
 final class AlertManager{
     static func showConfirmationAlert(on vc: UIViewController,
-                                      title: String,
+                                      title: String?,
                                       message: String,
                                       confirmTitle: String,
                                       cancelTitle: String,

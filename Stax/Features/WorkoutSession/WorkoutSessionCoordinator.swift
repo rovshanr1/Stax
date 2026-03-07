@@ -55,7 +55,21 @@ final class WorkoutSessionCoordinator: Coordinator{
 
         sessionVC.viewModel = self.vm
         
-        navigationController.viewControllers = [sessionVC]
+        navigationController.setViewControllers([sessionVC], animated: false)
+    }
+    
+    func finish() {
+        if navigationController.presentedViewController != nil{
+            navigationController.dismiss(animated: true)
+        }
+        
+        cancellables.removeAll()
+        vm = nil
+        
+        childCoordinators.forEach { $0.finish() }
+        childCoordinators.removeAll()
+        
+        finishDelegate?.coordinatorDidFinish(childCoordinator: self)
     }
     
     private func handle (_ event: WorkoutSessionEvent){
@@ -70,6 +84,7 @@ final class WorkoutSessionCoordinator: Coordinator{
             self.showExerciseMenu(for: exerciseToEdit)
         }
     }
+    
     
     private func showExerciseList(onExerciseSelected: ((Exercise) -> Void)? = nil) {
         let listNav = UINavigationController()
@@ -111,6 +126,14 @@ final class WorkoutSessionCoordinator: Coordinator{
         
         let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout, stats: summaryStats)
         summaryCoordinator.finishDelegate = self
+        
+        summaryCoordinator.onWorkoutSaved = {[weak self] in
+            self?.finish()
+        }
+        
+        summaryCoordinator.onWorkoutDiscarded = {[weak self] in
+            self?.finish()
+        }
         
         childCoordinators.append(summaryCoordinator)
         summaryCoordinator.start()
@@ -162,9 +185,7 @@ extension WorkoutSessionCoordinator: CoordinatorFinishDelegate {
         
         switch childCoordinator.type {
         case .exerciseList:
-            navigationController.dismiss(animated: true)
-        case .workoutSummary:
-            print("WorkoutSummary finished")
+            navigationController.presentedViewController?.dismiss(animated: true)
         default:
             break
         }

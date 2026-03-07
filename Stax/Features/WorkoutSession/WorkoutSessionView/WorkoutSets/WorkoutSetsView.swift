@@ -64,30 +64,18 @@ class WorkoutSetsView: UIView {
         
         let existingRows = setsContainerStackView.arrangedSubviews.compactMap { $0 as? SetRowView}
         
-        if existingRows.count == sets.count {
             for (index, set) in sets.enumerated() {
-                let row = existingRows[index]
+                let rowView: SetRowView
                 
-                row.configureSetRow(
-                    setNumber: index + 1,
-                    previous: set.previous ?? "-",
-                    weight: set.weight,
-                    reps: Int(set.reps),
-                    isDone: set.isComplated
-                )
-                
-                bindRowClosures(row, set: set)
-                
-            }
-        }else{
-            
-            setsContainerStackView.arrangedSubviews.forEach {
-                setsContainerStackView.removeArrangedSubview($0)
-                $0.removeFromSuperview()
-            }
-            
-            for (index, set) in sets.enumerated() {
-                let rowView = SetRowView()
+                if index < existingRows.count {
+                    rowView = existingRows[index]
+                }else{
+                    rowView = SetRowView()
+                    setsContainerStackView.addArrangedSubview(rowView)
+                    rowView.snp.makeConstraints { make in
+                        make.height.equalTo(34)
+                    }
+                }
                 
                 rowView.configureSetRow(
                     setNumber: index + 1,
@@ -97,11 +85,14 @@ class WorkoutSetsView: UIView {
                     isDone: set.isComplated
                 )
                 
-                setsContainerStackView.addArrangedSubview(rowView)
-                
-                rowView.snp.makeConstraints { make in
-                    make.height.equalTo(34)
-                }
+                bindRowClosures(rowView, set: set)
+        }
+        
+        if existingRows.count > sets.count {
+            for i in sets.count..<existingRows.count {
+                let viewToRemove = existingRows[i]
+                setsContainerStackView.removeArrangedSubview(viewToRemove)
+                viewToRemove.removeFromSuperview()
             }
         }
     }

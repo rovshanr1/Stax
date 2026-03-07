@@ -16,6 +16,7 @@ protocol TabCoordinatorProtocol: Coordinator{
     func currentPage() -> TabBarPage?
 }
 
+
 class TabCoordinator: NSObject, Coordinator {
     weak var finishDelegate: CoordinatorFinishDelegate?
     
@@ -29,7 +30,7 @@ class TabCoordinator: NSObject, Coordinator {
     
     init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
-        self.tabBarController = .init()
+        self.tabBarController = MainTabBarController()
         self.context = context
     }
     

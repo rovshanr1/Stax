@@ -37,6 +37,7 @@ class WorkoutSessionVC: UIViewController {
     private let contentView = WorkoutSessionView()
     private var dataSource: DataSource!
     private var sessionExercise: [WorkoutExercise] = []
+    private var isViewApeared: Bool = false
     
     
     override func viewDidLoad() {
@@ -45,7 +46,7 @@ class WorkoutSessionVC: UIViewController {
         configureDataSource()
         bindVM()
         bindEvents()
-        setupKeyboardObserver() 
+        setupKeyboardObserver()
         
         contentView.tableView.keyboardDismissMode = .onDrag
     }
@@ -53,7 +54,13 @@ class WorkoutSessionVC: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
+        isViewApeared = true
         viewModel?.input.viewDidAppear.send()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        isViewApeared = false
     }
     
     //MARK: - Setup UI
@@ -93,7 +100,8 @@ class WorkoutSessionVC: UIViewController {
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionTableViewCell.reuseIdentifier, for: indexPath) as? WorkoutSessionTableViewCell else {
                     return UITableViewCell()
                 }
-                
+                let currentStats = self.viewModel.currentStats
+                cell.updateStats(volume: currentStats.volume, sets: currentStats.sets)
                 
                 
                 return cell
@@ -157,7 +165,7 @@ class WorkoutSessionVC: UIViewController {
                     cell.deleteSetTapped = { [weak self] setID in
                         self?.viewModel.input.deleteSet.send(setID)
                     }
-
+                    
                     
                 }
                 return cell
@@ -200,6 +208,8 @@ class WorkoutSessionVC: UIViewController {
     }
     
     private func updateDurationCell(stats: (volume: Double, sets: Int)? = nil){
+        guard self.view.window != nil else {return}
+        
         guard let indexPath = dataSource.indexPath(for: .duration) else {return}
         guard let cell = contentView.tableView.cellForRow(at: indexPath) as? WorkoutSessionTableViewCell else {return}
         
@@ -222,18 +232,30 @@ class WorkoutSessionVC: UIViewController {
         }else{
             let items = exercises.map {RowItem.exercise($0.objectID)}
             snapshot.appendItems(items, toSection: .exercises)
-            
-            let existingItem = dataSource.snapshot().itemIdentifiers
-            let itemsToReconfigure = items.filter { existingItem.contains($0) }
-            
-            if !itemsToReconfigure.isEmpty {
-                snapshot.reconfigureItems(itemsToReconfigure)
-            }
+        }
+        
+        guard isViewApeared else {
+            dataSource.apply(snapshot, animatingDifferences: false)
+            return
         }
         
         dataSource.apply(snapshot, animatingDifferences: false)
+        
+        for cell in contentView.tableView.visibleCells {
+            if let exerciseCell = cell as? WorkoutSessionExerciseListCell,
+               let indexPath = contentView.tableView.indexPath(for: exerciseCell),
+               case .exercise(let id) = dataSource.itemIdentifier(for: indexPath),
+               let updateExercise = exercises.first(where: { $0.objectID == id }) {
+                exerciseCell.configureExerciseCell(with: updateExercise)
+            }
+        }
+        
+        UIView.performWithoutAnimation  {
+            self.contentView.tableView.beginUpdates()
+            self.contentView.tableView.endUpdates()
+        }
+       
     }
-    
 }
 
 

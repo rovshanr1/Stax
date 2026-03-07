@@ -40,7 +40,7 @@ final class SetRowView: UIView {
     private var currentWeight: UITextField = {
         let textField = UITextField()
         textField.textColor = .label
-        textField.placeholder = "0"
+        textField.placeholder = "0.0"
         textField.font = .systemFont(ofSize: 16, weight: .regular)
         textField.borderStyle = .none
         textField.keyboardType = .decimalPad
@@ -174,24 +174,45 @@ final class SetRowView: UIView {
         setNumberLabel.text = "\(setNumber)"
         previousSets.text = previous
         
+        
+        let targetWeightText: String
         if weight == 0  {
-            currentWeight.text = ""
+            targetWeightText = ""
         }else{
             let isInteger = floor(weight) == weight
-            currentWeight.text = isInteger ? "\(Int(weight))" : "\(weight)"
+            targetWeightText = isInteger ? "\(Int(weight))" : "\(weight)"
         }
         
+        let isWeightFirstResponder = currentWeight.isFirstResponder
+        if !isWeightFirstResponder{
+            if currentWeight.text != targetWeightText {
+                currentWeight.text = targetWeightText
+            }
+        }
+        
+        let targetRepsString: String
         if reps == 0 {
-            currentReps.text = ""
+            targetRepsString = ""
         }else{
-            currentReps.text = "\(reps)"
+            targetRepsString = "\(reps)"
         }
         
+        let isRepsFirstResponder = currentReps.isFirstResponder
+        if !isRepsFirstResponder{
+            if currentReps.text != targetRepsString {
+                currentReps.text = targetRepsString
+            }
+        }
         checkmarkBox.isSelected = isDone
         
         updateAppearance(isDone: isDone)
-        
-        deleteIcon.alpha = 0
+        UIView.performWithoutAnimation {
+            self.deleteBackgorundView.isHidden = true
+            deleteIcon.alpha = 0
+            self.contentContainerView.transform = .identity
+            self.layoutIfNeeded()
+        }
+       
     }
     
     private func setupGestures() {
@@ -250,11 +271,11 @@ final class SetRowView: UIView {
         
         switch gesture.state {
         case .began:
-            originalCenter = contentContainerView.center
+            
             deleteBackgorundView.isHidden = false
         case .changed:
             if translation.x < 0 {
-                contentContainerView.center = CGPoint(x: originalCenter.x + translation.x, y: originalCenter.y)
+                contentContainerView.transform = CGAffineTransform(translationX: translation.x, y: 0)
                 
                 let progress = min(1, abs(translation.x) / 100)
                 deleteIcon.alpha = progress
@@ -264,14 +285,14 @@ final class SetRowView: UIView {
             if translation.x < -80 {
                 
                 UIView.animate(withDuration: 0.2, animations: {
-                    self.contentContainerView.center = CGPoint(x: -self.bounds.width, y: self.originalCenter.y)
+                    self.contentContainerView.transform = CGAffineTransform(translationX: -self.bounds.width, y: 0)
                 }) { _ in
                     
                     self.onDelete?()
                 }
             }else{
                 UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.5, options: .curveEaseOut, animations:  {
-                    self.contentContainerView.center = self.originalCenter
+                    self.contentContainerView.transform = .identity
                 }, completion: { _ in
                     self.deleteBackgorundView.isHidden = true
                 })
