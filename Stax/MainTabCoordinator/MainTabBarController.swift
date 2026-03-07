@@ -8,10 +8,20 @@
 import UIKit
 final class MainTabBarController: UITabBarController{
     override var childForStatusBarStyle: UIViewController? {
-        selectedViewController
+        if let navController = selectedViewController as? UINavigationController{
+            return navController.visibleViewController
+        }
+        
+        return selectedViewController
     }
     
     override var childForStatusBarHidden: UIViewController? {
-        selectedViewController
+        if let navController = selectedViewController as? UINavigationController{
+            return navController.visibleViewController
+        }
+        return selectedViewController
     }
+    
+  
 }
+
