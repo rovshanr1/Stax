@@ -40,7 +40,7 @@ final class SetRowView: UIView {
     private var currentWeight: UITextField = {
         let textField = UITextField()
         textField.textColor = .label
-        textField.placeholder = "0"
+        textField.placeholder = "0.0"
         textField.font = .systemFont(ofSize: 16, weight: .regular)
         textField.borderStyle = .none
         textField.keyboardType = .decimalPad
@@ -174,17 +174,26 @@ final class SetRowView: UIView {
         setNumberLabel.text = "\(setNumber)"
         previousSets.text = previous
         
+        let targetWeightText: String
         if weight == 0  {
-            currentWeight.text = ""
+            targetWeightText = ""
         }else{
             let isInteger = floor(weight) == weight
-            currentWeight.text = isInteger ? "\(Int(weight))" : "\(weight)"
+            targetWeightText = isInteger ? "\(Int(weight))" : "\(weight)"
         }
         
+        if currentWeight.text != targetWeightText {
+            currentWeight.text = targetWeightText
+        }
+        
+        let targetRepsString: String
         if reps == 0 {
-            currentReps.text = ""
+            targetRepsString = ""
         }else{
-            currentReps.text = "\(reps)"
+            targetRepsString = "\(reps)"
+        }
+        if currentReps.text != targetRepsString {
+            currentReps.text = targetRepsString
         }
         
         checkmarkBox.isSelected = isDone
