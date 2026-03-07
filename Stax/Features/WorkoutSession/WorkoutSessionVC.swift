@@ -223,14 +223,15 @@ class WorkoutSessionVC: UIViewController {
             let items = exercises.map {RowItem.exercise($0.objectID)}
             snapshot.appendItems(items, toSection: .exercises)
             
-            let existingItem = dataSource.snapshot().itemIdentifiers
-            let itemsToReconfigure = items.filter { existingItem.contains($0) }
-            
-            if !itemsToReconfigure.isEmpty {
-                snapshot.reconfigureItems(itemsToReconfigure)
+            if self.view.window != nil {
+                let existingItem = dataSource.snapshot().itemIdentifiers
+                let itemsToReconfigure = items.filter { existingItem.contains($0) }
+                
+                if !itemsToReconfigure.isEmpty {
+                    snapshot.reconfigureItems(itemsToReconfigure)
+                }
             }
         }
-        
         dataSource.apply(snapshot, animatingDifferences: false)
     }
     
