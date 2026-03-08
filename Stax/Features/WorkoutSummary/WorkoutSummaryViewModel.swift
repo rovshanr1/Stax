@@ -10,7 +10,8 @@ import Combine
 import CoreData
 
 final class WorkoutSummaryViewModel{
-    
+    //MARK: - I/O Structs
+    ///Input: "Orders" fromd the VC (Orders)
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
         let updateTitle: PassthroughSubject<String, Never>
@@ -19,12 +20,14 @@ final class WorkoutSummaryViewModel{
         let toggleHealthKitSync: PassthroughSubject<Bool, Never>
     }
     
+    ///Output: "Data" to VC (Data Streams)
     struct Output{
         let defaultTitle: CurrentValueSubject<String, Never>
         let finished: PassthroughSubject<Void, Never>
         let workoutStats: CurrentValueSubject<WorkoutSummaryPresentation, Never>
         let isHealthKitSyncEnabled: CurrentValueSubject<Bool, Never>
     }
+    
     //MARK: - Properties
     let input: Input
     let output: Output
@@ -90,8 +93,6 @@ final class WorkoutSummaryViewModel{
         input.saveWorkout
             .flatMap{ [weak self] _ -> AnyPublisher<Void, Error> in
                 guard let self else {return Empty().eraseToAnyPublisher()}
-                
-                self.workout.date = Date()
                 
                 return self.workoutRepository.save()
             }

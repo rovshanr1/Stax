@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreData
 
 enum HomeEvent{
     case buttonTapped
@@ -13,32 +14,45 @@ enum HomeEvent{
 
 
 final class HomeCoordinator: Coordinator{
+    //Coordinator
     var finishDelegate: CoordinatorFinishDelegate?
-    
     var childCoordinators: [Coordinator] = []
-    
     var navigationController: UINavigationController
-    
     var type: CoordinatorType { .page }
     
-    init(_ navigationController: UINavigationController) {
+    
+    let context: NSManagedObjectContext
+    var vm: HomeVM?
+    
+    init(navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
+        self.context = context
     }
     
     func start() {
         let homeVC = HomeVC()
         
-        //TODO: - handle event closure
-//        homeVC.didSendEventClosure = { [weak self] event in
-//
-//        }
+        //Repo injection
+        let repo = DataRepository<Workout>(context: context)
+        
+        //VM injection
+        self.vm = HomeVM(workoutRepo: repo)
+        homeVC.vm = self.vm
+        
         homeVC.navigationItem.largeTitleDisplayMode = .always
+        
+        homeVC.didSendEventClosure = { [weak self] event in
+            self?.handle(event)
+        }
         
         navigationController.setViewControllers([homeVC], animated: false)
         
     }
     
     private func handle(_ event: HomeEvent){
-        
+        switch event{
+        case .buttonTapped:
+            print("")
+        }
     }
 }

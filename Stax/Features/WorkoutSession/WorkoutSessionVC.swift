@@ -13,7 +13,7 @@ import CoreData
 
 class WorkoutSessionVC: UIViewController {
     //MARK: - Diffable DataSource Types
-    enum Section: String, CaseIterable{
+    nonisolated enum Section: CaseIterable, Sendable{
         case duration
         case exercises
     }
