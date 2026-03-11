@@ -10,11 +10,6 @@ import CoreData
 import Combine
 
 //MARK: -
-struct HomeWorkoutPresentationItem: Hashable, Sendable{
-    let id: String
-    let title: String
-    let dateString: String
-}
 
 final class HomeVM: NSObject {
     //MARK: - I/O Structs
@@ -75,7 +70,9 @@ final class HomeVM: NSObject {
         return fw.map { workout in
             HomeWorkoutPresentationItem(id: workout.objectID.uriRepresentation().absoluteString,
                                         title: workout.name ?? "",
-                                        dateString: dateFormatter.string(from: workout.date ?? Date())
+                                        dateString: dateFormatter.string(from: workout.date ?? Date()),
+                                        time: formatDuration(seconds: workout.duration),
+                                        volume: String(workout.volume)
             )
         }
     }
@@ -87,8 +84,6 @@ final class HomeVM: NSObject {
         frc = workoutRepo.makeFetchResultsController(sortDescriptors: [sort], predicate: predicate)
         frc?.delegate = self
         
-       
-        
         do{
             try frc?.performFetch()
             
@@ -96,6 +91,19 @@ final class HomeVM: NSObject {
             output.workouts.send(presentationItems)
         }catch{
             print("Home FRC Error: \(error)")
+        }
+    }
+    
+    private func formatDuration(seconds: Double) -> String{
+        let totalSeconds = Int(seconds)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        
+        if hours == 0{
+            return String(format: "%02d:%02d", minutes, seconds)
+        }else{
+            return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
         }
     }
 }

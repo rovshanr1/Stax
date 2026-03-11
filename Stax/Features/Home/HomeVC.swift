@@ -57,15 +57,12 @@ class HomeVC: UIViewController {
         
         dataSource = DataSource(tableView: contentView.tableView, cellProvider: { [weak self] tableView, indexPath, itemIdentifier in
             
-            guard let self else {return nil}
+            guard self != nil else {return nil}
             
             switch itemIdentifier {
             case .workout(let presentationItem):
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: HomeTableViewCell.identifier,for: indexPath) as? HomeTableViewCell else {return UITableViewCell()}
-                var content = cell.defaultContentConfiguration()
-                content.text = presentationItem.title
-                content.secondaryText = presentationItem.dateString
-                cell.contentConfiguration = content
+                cell.headerView.configureHomeHeaderView(name: presentationItem.title, time: presentationItem.time, volume: presentationItem.volume )
             return cell
             }
         })

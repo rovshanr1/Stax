@@ -70,7 +70,9 @@ class WorkoutSessionVC: UIViewController {
         setupNavbar()
         constraints()
     }
-    
+    deinit{
+        print("deinited WorkoutSessionVC")
+    }
     //MARK: - Constraints
     private func constraints(){
         view.addSubview(contentView)

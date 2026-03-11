@@ -123,8 +123,8 @@ final class WorkoutSessionViewModel: NSObject{
                 
                 self.timerService.stop()
                 
-                workout.duration = Int32(self.timerService.seconsElapsed)
-                
+                workout.duration = Double(self.timerService.seconsElapsed)
+                workout.volume = self.currentStats.volume
                 self.output.dismissEvent.send()
             }
             .store(in: &cancellables)

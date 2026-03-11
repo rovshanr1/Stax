@@ -35,6 +35,7 @@ class WorkoutSummaryVC: UIViewController {
     
     deinit{
         onDeinit?()
+        print("deinited summary")
     }
     
     private func setupUI(){

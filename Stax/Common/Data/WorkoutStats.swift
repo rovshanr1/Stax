@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 struct WorkoutStats{
     let duration: TimeInterval
     let volume: Double
