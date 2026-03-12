@@ -9,6 +9,7 @@ import UIKit
 import SnapKit
 
 class HomeUiView: UIView {
+    var headerMoreButtonOnTap: (() -> Void)?
 
     let tableView: UITableView = {
         let tableView = UITableView()
@@ -31,5 +32,9 @@ class HomeUiView: UIView {
         tableView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
         }
+    }
+    
+    private func setupEvent(){
+        
     }
 }

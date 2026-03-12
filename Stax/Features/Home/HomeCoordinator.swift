@@ -9,7 +9,7 @@ import UIKit
 import CoreData
 
 enum HomeEvent{
-    case buttonTapped
+    case moreButtonTapped(id: String)
 }
 
 
@@ -46,13 +46,25 @@ final class HomeCoordinator: Coordinator{
         }
         
         navigationController.setViewControllers([homeVC], animated: false)
-        
     }
     
     private func handle(_ event: HomeEvent){
         switch event{
-        case .buttonTapped:
-            print("")
+        case .moreButtonTapped(let id):
+            self.showMoreSheet(for: id)
         }
+    }
+    
+    private func showMoreSheet(for id: String){
+        let sheetNav = MoreSheetViewController()
+        sheetNav.modalPresentationStyle = .pageSheet
+        
+        if let sheet = sheetNav.sheetPresentationController{
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        
+        navigationController.present(sheetNav, animated: true)
     }
 }

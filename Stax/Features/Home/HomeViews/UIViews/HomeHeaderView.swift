@@ -9,12 +9,28 @@ import UIKit
 import SnapKit
 
 class HomeHeaderView: UIView {
+    //Closures
+    var moreButtonOnTapped: (() -> Void)?
     
     private var workoutTitleLabel: UILabel = {
         let label = UILabel()
         label.font = .preferredFont(forTextStyle: .title1)
         label.textColor = .label
         return label
+    }()
+    
+    private var moreButton: UIButton = {
+        let button = UIButton()
+        var config = UIButton.Configuration.plain()
+        let imageConfig = UIImage.SymbolConfiguration(pointSize: 16, weight: .regular)
+        
+        config.image = UIImage(systemName: "ellipsis", withConfiguration: imageConfig)
+        config.imagePadding = 8
+        config.baseBackgroundColor = .clear
+        config.baseForegroundColor = .label
+        
+        button.configuration = config
+        return button
     }()
 
     private let timeLabel: UILabel = {
@@ -49,6 +65,14 @@ class HomeHeaderView: UIView {
         return label
     }()
     
+    private lazy var titleStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [workoutTitleLabel, moreButton])
+        stackView.axis = .horizontal
+        stackView.distribution = .fill
+        stackView.spacing = 8
+        return stackView
+    }()
+    
     private lazy var timeStackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [timeLabel, timeValueLabel])
         stackView.axis = .vertical
@@ -72,7 +96,7 @@ class HomeHeaderView: UIView {
     }()
     
     private lazy var mainStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [workoutTitleLabel, informationStackView])
+        let stackView = UIStackView(arrangedSubviews: [titleStackView, informationStackView])
         stackView.axis = .vertical
         stackView.spacing = 16
         return stackView
@@ -93,11 +117,23 @@ class HomeHeaderView: UIView {
         mainStackView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview().inset(16)
         }
+        
+        mainStackView.isUserInteractionEnabled = true
+        
+        moreButton.addTarget(self, action: #selector(moreButtonTapped), for: .touchUpInside)
     }
     
     func configureHomeHeaderView(name: String, time: String, volume: String){
         workoutTitleLabel.text = name
         timeValueLabel.text = time
         volumeValueLabel.text = volume
+    }
+    
+    
+    @objc private func moreButtonTapped(){
+        
+        moreButton.imageView?.addSymbolEffect(.bounce, options: .nonRepeating, animated: true)
+        
+        moreButtonOnTapped?()
     }
 }
