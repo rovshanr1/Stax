@@ -60,7 +60,7 @@ final class HomeCoordinator: Coordinator{
         sheetNav.modalPresentationStyle = .pageSheet
         
         if let sheet = sheetNav.sheetPresentationController{
-            sheet.detents = [.medium()]
+            sheet.detents = [.custom(resolver: { _ in 200})]
             sheet.prefersGrabberVisible = true
         }
         
