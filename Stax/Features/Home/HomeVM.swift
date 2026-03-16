@@ -16,6 +16,7 @@ final class HomeVM: NSObject {
     ///Input: "Orders" fromd the VC (Orders)
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
+        let deleteWorkout: PassthroughSubject<String, Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -40,7 +41,8 @@ final class HomeVM: NSObject {
         self.workoutRepo = workoutRepo
         
         
-        self.input = .init(viewDidLoad: .init()
+        self.input = .init(viewDidLoad: .init(),
+                           deleteWorkout: .init()
         )
         self.output = .init(workouts: .init([])
             
@@ -56,6 +58,12 @@ final class HomeVM: NSObject {
             .sink { [weak self] in
                 guard let self else { return }
                 self.startFeatchedResultsController()
+            }
+            .store(in: &cancellables)
+        input.deleteWorkout
+            .sink { [weak self] id in
+                guard let self else { return }
+                self.deleteWorkout()
             }
             .store(in: &cancellables)
     }
@@ -105,6 +113,10 @@ final class HomeVM: NSObject {
         }else{
             return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
         }
+    }
+    
+    private func deleteWorkout(){
+        print("Delete Workout")
     }
 }
 

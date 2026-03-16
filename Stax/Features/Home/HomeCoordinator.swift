@@ -7,9 +7,10 @@
 
 import UIKit
 import CoreData
+import Combine
 
 enum HomeEvent{
-    case moreButtonTapped(id: String)
+    case workoutMenuButtonTapped(id: String)
 }
 
 
@@ -50,13 +51,13 @@ final class HomeCoordinator: Coordinator{
     
     private func handle(_ event: HomeEvent){
         switch event{
-        case .moreButtonTapped(let id):
+        case .workoutMenuButtonTapped(let id):
             self.showMoreSheet(for: id)
         }
     }
     
     private func showMoreSheet(for id: String){
-        let sheetNav = MoreSheetViewController()
+        let sheetNav = WorkoutMenuViewController()
         sheetNav.modalPresentationStyle = .pageSheet
         
         if let sheet = sheetNav.sheetPresentationController{
@@ -64,7 +65,22 @@ final class HomeCoordinator: Coordinator{
             sheet.prefersGrabberVisible = true
         }
         
-        
+        sheetNav.onActionSelected = {[weak self] action in
+            self?.handleWorkoutMenu(action, for: id)
+        }
+         
         navigationController.present(sheetNav, animated: true)
+    }
+    
+    private func handleWorkoutMenu(_ action: WorkoutMenuViewController.Action, for id: String){
+        
+        switch action{
+        case .edit:
+            print("edit")
+        case .share:
+            print("share")
+        case .delete:
+            vm?.input.deleteWorkout.send(id)
+        }
     }
 }

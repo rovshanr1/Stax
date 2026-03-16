@@ -1,5 +1,5 @@
 //
-//  MoreSheetViewController.swift
+//  WorkoutMenuViewController.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 12.03.26.
@@ -8,15 +8,19 @@
 import UIKit
 import SnapKit
 
-class MoreSheetViewController: UIViewController {
-    //Closures
-    var sendEventClosure: ((HomeEvent) -> Void)?
+class WorkoutMenuViewController: UIViewController {
+    enum Action{
+        case edit
+        case share
+        case delete
+    }
     
     //ContentView
-    private let editActionView = MoreSheetView()
-    private let shareActionView = MoreSheetView()
-    private let deleteActionView = MoreSheetView()
+    private let editActionView = CustomSheetButton()
+    private let shareActionView = CustomSheetButton()
+    private let deleteActionView = CustomSheetButton()
 
+    var onActionSelected: ((Action) -> Void)?
     
     private lazy var stackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [editActionView, shareActionView, deleteActionView])
@@ -58,7 +62,17 @@ class MoreSheetViewController: UIViewController {
     private func handleEvent(){
         editActionView.buttonTapped = {[weak self] in
             guard let self else {return}
-            print("Somethink")
+            self.onActionSelected?(.edit)
+        }
+        
+        shareActionView.buttonTapped = {[weak self] in
+            guard let self else {return}
+            self.onActionSelected?(.share)
+        }
+        
+        deleteActionView.buttonTapped = {[weak self] in
+            guard let self else {return}
+            self.onActionSelected?(.delete)
         }
     }
 }

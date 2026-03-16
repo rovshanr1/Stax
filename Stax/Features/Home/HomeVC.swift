@@ -63,7 +63,7 @@ class HomeVC: UIViewController {
                 guard let cell = tableView.dequeueReusableCell(withIdentifier: HomeTableViewCell.identifier,for: indexPath) as? HomeTableViewCell else {return UITableViewCell()}
                 cell.headerView.configureHomeHeaderView(name: presentationItem.title, time: presentationItem.time, volume: presentationItem.volume )
                 cell.headerMoreButtonTapped = { [weak self] in
-                    self?.didSendEventClosure?(.moreButtonTapped(id: presentationItem.id))
+                    self?.didSendEventClosure?(.workoutMenuButtonTapped(id: presentationItem.id))
                 }
                 
             return cell
@@ -97,8 +97,6 @@ class HomeVC: UIViewController {
         
         dataSource.apply(snaphot, animatingDifferences: true)
     }
-    
- 
 }
 
 //MARK: - TableViewDelegate

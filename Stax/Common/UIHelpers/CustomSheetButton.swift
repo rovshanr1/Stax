@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class MoreSheetView: UIView {
+class CustomSheetButton: UIView {
     //Closures
     var buttonTapped: (() -> Void)?
     
