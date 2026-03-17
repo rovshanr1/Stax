@@ -63,7 +63,7 @@ final class HomeVM: NSObject {
         input.deleteWorkout
             .sink { [weak self] id in
                 guard let self else { return }
-                self.deleteWorkout()
+                self.deleteWorkout(with: id)
             }
             .store(in: &cancellables)
     }
@@ -115,8 +115,11 @@ final class HomeVM: NSObject {
         }
     }
     
-    private func deleteWorkout(){
-        print("Delete Workout")
+    private func deleteWorkout(with id: String){
+        workoutRepo.delete(by: id)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
+            .store(in: &cancellables)
     }
 }
 

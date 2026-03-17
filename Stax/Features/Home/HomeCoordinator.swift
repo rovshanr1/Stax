@@ -61,7 +61,7 @@ final class HomeCoordinator: Coordinator{
         sheetNav.modalPresentationStyle = .pageSheet
         
         if let sheet = sheetNav.sheetPresentationController{
-            sheet.detents = [.custom(resolver: { _ in 200})]
+            sheet.detents = [.custom(resolver: { _ in 190})]
             sheet.prefersGrabberVisible = true
         }
         
@@ -73,14 +73,17 @@ final class HomeCoordinator: Coordinator{
     }
     
     private func handleWorkoutMenu(_ action: WorkoutMenuViewController.Action, for id: String){
-        
-        switch action{
-        case .edit:
-            print("edit")
-        case .share:
-            print("share")
-        case .delete:
-            vm?.input.deleteWorkout.send(id)
+        navigationController.dismiss(animated: true) { [weak self] in
+            guard let self else {return}
+            
+            switch action{
+            case .edit:
+                print("edit")
+            case .share:
+                print("share")
+            case .delete:
+                self.vm?.input.deleteWorkout.send(id)
+            }
         }
     }
 }
