@@ -33,8 +33,4 @@ class HomeUiView: UIView {
             make.edges.equalToSuperview()
         }
     }
-    
-    private func setupEvent(){
-        
-    }
 }

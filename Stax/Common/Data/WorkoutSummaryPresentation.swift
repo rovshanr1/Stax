@@ -13,3 +13,4 @@ nonisolated struct WorkoutSummaryPresentation {
         let sets: Int
         let date: Date
 }
+

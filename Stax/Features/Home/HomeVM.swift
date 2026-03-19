@@ -17,19 +17,22 @@ final class HomeVM: NSObject {
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
         let deleteWorkout: PassthroughSubject<String, Never>
+        let shareWorkout: PassthroughSubject<String, Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
     struct Output{
         let workouts: CurrentValueSubject<[HomeWorkoutPresentationItem], Never>
+        let showShareSheet: PassthroughSubject<String, Never>
     }
     
     //MARK: - Properties
     let input: Input
     let output: Output
     
-    //Repositorys
+    //Repositorys & Services
     private let workoutRepo: DataRepository<Workout>
+    private let shareService: WorkoutShareServiceProtocol
 
     //State
     private var frc: NSFetchedResultsController<Workout>?
@@ -37,14 +40,16 @@ final class HomeVM: NSObject {
     //Combine
     private var cancellables = Set<AnyCancellable>()
     
-    init(workoutRepo: DataRepository<Workout>){
+    init(workoutRepo: DataRepository<Workout>, shareService: WorkoutShareServiceProtocol){
         self.workoutRepo = workoutRepo
-        
+        self.shareService = shareService
         
         self.input = .init(viewDidLoad: .init(),
-                           deleteWorkout: .init()
+                           deleteWorkout: .init(),
+                           shareWorkout: .init()
         )
-        self.output = .init(workouts: .init([])
+        self.output = .init(workouts: .init([]),
+                            showShareSheet: .init()
             
         )
         
@@ -64,6 +69,14 @@ final class HomeVM: NSObject {
             .sink { [weak self] id in
                 guard let self else { return }
                 self.deleteWorkout(with: id)
+            }
+            .store(in: &cancellables)
+        input.shareWorkout
+            .sink { [weak self] id  in
+                guard let self else { return }
+                guard let workout = self.frc?.fetchedObjects?.first(where: { $0.objectID.uriRepresentation().absoluteString == id }) else { return }
+                let shareText = self.shareService.generateShareText(from: workout)
+                self.output.showShareSheet.send(shareText)
             }
             .store(in: &cancellables)
     }
@@ -109,9 +122,9 @@ final class HomeVM: NSObject {
         let seconds = totalSeconds % 60
         
         if hours == 0{
-            return String(format: "%02d:%02d", minutes, seconds)
+            return String(format: "%02dmin %02dsec", minutes, seconds)
         }else{
-            return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+            return String(format: "%02dh %02dmin %02dsec", hours, minutes, seconds)
         }
     }
     
@@ -120,6 +133,12 @@ final class HomeVM: NSObject {
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
             .store(in: &cancellables)
+    }
+    
+    private func getShareText(for id: String) -> String{
+        guard let workout = frc?.fetchedObjects?.first(where: { $0.objectID.uriRepresentation().absoluteString == id }) else { return "No Workout Found" }
+        
+        return shareService.generateShareText(from: workout)
     }
 }
 

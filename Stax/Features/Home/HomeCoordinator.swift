@@ -11,6 +11,7 @@ import Combine
 
 enum HomeEvent{
     case workoutMenuButtonTapped(id: String)
+    case presentShareSheet(text: String)
 }
 
 
@@ -35,11 +36,11 @@ final class HomeCoordinator: Coordinator{
         
         //Repo injection
         let repo = DataRepository<Workout>(context: context)
+        let shareService = WorkoutTextShareService()
         
         //VM injection
-        self.vm = HomeVM(workoutRepo: repo)
+        self.vm = HomeVM(workoutRepo: repo, shareService: shareService)
         homeVC.vm = self.vm
-        
         homeVC.navigationItem.largeTitleDisplayMode = .always
         
         homeVC.didSendEventClosure = { [weak self] event in
@@ -53,8 +54,12 @@ final class HomeCoordinator: Coordinator{
         switch event{
         case .workoutMenuButtonTapped(let id):
             self.showMoreSheet(for: id)
+        case .presentShareSheet(text: let text):
+            self.handleShareSheet(with: text)
         }
     }
+    
+   
     
     private func showMoreSheet(for id: String){
         let sheetNav = WorkoutMenuViewController()
@@ -80,10 +85,15 @@ final class HomeCoordinator: Coordinator{
             case .edit:
                 print("edit")
             case .share:
-                print("share")
+              self.vm?.input.shareWorkout.send(id)
             case .delete:
                 self.vm?.input.deleteWorkout.send(id)
             }
         }
+    }
+    
+    private func handleShareSheet(with text: String){
+        let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        navigationController.present(activityVC, animated: true)
     }
 }

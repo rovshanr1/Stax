@@ -14,10 +14,10 @@ class HomeVC: UIViewController {
     //MARK: - Diffable DataSource
     nonisolated enum Section: CaseIterable, Sendable {case main}
     nonisolated enum RowItem: Hashable, Sendable {case workout(HomeWorkoutPresentationItem)}
-
+    
     typealias DataSource = UITableViewDiffableDataSource<Section, RowItem>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, RowItem>
-  
+    
     
     //Closures
     var didSendEventClosure: ((HomeEvent) -> Void)?
@@ -66,7 +66,7 @@ class HomeVC: UIViewController {
                     self?.didSendEventClosure?(.workoutMenuButtonTapped(id: presentationItem.id))
                 }
                 
-            return cell
+                return cell
             }
         })
         
@@ -85,6 +85,16 @@ class HomeVC: UIViewController {
         DispatchQueue.main.async {[weak self] in
             self?.vm.input.viewDidLoad.send()
         }
+        
+        
+        vm.output.showShareSheet
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] text in
+                guard let self else { return }
+                self.didSendEventClosure?(.presentShareSheet(text: text))
+            }
+            .store(in: &cancellables)
+        
     }
     
     //MARK: - Update Snapshot
