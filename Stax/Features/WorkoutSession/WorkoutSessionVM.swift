@@ -5,7 +5,8 @@
 //  Created by Rovshan Rasulov on 05.12.25.
 //
 
-import UIKit
+import Foundation //MARK: - I/O Structs
+///Input: "Orders" fromd the VC (Orders)
 import Combine
 import CoreData
 
@@ -54,8 +55,6 @@ final class WorkoutSessionViewModel: NSObject{
     private var timer: Timer?
     private var secondsElapsed: Int = 0
     private var frc: NSFetchedResultsController<WorkoutExercise>?
-    
-    
     
     
     //MARK: - Initializer
@@ -124,8 +123,8 @@ final class WorkoutSessionViewModel: NSObject{
                 
                 self.timerService.stop()
                 
-                workout.duration = Int32(self.timerService.seconsElapsed)
-                
+                workout.duration = Double(self.timerService.seconsElapsed)
+                workout.volume = self.currentStats.volume
                 self.output.dismissEvent.send()
             }
             .store(in: &cancellables)
@@ -429,7 +428,7 @@ extension WorkoutSessionViewModel {
 
 //MARK: - FRC Delegate Extension
 extension WorkoutSessionViewModel: NSFetchedResultsControllerDelegate {
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<any NSFetchRequestResult>) {
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         guard let exercise = controller.fetchedObjects as? [WorkoutExercise] else { return }
         
         output.exercises.send(exercise)

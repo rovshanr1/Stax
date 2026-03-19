@@ -34,7 +34,7 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
         do {
             return try context.fetch(request)
         }catch{
-            print("❌ Repository Fetch Error: \(error)")
+            print("Repository Fetch Error: \(error)")
             return []
         }
     }
@@ -86,7 +86,30 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
         }.eraseToAnyPublisher()
     }
     
-    
+    func delete(by id: String) -> AnyPublisher<Void, Error> {
+       guard let url = URL(string: id) else {
+            return Fail(error: URLError(.badServerResponse)).eraseToAnyPublisher()
+        }
+        return Future { promise in
+            self.context.perform {
+                guard let objectID = self.context.persistentStoreCoordinator?.managedObjectID(forURIRepresentation: url) else{
+                    promise(.failure(URLError(.fileDoesNotExist)))
+                    return
+                }
+                
+                do{
+                    let object = try self.context.existingObject(with: objectID) as! T
+                    self.context.delete(object)
+                    
+                    try self.context.save()
+                    promise(.success(()))
+                }catch{
+                    promise(.failure(error))
+                }
+
+            }
+        }.eraseToAnyPublisher()
+    }
     
     func save() -> AnyPublisher<Void, Error> {
         return Future { promise in
@@ -144,7 +167,7 @@ extension DataRepository where T == WorkoutExercise {
         
         let cutoffDate: Date = currentWorkout.date ?? Date()
         request.predicate = NSPredicate(
-            format: "exercise == %@ AND workout != %@ AND workout.date < %@",
+            format: "exercise == %@ AND workout != %@ AND workout.date < %@ AND workout.duration > 0",
             argumentArray: [exerciseDef, currentWorkout, cutoffDate as NSDate]
         )
         

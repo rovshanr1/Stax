@@ -153,14 +153,14 @@ final class WorkoutSessionCoordinator: Coordinator{
         }
         
         sheetNav.onActionSelected = { [weak self] action in
-            self?.hanleExerciseMenuAction(action, for: exercise)
+            self?.handleExerciseMenuAction(action, for: exercise)
         }
         
         navigationController.present(sheetNav, animated: true)
     }
     
     
-    private func hanleExerciseMenuAction(_ action: ExerciseMenuSheet.Action, for exercise: WorkoutExercise){
+    private func handleExerciseMenuAction(_ action: ExerciseMenuSheet.Action, for exercise: WorkoutExercise){
         
         navigationController.dismiss(animated: true) { [weak self]  in
             guard let self else { return }

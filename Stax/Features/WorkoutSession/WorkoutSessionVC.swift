@@ -13,7 +13,7 @@ import CoreData
 
 class WorkoutSessionVC: UIViewController {
     //MARK: - Diffable DataSource Types
-    enum Section: String, CaseIterable{
+    nonisolated enum Section: CaseIterable, Sendable{
         case duration
         case exercises
     }
@@ -70,7 +70,9 @@ class WorkoutSessionVC: UIViewController {
         setupNavbar()
         constraints()
     }
-    
+    deinit{
+        print("deinited WorkoutSessionVC")
+    }
     //MARK: - Constraints
     private func constraints(){
         view.addSubview(contentView)

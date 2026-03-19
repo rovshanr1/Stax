@@ -9,13 +9,28 @@ import UIKit
 import SnapKit
 
 class HomeUiView: UIView {
+    var headerMoreButtonOnTap: (() -> Void)?
 
-    /*
-    // Only override draw() if you perform custom drawing.
-    // An empty implementation adversely affects performance during animation.
-    override func draw(_ rect: CGRect) {
-        // Drawing code
+    let tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.register(HomeTableViewCell.self, forCellReuseIdentifier: HomeTableViewCell.identifier)
+        return tableView
+    }()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
     }
-    */
-
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI(){
+        addSubview(tableView)
+        
+        tableView.snp.makeConstraints { (make) in
+            make.edges.equalToSuperview()
+        }
+    }
 }

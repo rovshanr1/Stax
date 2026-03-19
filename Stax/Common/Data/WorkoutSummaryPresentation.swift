@@ -7,9 +7,10 @@
 
 import Foundation
 
-struct WorkoutSummaryPresentation {
+nonisolated struct WorkoutSummaryPresentation {
         let duration: String
         let volume: Double
         let sets: Int
         let date: Date
-    }
+}
+

@@ -33,6 +33,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         coordinator = MainCoordinator.init(navigationViewController, context: context)
         coordinator?.start()
+        
+
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

@@ -6,39 +6,94 @@
 //
 
 import UIKit
+import CoreData
+import Combine
 
 enum HomeEvent{
-    case buttonTapped
+    case workoutMenuButtonTapped(id: String)
+    case presentShareSheet(text: String)
 }
 
 
 final class HomeCoordinator: Coordinator{
+    //Coordinator
     var finishDelegate: CoordinatorFinishDelegate?
-    
     var childCoordinators: [Coordinator] = []
-    
     var navigationController: UINavigationController
-    
     var type: CoordinatorType { .page }
     
-    init(_ navigationController: UINavigationController) {
+    
+    let context: NSManagedObjectContext
+    var vm: HomeVM?
+    
+    init(navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
+        self.context = context
     }
     
     func start() {
         let homeVC = HomeVC()
         
-        //TODO: - handle event closure
-//        homeVC.didSendEventClosure = { [weak self] event in
-//
-//        }
+        //Repo injection
+        let repo = DataRepository<Workout>(context: context)
+        let shareService = WorkoutTextShareService()
+        
+        //VM injection
+        self.vm = HomeVM(workoutRepo: repo, shareService: shareService)
+        homeVC.vm = self.vm
         homeVC.navigationItem.largeTitleDisplayMode = .always
         
-        navigationController.setViewControllers([homeVC], animated: false)
+        homeVC.didSendEventClosure = { [weak self] event in
+            self?.handle(event)
+        }
         
+        navigationController.setViewControllers([homeVC], animated: false)
     }
     
     private func handle(_ event: HomeEvent){
+        switch event{
+        case .workoutMenuButtonTapped(let id):
+            self.showMoreSheet(for: id)
+        case .presentShareSheet(text: let text):
+            self.handleShareSheet(with: text)
+        }
+    }
+    
+   
+    
+    private func showMoreSheet(for id: String){
+        let sheetNav = WorkoutMenuViewController()
+        sheetNav.modalPresentationStyle = .pageSheet
         
+        if let sheet = sheetNav.sheetPresentationController{
+            sheet.detents = [.custom(resolver: { _ in 190})]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        sheetNav.onActionSelected = {[weak self] action in
+            self?.handleWorkoutMenu(action, for: id)
+        }
+         
+        navigationController.present(sheetNav, animated: true)
+    }
+    
+    private func handleWorkoutMenu(_ action: WorkoutMenuViewController.Action, for id: String){
+        navigationController.dismiss(animated: true) { [weak self] in
+            guard let self else {return}
+            
+            switch action{
+            case .edit:
+                print("edit")
+            case .share:
+              self.vm?.input.shareWorkout.send(id)
+            case .delete:
+                self.vm?.input.deleteWorkout.send(id)
+            }
+        }
+    }
+    
+    private func handleShareSheet(with text: String){
+        let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        navigationController.present(activityVC, animated: true)
     }
 }

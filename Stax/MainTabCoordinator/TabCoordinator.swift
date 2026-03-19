@@ -71,7 +71,7 @@ class TabCoordinator: NSObject, Coordinator {
         
         switch page {
         case .home:
-            let homeCoordinator = HomeCoordinator(navController)
+            let homeCoordinator = HomeCoordinator(navigationController: navController, context: context)
             homeCoordinator.finishDelegate = self
             childCoordinators.append(homeCoordinator)
             homeCoordinator.start()
