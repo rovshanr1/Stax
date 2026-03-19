@@ -207,6 +207,21 @@ class WorkoutSessionVC: UIViewController {
                 self.updateDurationCell(stats: stats)
             }
             .store(in: &cancellables)
+        
+        viewModel.output.cancelWorkoutEvent
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self else { return }
+                self.didSendEventClosure?(.cancelWorkout)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.output.finishWorkoutEvent
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                self?.didSendEventClosure?(.finishWorkout)
+            }
+            .store(in: &cancellables)
     }
     
     private func updateDurationCell(stats: (volume: Double, sets: Int)? = nil){
@@ -293,7 +308,6 @@ extension WorkoutSessionVC{
     @objc private func finishSession() {
         
         viewModel.input.didTapFinish.send()
-        didSendEventClosure?(.finishWorkout)
     }
     
     @objc private func cancelSession(){
@@ -305,7 +319,6 @@ extension WorkoutSessionVC{
         { [weak self] in
             guard let self else { return }
             self.viewModel.input.didTapCancel.send()
-            didSendEventClosure?(.cancelWorkout)
         }
         
         

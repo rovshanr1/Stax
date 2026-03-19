@@ -30,7 +30,8 @@ final class WorkoutSessionViewModel: NSObject{
     ///Output: "Data" to VC (Data Streams)
     struct Output{
         let timerSubject: CurrentValueSubject<String, Never>
-        let dismissEvent: PassthroughSubject<Void, Never>
+        let finishWorkoutEvent: PassthroughSubject<Void, Never>
+        let cancelWorkoutEvent: PassthroughSubject<Void, Never>
         let exercises: CurrentValueSubject<[WorkoutExercise], Never>
         let sessionStats: CurrentValueSubject<(volume: Double, sets: Int), Never>
     }
@@ -51,6 +52,8 @@ final class WorkoutSessionViewModel: NSObject{
     public private(set) var currentWorkout: Workout?
     public private(set) var currentStats: (volume: Double, sets: Int) = (0, 0)
     
+    private let workoutId: String?
+    
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
     private var secondsElapsed: Int = 0
@@ -61,12 +64,14 @@ final class WorkoutSessionViewModel: NSObject{
     init(workoutRepo: DataRepository<Workout>,
          exerciseRepo: DataRepository<WorkoutExercise>,
          workoutSets: DataRepository<WorkoutSet>,
-         timerService: WorkoutTimerServiceProtocol = WorkoutTimerService()
+         timerService: WorkoutTimerServiceProtocol = WorkoutTimerService(),
+         workoutId: String? = nil
     ){
         self.workoutRepo = workoutRepo
         self.exerciseRepo = exerciseRepo
         self.workoutSets = workoutSets
         self.timerService = timerService
+        self.workoutId = workoutId
         
         self.input = .init(viewDidLoad: .init(),
                            viewDidAppear: .init(),
@@ -82,7 +87,8 @@ final class WorkoutSessionViewModel: NSObject{
         )
         
         self.output = .init(timerSubject: .init("0s"),
-                            dismissEvent: .init(),
+                            finishWorkoutEvent: .init(),
+                            cancelWorkoutEvent: .init(),
                             exercises: .init([]),
                             sessionStats: .init((volume: 0.0, sets: 0))
                             
@@ -105,7 +111,7 @@ final class WorkoutSessionViewModel: NSObject{
             .sink { [weak self] in
                 guard let self else { return }
                 
-                self.createWorkoutSession()
+                self.setupSession()
             }
             .store(in: &cancellables)
         
@@ -125,21 +131,15 @@ final class WorkoutSessionViewModel: NSObject{
                 
                 workout.duration = Double(self.timerService.seconsElapsed)
                 workout.volume = self.currentStats.volume
-                self.output.dismissEvent.send()
+                self.output.finishWorkoutEvent.send()
             }
             .store(in: &cancellables)
         
         input.didTapCancel
             .sink { [weak self] in
                 guard let self else {return}
-                self.timerService.stop()
-                
-                if let workoutToDelete = self.currentWorkout {
-                    self.workoutRepo.delete(workoutToDelete)
-                        .sink(receiveCompletion: { _ in}, receiveValue: {_ in})
-                        .store(in: &cancellables)
-                }
-                self.output.dismissEvent.send()
+                self.cancelWorkoutSession()
+                self.output.cancelWorkoutEvent.send()
             }
             .store(in: &cancellables)
         
@@ -194,12 +194,34 @@ final class WorkoutSessionViewModel: NSObject{
     }
     
     //MARK: - Logic Helpers
-    private func createWorkoutSession() {
-        self.currentWorkout = self.workoutRepo.create()
-        self.currentWorkout?.date = Date()
-        self.currentWorkout?.id = UUID()
+
+    private func setupSession(){
+        if let id = workoutId, let existingWorkout = workoutRepo.fetch(by: id)
+        {
+            self.currentWorkout = existingWorkout
+            self.currentWorkout?.duration = existingWorkout.duration
+        }else{
+            self.currentWorkout = self.workoutRepo.create()
+            self.currentWorkout?.date = Date()
+            self.currentWorkout?.id = UUID()
+            
+        }
         
         self.startFetchExercises()
+    }
+    
+    private func cancelWorkoutSession(){
+        self.timerService.stop()
+        
+        if workoutId == nil {
+            if let workoutToDelete = self.currentWorkout {
+                self.workoutRepo.delete(workoutToDelete)
+                    .sink(receiveCompletion: {_ in}, receiveValue: {_ in})
+                    .store(in: &cancellables)
+            }
+        }else{
+            self.workoutRepo.rollback()
+        }
     }
     
     private func addExercise(_ exerciseDefinition: Exercise) {

@@ -16,6 +16,7 @@ enum HomeEvent{
 
 
 final class HomeCoordinator: Coordinator{
+   
     //Coordinator
     var finishDelegate: CoordinatorFinishDelegate?
     var childCoordinators: [Coordinator] = []
@@ -83,7 +84,7 @@ final class HomeCoordinator: Coordinator{
             
             switch action{
             case .edit:
-                print("edit")
+                self.handleEditWorkout(for: id)
             case .share:
               self.vm?.input.shareWorkout.send(id)
             case .delete:
@@ -96,4 +97,25 @@ final class HomeCoordinator: Coordinator{
         let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         navigationController.present(activityVC, animated: true)
     }
+    
+    private func handleEditWorkout(for id: String){
+        let modalNav = UINavigationController()
+        modalNav.modalPresentationStyle = .fullScreen
+        
+        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, context: self.context, workoutId: id)
+        
+        sessionCoordinator.finishDelegate = self
+        
+        self.childCoordinators.append(sessionCoordinator)
+        sessionCoordinator.start()
+        
+        navigationController.present(modalNav, animated: true)
+    }
+}
+
+extension HomeCoordinator: CoordinatorFinishDelegate{
+    func coordinatorDidFinish(childCoordinator: Coordinator) {
+        childCoordinators = childCoordinators.filter({$0 !== childCoordinator})
+    }
+    
 }

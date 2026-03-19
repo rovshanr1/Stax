@@ -39,6 +39,14 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
         }
     }
     
+    func fetch(by id: String) -> T? {
+        guard let url = URL(string: id),
+              let objectID = context.persistentStoreCoordinator?.managedObjectID(forURIRepresentation: url) else{
+            return nil 
+        }
+        return try? context.existingObject(with: objectID) as? T
+    }
+    
     func fetchAll() -> AnyPublisher<[T], Error> {
         let request = T.fetchRequest()
         
@@ -157,6 +165,12 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
             }
         }
         .eraseToAnyPublisher()
+    }
+    
+    func rollback(){
+        if context.hasChanges{
+            context.rollback()
+        }
     }
 }
 

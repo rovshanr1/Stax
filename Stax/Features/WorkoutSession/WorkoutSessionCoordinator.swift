@@ -20,8 +20,6 @@ final class WorkoutSessionCoordinator: Coordinator{
     //StandartDelegate
     weak var finishDelegate: CoordinatorFinishDelegate?
     
-    var vm: WorkoutSessionViewModel?
-    
     var childCoordinators: [Coordinator] = []
     
     var navigationController: UINavigationController
@@ -29,12 +27,16 @@ final class WorkoutSessionCoordinator: Coordinator{
     var type: CoordinatorType { .workoutSession}
     
     let context: NSManagedObjectContext
-    
+
     var cancellables: Set<AnyCancellable> = []
     
-    init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
+    var vm: WorkoutSessionViewModel?
+    var workoutId: String?
+    
+    init(_ navigationController: UINavigationController, context: NSManagedObjectContext, workoutId: String? = nil) {
         self.navigationController = navigationController
         self.context = context
+        self.workoutId = workoutId
     }
     
     
@@ -51,7 +53,7 @@ final class WorkoutSessionCoordinator: Coordinator{
         let exerciseSetsRepo = DataRepository<WorkoutSet>(context: context)
         
         //VM Injection
-        self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo, workoutSets: exerciseSetsRepo)
+        self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo, workoutSets: exerciseSetsRepo, workoutId: self.workoutId)
 
         sessionVC.viewModel = self.vm
         
@@ -59,9 +61,7 @@ final class WorkoutSessionCoordinator: Coordinator{
     }
     
     func finish() {
-        if navigationController.presentedViewController != nil{
-            navigationController.dismiss(animated: true)
-        }
+        navigationController.dismiss(animated: true)
         
         cancellables.removeAll()
         vm = nil
