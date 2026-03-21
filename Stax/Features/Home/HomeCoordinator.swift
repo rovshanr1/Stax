@@ -36,11 +36,12 @@ final class HomeCoordinator: Coordinator{
         let homeVC = HomeVC()
         
         //Repo injection
-        let repo = DataRepository<Workout>(context: context)
+        let genericRepo = DataRepository<Workout>(context: context)
+        let workoutRepo = WorkoutRepository(genericRoository: genericRepo)
         let shareService = WorkoutTextShareService()
         
         //VM injection
-        self.vm = HomeVM(workoutRepo: repo, shareService: shareService)
+        self.vm = HomeVM(workoutRepo: workoutRepo, shareService: shareService)
         homeVC.vm = self.vm
         homeVC.navigationItem.largeTitleDisplayMode = .always
         

@@ -52,7 +52,18 @@ class WorkoutSummaryVC: UIViewController {
         //Header View Callback
         contentView.titleOnChanged = {[weak self] title in
             guard let self else {return}
-            self.viewModel?.input.updateTitle.send(title)
+            if title.isEmpty{
+                self.viewModel.output.defaultTitle
+                    .receive(on: DispatchQueue.main)
+                    .sink { [weak self] title in
+                        guard let self else {return}
+                        self.contentView.headerView.configureHeader(title)
+                    }
+                    .store(in: &cancellables)
+            }else{
+                self.viewModel?.input.updateTitle.send(title)
+            }
+          
         }
         
         

@@ -79,6 +79,8 @@ class HomeVC: UIViewController {
             .sink { [weak self] workouts in
                 self?.currentWorkout = workouts
                 self?.updateSnapshot(with: workouts)
+                
+                print("HOME_VC: Arayüze \(workouts.count)")
             }
             .store(in: &cancellables)
         
