@@ -10,7 +10,7 @@ import SnapKit
 
 class SyncWithSheet: UIViewController {
     
-    var syncWithHealth: ((Bool, @escaping (Bool) -> Void) -> Void)?
+    var syncWithHealth: ((Bool) -> Void)?
     
     private let initialSyncState: Bool
     
@@ -24,6 +24,9 @@ class SyncWithSheet: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    deinit{
+        print("syncWithSheet deinited")
+    }
     private var healthLabel: UILabel = {
        let label = UILabel()
         label.text = "Health"
@@ -39,7 +42,6 @@ class SyncWithSheet: UIViewController {
     }()
     
     private let spacer = UIView()
-    
     
     private lazy var mainContainer: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [healthLabel, spacer, syncSwitch ])
@@ -65,22 +67,22 @@ class SyncWithSheet: UIViewController {
         
         syncSwitch.isOn = initialSyncState
         
+        healthLabel.textColor = initialSyncState ? .label : .secondaryLabel
+        
         syncSwitch.addTarget(self, action: #selector(handleSwitchTapped(_:)), for: .valueChanged)
     }
     
     @objc private func handleSwitchTapped(_ sender: UISwitch){
         let desiredState = sender.isOn
-        
         healthLabel.textColor = desiredState ? .label: .secondaryLabel
         
-        syncWithHealth?(desiredState) { [weak self] actualState in
-            guard let self else { return }
-            
-            if desiredState != actualState {
-                self.syncSwitch.setOn(actualState, animated: true)
-                self.healthLabel.textColor = desiredState ? .label: .secondaryLabel
-            }
+        syncWithHealth?(desiredState)
+    }
+    
+    func forceUpdateState(_ isOn: Bool){
+        if syncSwitch.isOn != isOn {
+            syncSwitch.setOn(isOn, animated: true)
+            healthLabel.textColor = isOn ? .label : .secondaryLabel
         }
-       
     }
 }
