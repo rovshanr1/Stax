@@ -13,6 +13,7 @@ protocol WorkoutTimerServiceProtocol {
     var seconsElapsed: Int{get}
     func start()
     func stop()
+    func setInitialTime(_ seconds: Int)
 }
 
 final class WorkoutTimerService: WorkoutTimerServiceProtocol{
@@ -49,5 +50,10 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
         } else {
             return String(format: "%2ds", seconds)
         }
+    }
+    
+    func setInitialTime(_ seconds: Int) {
+        self.seconsElapsed = seconds
+        timerPublisher.send(formatTime(seconds))
     }
 }

@@ -199,11 +199,19 @@ final class WorkoutSessionViewModel: NSObject{
         if let id = workoutId, let existingWorkout = workoutRepo.fetch(by: id)
         {
             self.currentWorkout = existingWorkout
-            self.currentWorkout?.duration = existingWorkout.duration
+            self.startFetchExercises()
+            self.calculateTotalStats()
+            
+            if let saveDuration = self.currentWorkout?.duration {
+                self.timerService.setInitialTime(Int(saveDuration))
+            }
         }else{
             self.currentWorkout = self.workoutRepo.create()
             self.currentWorkout?.date = Date()
             self.currentWorkout?.id = UUID()
+            
+            self.startFetchExercises()
+            self.calculateTotalStats()
             
         }
         
