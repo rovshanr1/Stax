@@ -320,8 +320,6 @@ extension WorkoutSessionVC{
             guard let self else { return }
             self.viewModel.input.didTapCancel.send()
         }
-        
-        
     }
 }
 

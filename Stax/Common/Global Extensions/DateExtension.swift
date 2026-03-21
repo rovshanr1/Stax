@@ -8,5 +8,9 @@
 import Foundation
 
 extension Date{
-    
+    func dayName() -> String{
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE"
+        return formatter.string(from: self)
+    }
 }

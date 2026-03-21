@@ -74,6 +74,11 @@ class WorkoutSummaryVC: UIViewController {
     }
     
     private func bindViewModel(){
+        DispatchQueue.main.async { [weak self] in
+            self?.viewModel.input.viewDidLoad.send()
+        }
+        
+        
         viewModel?.output.workoutStats
             .receive(on: DispatchQueue.main)
             .sink { [weak self] presentation in
@@ -82,6 +87,14 @@ class WorkoutSummaryVC: UIViewController {
                 print("\(presentation)")
                 
                 self.contentView.informationView.configureInformations(duration: presentation.duration, volume: presentation.volume, sets: presentation.sets, date: self.viewModel.workout.date ?? Date())
+            }
+            .store(in: &cancellables)
+        
+        viewModel.output.defaultTitle
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] title in
+                guard let self else {return}
+                self.contentView.headerView.configureHeader(title)
             }
             .store(in: &cancellables)
         
@@ -114,6 +127,9 @@ extension WorkoutSummaryVC{
     
     //Actions
     @objc private func saveButtonTapped(){
-        didSendEventClosure?(.saveWorkout)
+        AlertManager.showConfirmationAlert(on: self, title: "Save Workout?", message: "nil", confirmTitle: "Save", cancelTitle: "Cancel", action: { [weak self] in
+            guard let self else {return}
+            self.didSendEventClosure?(.saveWorkout)
+        })
     }
 }
