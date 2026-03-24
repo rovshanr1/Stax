@@ -1,20 +1,18 @@
 //
-//  HomeUiView.swift
+//  WorkoutDetailView.swift
 //  Stax
 //
-//  Created by Rovshan Rasulov on 02.12.25.
+//  Created by Rovshan Rasulov on 24.03.26.
 //
 
 import UIKit
 import SnapKit
 
-class HomeUiView: UIView {
-    var headerMoreButtonOnTap: (() -> Void)?
-
-    let tableView: UITableView = {
+class WorkoutDetailView: UIView {
+    
+    private let tableView: UITableView = {
         let tableView = UITableView()
-        tableView.register(HomeTableViewCell.self, forCellReuseIdentifier: HomeTableViewCell.identifier)
-        tableView.separatorStyle = .none
+        tableView.register(WorkoutDetailTableViewCell.self, forCellReuseIdentifier: WorkoutDetailTableViewCell.identifier)
         return tableView
     }()
 
@@ -31,7 +29,7 @@ class HomeUiView: UIView {
         addSubview(tableView)
         backgroundColor = .systemBackground
         
-        tableView.snp.makeConstraints { (make) in
+        tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
     }

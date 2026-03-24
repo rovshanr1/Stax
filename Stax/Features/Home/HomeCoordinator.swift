@@ -12,6 +12,7 @@ import Combine
 enum HomeEvent{
     case workoutMenuButtonTapped(id: String)
     case presentShareSheet(text: String)
+    case presentWorkoutDetails(id: String)
 }
 
 
@@ -58,6 +59,8 @@ final class HomeCoordinator: Coordinator{
             self.showMoreSheet(for: id)
         case .presentShareSheet(text: let text):
             self.handleShareSheet(with: text)
+        case .presentWorkoutDetails(id: let id):
+            handleWorkoutDetailView(for: id)
         }
     }
     
@@ -111,6 +114,14 @@ final class HomeCoordinator: Coordinator{
         sessionCoordinator.start()
         
         navigationController.present(modalNav, animated: true)
+    }
+    
+    private func handleWorkoutDetailView(for id: String){
+        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, context: context, workoutID: id)
+        
+        workoutDetailCoordinator.finishDelegate = self
+        childCoordinators.append(workoutDetailCoordinator)
+        workoutDetailCoordinator.start()
     }
 }
 

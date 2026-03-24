@@ -6,10 +6,8 @@
 //
 
 import UIKit
-import SnapKit
 import Combine
 import CoreData
-
 
 class ExerciseListVC: UIViewController {
     //MARK: - Diffable DataSource Types
@@ -42,20 +40,16 @@ class ExerciseListVC: UIViewController {
         setupDelegate()
     }
     
+    override func loadView() {
+        self.view = contentView
+    }
+    
     private func setupUI() {
         view.backgroundColor = .systemBackground
 
         setupNavbar()
-        setupConstraints()
     }
-    
-    private func setupConstraints() {
-        view.addSubview(contentView)
-        
-        contentView.snp.makeConstraints { (make) in
-            make.edges.equalTo(self.view).inset(0)
-        }
-    }
+ 
     
     private func setupDelegate(){
         contentView.tableView.delegate = self

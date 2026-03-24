@@ -79,7 +79,6 @@ final class HomeVM {
     private func bindRepository(){
         workoutRepo.workoutPublisher
             .map {domainModels in
-                print("HOME_VM: Repodan \(domainModels.count) saf model geldi!")
                 
                 return domainModels.map { workout in
                     HomeWorkoutPresentationItem(
@@ -88,7 +87,9 @@ final class HomeVM {
                         dateString: DateFormatter.localizedString(from: workout.date, dateStyle: .medium, timeStyle: .none),
                         time: self.formatDuration(seconds: workout.duration),
                         volume: String(workout.volume),
-                        exerciseSummar: self.generateExerciseSummary(for: workout.workoutExercises))
+                        exerciseSummar: self.generateExerciseSummary(for: workout.workoutExercises),
+                        moreText: workout.workoutExercises.count > 3 ? "+ \(workout.workoutExercises.count - 3) more exercises" : nil
+                    )
                 }
             }
             .sink { [weak self] presentationItems in
@@ -97,21 +98,20 @@ final class HomeVM {
             .store(in: &cancellables)
     }
     
-    private func generateExerciseSummary(for exercises: [WorkoutExerciseDomainModel]) -> String{
+    private func generateExerciseSummary(for exercises: [WorkoutExerciseDomainModel]) -> [ExerciseSummaryItem]{
         let topExercises = exercises.prefix(3)
-        var summaryLines: [String] = []
+        var summaryItems: [ExerciseSummaryItem] = []
         
         for workoutExercise in topExercises{
             let exerciseName = workoutExercise.exercise?.name ?? "Unknown Exercise"
             let activeSetsCount = workoutExercise.workoutSets.count
-            summaryLines.append("\(activeSetsCount) sets of \(exerciseName)")
+            let title = "\(activeSetsCount) sets of \(exerciseName)"
+            
+            let item = ExerciseSummaryItem(exerciseName: title, imageURl: nil)
+            summaryItems.append(item)
         }
-        
-        if exercises.count > 3{
-            summaryLines.append("\(exercises.count - 3) more exercises")
-        }
-        
-        return summaryLines.joined(separator: "\n")
+ 
+        return summaryItems
     }
     
  

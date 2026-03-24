@@ -7,7 +7,6 @@
 
 import UIKit
 import Combine
-import SnapKit
 
 class WorkoutSummaryVC: UIViewController {
     
@@ -27,10 +26,14 @@ class WorkoutSummaryVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
+        
         setupNavigationBar()
         bindEvent()
         bindViewModel()
+    }
+    
+    override func loadView() {
+        self.view = contentView
     }
     
     deinit{
@@ -38,35 +41,17 @@ class WorkoutSummaryVC: UIViewController {
         print("deinited summary")
     }
     
-    private func setupUI(){
-        view.addSubview(contentView)
-        
-        
-        contentView.snp.makeConstraints { (make) in
-            make.edges.equalTo(self.view).inset(0)
-        }
-        
-    }
-    
+ 
     private func bindEvent(){
         //Header View Callback
         contentView.titleOnChanged = {[weak self] title in
             guard let self else {return}
-            if title.isEmpty{
-                self.viewModel.output.defaultTitle
-                    .receive(on: DispatchQueue.main)
-                    .sink { [weak self] title in
-                        guard let self else {return}
-                        self.contentView.headerView.configureHeader(title)
-                    }
-                    .store(in: &cancellables)
-            }else{
+            
                 self.viewModel?.input.updateTitle.send(title)
-            }
+            
           
         }
-        
-        
+
         //Description View Callback
         contentView.descriptionOnChange = { [weak self] description in
             guard let self else { return }
@@ -138,7 +123,7 @@ extension WorkoutSummaryVC{
     
     //Actions
     @objc private func saveButtonTapped(){
-        AlertManager.showConfirmationAlert(on: self, title: "Save Workout?", message: "nil", confirmTitle: "Save", cancelTitle: "Cancel", action: { [weak self] in
+        AlertManager.showConfirmationAlert(on: self, title: nil, message: "Save this workout?", confirmTitle: "Save", cancelTitle: "Cancel", action: { [weak self] in
             guard let self else {return}
             self.didSendEventClosure?(.saveWorkout)
         })

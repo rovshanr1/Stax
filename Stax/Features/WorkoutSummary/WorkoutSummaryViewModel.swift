@@ -86,7 +86,9 @@ final class WorkoutSummaryViewModel{
         input.saveWorkout
             .flatMap{ [weak self] _ -> AnyPublisher<Void, Error> in
                 guard let self else {return Empty().eraseToAnyPublisher()}
-                
+                if (self.workout.name == nil || self.workout.name?.isEmpty == true) {
+                    self.workout.name = self.output.defaultTitle.value
+                }
                 return self.workoutRepository.save()
             }
             .sink(receiveCompletion: { completion in
@@ -172,7 +174,6 @@ final class WorkoutSummaryViewModel{
                                                       date: dateToUse
         )
         
-                
         self.output.workoutStats.send(presentation)
     }
     
@@ -180,8 +181,7 @@ final class WorkoutSummaryViewModel{
         let cleanTitle = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         
         if cleanTitle.isEmpty {
-            let dateToUse = workout.date ?? Date()
-            workout.name = "\(dateToUse.dayName()) Workout"
+            workout.name = nil
         }else{
             workout.name = cleanTitle
         }

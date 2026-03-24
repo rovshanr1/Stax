@@ -9,6 +9,9 @@ import UIKit
 
 class ProfileVC: UIViewController {
     var didSendEventClosure: ((ProfileEvent) -> Void)?
+        
+    var contentView = ProfileUIView()
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -16,4 +19,9 @@ class ProfileVC: UIViewController {
         title = "Profile"
         
     }
+    
+    override func loadView() {
+        self.view = contentView
+    }
+    
 }

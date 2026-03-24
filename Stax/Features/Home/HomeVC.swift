@@ -7,8 +7,6 @@
 
 import UIKit
 import Combine
-import SnapKit
-
 
 class HomeVC: UIViewController {
     //MARK: - Diffable DataSource
@@ -35,21 +33,17 @@ class HomeVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
+        title = "Home"
+    
         configureDataSource()
         bindVM()
     }
     
-    private func setupUI(){
-        title = "Home"
-        view.backgroundColor = .systemBackground
-        view.addSubview(contentView)
-        
-        contentView.snp.makeConstraints { (make) in
-            make.edges.equalTo(self.view).inset(0)
-        }
+    override func loadView() {
+        self.view = contentView
     }
     
+
     //MARK: - Datasource Configuration
     private func configureDataSource(){
         contentView.tableView.delegate = self
@@ -66,6 +60,7 @@ class HomeVC: UIViewController {
                     self?.didSendEventClosure?(.workoutMenuButtonTapped(id: presentationItem.id))
                 }
                 
+                cell.configureExercise(exercise: presentationItem.exerciseSummar, moreText: presentationItem.moreText)
                 return cell
             }
         })
@@ -79,8 +74,6 @@ class HomeVC: UIViewController {
             .sink { [weak self] workouts in
                 self?.currentWorkout = workouts
                 self?.updateSnapshot(with: workouts)
-                
-                print("HOME_VC: Arayüze \(workouts.count)")
             }
             .store(in: &cancellables)
         
@@ -112,4 +105,16 @@ class HomeVC: UIViewController {
 }
 
 //MARK: - TableViewDelegate
-extension HomeVC: UITableViewDelegate{}
+extension HomeVC: UITableViewDelegate{
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        guard let selectedItem = dataSource.itemIdentifier(for: indexPath) else { return }
+        
+        switch selectedItem {
+        case .workout(let presentetionItem):
+            didSendEventClosure?(.presentWorkoutDetails(id: presentetionItem.id))
+        }
+    }
+}

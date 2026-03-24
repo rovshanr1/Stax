@@ -1,36 +1,21 @@
 //
-//  HomeHeaderView.swift
+//  WorkoutDetailHeaderView.swift
 //  Stax
 //
-//  Created by Rovshan Rasulov on 10.03.26.
+//  Created by Rovshan Rasulov on 24.03.26.
 //
 
 import UIKit
 import SnapKit
 
-class HomeHeaderView: UIView {
-    //Closures
-    var moreButtonOnTapped: (() -> Void)?
+class WorkoutDetailHeaderView: UIView {
     
+    //UI Contents
     private var workoutTitleLabel: UILabel = {
         let label = UILabel()
         label.font = .preferredFont(forTextStyle: .title1)
         label.textColor = .label
         return label
-    }()
-    
-    private var moreButton: UIButton = {
-        let button = UIButton()
-        var config = UIButton.Configuration.plain()
-        let imageConfig = UIImage.SymbolConfiguration(pointSize: 16, weight: .regular)
-        
-        config.image = UIImage(systemName: "ellipsis", withConfiguration: imageConfig)
-        config.imagePadding = 8
-        config.baseBackgroundColor = .clear
-        config.baseForegroundColor = .label
-        
-        button.configuration = config
-        return button
     }()
 
     private let timeLabel: UILabel = {
@@ -40,12 +25,28 @@ class HomeHeaderView: UIView {
         label.text = "Time"
         return label
     }()
-
+    
     private let volumeLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .regular)
         label.textColor = .secondaryLabel
         label.text = "Volume"
+        return label
+    }()
+    
+    private var setsLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 12, weight: .regular)
+        label.textColor = .secondaryLabel
+        label.text = "Sets"
+        return label
+    }()
+    
+    private var caloriesLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 12, weight: .regular)
+        label.textColor = .secondaryLabel
+        label.text = "Calories"
         return label
     }()
     
@@ -65,19 +66,29 @@ class HomeHeaderView: UIView {
         return label
     }()
     
+    private var setsValueLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.text = "00"
+        return label
+    }()
+    
+    private var caloriesValueLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.text = "00"
+        return label
+    }()
+ 
     private var separatorView: UIView = {
         let view = UIView()
         view.backgroundColor = .separator
         return view
     }()
     
-    private lazy var titleStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [workoutTitleLabel, moreButton])
-        stackView.axis = .horizontal
-        stackView.distribution = .fill
-        stackView.spacing = 8
-        return stackView
-    }()
+    //Stack Views
     
     private lazy var timeStackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [timeLabel, timeValueLabel])
@@ -85,7 +96,6 @@ class HomeHeaderView: UIView {
         stackView.spacing = 4
         return stackView
     }()
-    
     private lazy var volumeStackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [volumeLabel, volumeValueLabel])
         stackView.axis = .vertical
@@ -93,8 +103,22 @@ class HomeHeaderView: UIView {
         return stackView
     }()
     
+    private lazy var setsStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [setsLabel, setsValueLabel])
+        stackView.axis = .vertical
+        stackView.spacing = 4
+        return stackView
+    }()
+    
+    private lazy var caloriesStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [caloriesLabel, caloriesValueLabel])
+        stackView.axis = .vertical
+        stackView.spacing = 4
+        return stackView
+    }()
+    
     private lazy var informationStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [timeStackView, volumeStackView])
+        let stackView = UIStackView(arrangedSubviews: [timeStackView, volumeStackView, setsStackView, caloriesLabel])
         stackView.axis = .horizontal
         stackView.distribution = .fillEqually
         stackView.spacing = 4
@@ -102,14 +126,19 @@ class HomeHeaderView: UIView {
     }()
     
     private lazy var mainStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [titleStackView, informationStackView])
+        let stackView = UIStackView(arrangedSubviews: [workoutTitleLabel, separatorView, informationStackView])
         stackView.axis = .vertical
         stackView.spacing = 16
         return stackView
     }()
     
+    
+   
+    
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
         setupUI()
     }
     
@@ -117,33 +146,13 @@ class HomeHeaderView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    
     private func setupUI(){
         addSubview(mainStackView)
         
-        mainStackView.snp.makeConstraints { (make) in
+        mainStackView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-        
-        separatorView.snp.makeConstraints{ make in
-            make.height.equalTo(1)
-        }
-        
-        mainStackView.isUserInteractionEnabled = true
-        
-        moreButton.addTarget(self, action: #selector(moreButtonTapped), for: .touchUpInside)
     }
     
-    func configureHomeHeaderView(name: String, time: String, volume: String){
-        workoutTitleLabel.text = name
-        timeValueLabel.text = time
-        volumeValueLabel.text = volume
-    }
-    
-    
-    @objc private func moreButtonTapped(){
-        
-        moreButton.imageView?.addSymbolEffect(.bounce, options: .nonRepeating, animated: true)
-        
-        moreButtonOnTapped?()
-    }
 }
