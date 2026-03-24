@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import SnapKit
 import Combine
 import CoreData
 
@@ -42,13 +41,18 @@ class WorkoutSessionVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
+        setupNavbar()
         configureDataSource()
         bindVM()
         bindEvents()
         setupKeyboardObserver()
+       
         
         contentView.tableView.keyboardDismissMode = .onDrag
+    }
+    
+    override func loadView() {
+        self.view = contentView
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -63,23 +67,8 @@ class WorkoutSessionVC: UIViewController {
         isViewApeared = false
     }
     
-    //MARK: - Setup UI
-    private func setupUI(){
-        view.backgroundColor = .systemBackground
-        
-        setupNavbar()
-        constraints()
-    }
     deinit{
         print("deinited WorkoutSessionVC")
-    }
-    //MARK: - Constraints
-    private func constraints(){
-        view.addSubview(contentView)
-        
-        contentView.snp.makeConstraints { (make) in
-            make.edges.equalTo(self.view).inset(0)
-        }
     }
     
     //MARK: - Event Binding
@@ -207,6 +196,21 @@ class WorkoutSessionVC: UIViewController {
                 self.updateDurationCell(stats: stats)
             }
             .store(in: &cancellables)
+        
+        viewModel.output.cancelWorkoutEvent
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self else { return }
+                self.didSendEventClosure?(.cancelWorkout)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.output.finishWorkoutEvent
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                self?.didSendEventClosure?(.finishWorkout)
+            }
+            .store(in: &cancellables)
     }
     
     private func updateDurationCell(stats: (volume: Double, sets: Int)? = nil){
@@ -293,7 +297,6 @@ extension WorkoutSessionVC{
     @objc private func finishSession() {
         
         viewModel.input.didTapFinish.send()
-        didSendEventClosure?(.finishWorkout)
     }
     
     @objc private func cancelSession(){
@@ -305,10 +308,7 @@ extension WorkoutSessionVC{
         { [weak self] in
             guard let self else { return }
             self.viewModel.input.didTapCancel.send()
-            didSendEventClosure?(.cancelWorkout)
         }
-        
-        
     }
 }
 

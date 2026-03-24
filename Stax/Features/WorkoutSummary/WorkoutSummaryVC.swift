@@ -7,7 +7,6 @@
 
 import UIKit
 import Combine
-import SnapKit
 
 class WorkoutSummaryVC: UIViewController {
     
@@ -27,10 +26,14 @@ class WorkoutSummaryVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
+        
         setupNavigationBar()
         bindEvent()
         bindViewModel()
+    }
+    
+    override func loadView() {
+        self.view = contentView
     }
     
     deinit{
@@ -38,24 +41,17 @@ class WorkoutSummaryVC: UIViewController {
         print("deinited summary")
     }
     
-    private func setupUI(){
-        view.addSubview(contentView)
-        
-        
-        contentView.snp.makeConstraints { (make) in
-            make.edges.equalTo(self.view).inset(0)
-        }
-        
-    }
-    
+ 
     private func bindEvent(){
         //Header View Callback
         contentView.titleOnChanged = {[weak self] title in
             guard let self else {return}
-            self.viewModel?.input.updateTitle.send(title)
+            
+                self.viewModel?.input.updateTitle.send(title)
+            
+          
         }
-        
-        
+
         //Description View Callback
         contentView.descriptionOnChange = { [weak self] description in
             guard let self else { return }
@@ -74,6 +70,11 @@ class WorkoutSummaryVC: UIViewController {
     }
     
     private func bindViewModel(){
+        DispatchQueue.main.async { [weak self] in
+            self?.viewModel.input.viewDidLoad.send()
+        }
+        
+        
         viewModel?.output.workoutStats
             .receive(on: DispatchQueue.main)
             .sink { [weak self] presentation in
@@ -82,6 +83,14 @@ class WorkoutSummaryVC: UIViewController {
                 print("\(presentation)")
                 
                 self.contentView.informationView.configureInformations(duration: presentation.duration, volume: presentation.volume, sets: presentation.sets, date: self.viewModel.workout.date ?? Date())
+            }
+            .store(in: &cancellables)
+        
+        viewModel.output.defaultTitle
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] title in
+                guard let self else {return}
+                self.contentView.headerView.configureHeader(title)
             }
             .store(in: &cancellables)
         
@@ -114,6 +123,9 @@ extension WorkoutSummaryVC{
     
     //Actions
     @objc private func saveButtonTapped(){
-        didSendEventClosure?(.saveWorkout)
+        AlertManager.showConfirmationAlert(on: self, title: nil, message: "Save this workout?", confirmTitle: "Save", cancelTitle: "Cancel", action: { [weak self] in
+            guard let self else {return}
+            self.didSendEventClosure?(.saveWorkout)
+        })
     }
 }

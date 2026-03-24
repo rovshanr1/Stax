@@ -12,10 +12,12 @@ import Combine
 enum HomeEvent{
     case workoutMenuButtonTapped(id: String)
     case presentShareSheet(text: String)
+    case presentWorkoutDetails(id: String)
 }
 
 
 final class HomeCoordinator: Coordinator{
+   
     //Coordinator
     var finishDelegate: CoordinatorFinishDelegate?
     var childCoordinators: [Coordinator] = []
@@ -35,11 +37,12 @@ final class HomeCoordinator: Coordinator{
         let homeVC = HomeVC()
         
         //Repo injection
-        let repo = DataRepository<Workout>(context: context)
+        let genericRepo = DataRepository<Workout>(context: context)
+        let workoutRepo = WorkoutRepository(genericRoository: genericRepo)
         let shareService = WorkoutTextShareService()
         
         //VM injection
-        self.vm = HomeVM(workoutRepo: repo, shareService: shareService)
+        self.vm = HomeVM(workoutRepo: workoutRepo, shareService: shareService)
         homeVC.vm = self.vm
         homeVC.navigationItem.largeTitleDisplayMode = .always
         
@@ -56,6 +59,8 @@ final class HomeCoordinator: Coordinator{
             self.showMoreSheet(for: id)
         case .presentShareSheet(text: let text):
             self.handleShareSheet(with: text)
+        case .presentWorkoutDetails(id: let id):
+            handleWorkoutDetailView(for: id)
         }
     }
     
@@ -83,7 +88,7 @@ final class HomeCoordinator: Coordinator{
             
             switch action{
             case .edit:
-                print("edit")
+                self.handleEditWorkout(for: id)
             case .share:
               self.vm?.input.shareWorkout.send(id)
             case .delete:
@@ -96,4 +101,33 @@ final class HomeCoordinator: Coordinator{
         let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         navigationController.present(activityVC, animated: true)
     }
+    
+    private func handleEditWorkout(for id: String){
+        let modalNav = UINavigationController()
+        modalNav.modalPresentationStyle = .fullScreen
+        
+        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, context: self.context, workoutId: id)
+        
+        sessionCoordinator.finishDelegate = self
+        
+        self.childCoordinators.append(sessionCoordinator)
+        sessionCoordinator.start()
+        
+        navigationController.present(modalNav, animated: true)
+    }
+    
+    private func handleWorkoutDetailView(for id: String){
+        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, context: context, workoutID: id)
+        
+        workoutDetailCoordinator.finishDelegate = self
+        childCoordinators.append(workoutDetailCoordinator)
+        workoutDetailCoordinator.start()
+    }
+}
+
+extension HomeCoordinator: CoordinatorFinishDelegate{
+    func coordinatorDidFinish(childCoordinator: Coordinator) {
+        childCoordinators = childCoordinators.filter({$0 !== childCoordinator})
+    }
+    
 }

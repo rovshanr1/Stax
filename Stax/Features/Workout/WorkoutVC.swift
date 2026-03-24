@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import SnapKit
 
 class WorkoutVC: UIViewController {
     var didSendEventClosure: ((WorkoutEvent) -> Void)?
@@ -17,8 +16,11 @@ class WorkoutVC: UIViewController {
         super.viewDidLoad()
         navigationItem.title = "Workout"
         bindEvent()
-        setupUI()
         setupTableView()
+    }
+    
+    override func loadView() {
+        self.view = contentView
     }
     
     private func bindEvent(){
@@ -27,15 +29,7 @@ class WorkoutVC: UIViewController {
         }
     }
     
-    private func setupUI(){
-        view.addSubview(contentView)
-        contentView.snp.makeConstraints { (make) in
-            make.edges.equalTo(self.view).inset(UIEdgeInsets(top: 0,
-                                                             left: 0,
-                                                             bottom: 0,
-                                                             right: 0))
-        }
-    }
+
     
     private func setupTableView(){
         contentView.tableView.delegate = self

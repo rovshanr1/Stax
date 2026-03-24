@@ -84,7 +84,7 @@ final class WorkoutSessionTableViewCell: UITableViewCell {
         return stackView
     }()
     
-    private let seperatorView: UIView = {
+    private let separatorView: UIView = {
         let view  = UIView()
         view.backgroundColor = .separator
         return view
@@ -103,13 +103,13 @@ final class WorkoutSessionTableViewCell: UITableViewCell {
     private func setupUI(){
         contentView.addSubview(mainStackView)
         
-        contentView.addSubview(seperatorView)
+        contentView.addSubview(separatorView)
         
         mainStackView.snp.makeConstraints { (make) in
             make.edges.equalTo(contentView).inset(16).priority(999)
         }
         
-        seperatorView.snp.makeConstraints { make in
+        separatorView.snp.makeConstraints { make in
             make.leading.trailing.equalToSuperview().inset(16)
             
             make.bottom.equalToSuperview()

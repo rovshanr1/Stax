@@ -24,7 +24,7 @@ final class WorkoutSummaryViewModel{
     struct Output{
         let defaultTitle: CurrentValueSubject<String, Never>
         let finished: PassthroughSubject<Void, Never>
-        let workoutStats: CurrentValueSubject<WorkoutSummaryPresentation, Never>
+        let workoutStats: PassthroughSubject<WorkoutSummaryPresentation, Never>
         let isHealthKitSyncEnabled: CurrentValueSubject<Bool, Never>
     }
     
@@ -45,6 +45,8 @@ final class WorkoutSummaryViewModel{
     
     private var cancellables: Set<AnyCancellable> = []
     
+    let emojis = ["🔥", "💪", "🏋️‍♂️", "🏃‍♂️", "🦍", "⚡️"]
+    
     init(workout: Workout,
          workoutRepository: DataRepository<Workout>,
          stats: WorkoutStats,
@@ -63,37 +65,30 @@ final class WorkoutSummaryViewModel{
             updateTitle: .init(),
             updateDescription: .init(),
             saveWorkout: .init(),
-            toggleHealthKitSync: .init()
-        )
-        
-        let currentTitle = workout.name ?? "New Workout"
-        
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute, .second]
-        formatter.unitsStyle = .abbreviated
-        let durationString = formatter.string(from: stats.duration) ?? "0s"
-        
-        let presentation = WorkoutSummaryPresentation(duration: durationString,
-                                                      volume: stats.volume,
-                                                      sets: stats.totalSets,
-                                                      date: workout.date ?? Date()
-        )
+            toggleHealthKitSync: .init())
         
         self.output = Output(
-            defaultTitle: .init(currentTitle),
+            defaultTitle: .init(""),
             finished: .init(),
-            workoutStats: .init(presentation),
-            isHealthKitSyncEnabled: .init(preferencesService.isHealthKitSyncEnabled)
-        )
+            workoutStats: .init(),
+            isHealthKitSyncEnabled: .init(preferencesService.isHealthKitSyncEnabled))
         
         self.transform()
     }
     
     private func transform(){
+        input.viewDidLoad
+            .sink { [weak self] in
+                self?.setupInitialData()
+            }
+            .store(in: &cancellables)
+        
         input.saveWorkout
             .flatMap{ [weak self] _ -> AnyPublisher<Void, Error> in
                 guard let self else {return Empty().eraseToAnyPublisher()}
-                
+                if (self.workout.name == nil || self.workout.name?.isEmpty == true) {
+                    self.workout.name = self.output.defaultTitle.value
+                }
                 return self.workoutRepository.save()
             }
             .sink(receiveCompletion: { completion in
@@ -158,11 +153,35 @@ final class WorkoutSummaryViewModel{
     }
     
     
+    //Helper Methods
+    private func setupInitialData(){
+        let randomEmoji = emojis.randomElement() ?? "💪"
+
+        let dateToUse = workout.date ?? Date()
+        let defaultName = "\(dateToUse.dayName()) Workout\(randomEmoji)"
+        let currentTitle = (workout.name?.isEmpty == false) ? workout.name! : defaultName
+        
+        self.output.defaultTitle.send(currentTitle)
+        
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .abbreviated
+        let durationString = formatter.string(from: stats.duration) ?? "0s"
+        
+        let presentation = WorkoutSummaryPresentation(duration: durationString,
+                                                      volume: stats.volume,
+                                                      sets: stats.totalSets,
+                                                      date: dateToUse
+        )
+        
+        self.output.workoutStats.send(presentation)
+    }
+    
     private func updateWorkoutName(_ newTitle: String){
         let cleanTitle = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         
         if cleanTitle.isEmpty {
-            workout.name = "New Workout"
+            workout.name = nil
         }else{
             workout.name = cleanTitle
         }

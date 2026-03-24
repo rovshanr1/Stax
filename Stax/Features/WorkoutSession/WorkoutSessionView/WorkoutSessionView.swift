@@ -53,8 +53,10 @@ final class WorkoutSessionView: UIView {
     }
 
     private func setupUI(){
+        backgroundColor = .systemBackground
         addSubview(tableView)
         tableView.separatorStyle = .none
+       
         
         tableView.tableFooterView = footerView
         

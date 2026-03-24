@@ -6,12 +6,9 @@
 //
 
 import Foundation
-import CoreData
 import Combine
 
-//MARK: -
-
-final class HomeVM: NSObject {
+final class HomeVM {
     //MARK: - I/O Structs
     ///Input: "Orders" fromd the VC (Orders)
     struct Input{
@@ -31,16 +28,14 @@ final class HomeVM: NSObject {
     let output: Output
     
     //Repositorys & Services
-    private let workoutRepo: DataRepository<Workout>
+    private let workoutRepo: WorkoutRepositoryInterface
     private let shareService: WorkoutShareServiceProtocol
 
-    //State
-    private var frc: NSFetchedResultsController<Workout>?
     
     //Combine
     private var cancellables = Set<AnyCancellable>()
     
-    init(workoutRepo: DataRepository<Workout>, shareService: WorkoutShareServiceProtocol){
+    init(workoutRepo: WorkoutRepositoryInterface, shareService: WorkoutShareServiceProtocol){
         self.workoutRepo = workoutRepo
         self.shareService = shareService
         
@@ -53,8 +48,8 @@ final class HomeVM: NSObject {
             
         )
         
-        super.init()
         transform()
+        bindRepository()
     }
     
     //MARK: - Transform Method
@@ -62,58 +57,64 @@ final class HomeVM: NSObject {
         input.viewDidLoad
             .sink { [weak self] in
                 guard let self else { return }
-                self.startFeatchedResultsController()
+                self.workoutRepo.fetchWorkouts()
             }
             .store(in: &cancellables)
         input.deleteWorkout
             .sink { [weak self] id in
                 guard let self else { return }
-                self.deleteWorkout(with: id)
+                self.workoutRepo.deleteWorkout(by: id)
             }
             .store(in: &cancellables)
         input.shareWorkout
             .sink { [weak self] id  in
                 guard let self else { return }
-                guard let workout = self.frc?.fetchedObjects?.first(where: { $0.objectID.uriRepresentation().absoluteString == id }) else { return }
-                let shareText = self.shareService.generateShareText(from: workout)
+                guard  let workoutDomain = self.workoutRepo.getWorkout(by: id) else {return}
+                let shareText = self.shareService.generateShareText(from: workoutDomain)
                 self.output.showShareSheet.send(shareText)
             }
             .store(in: &cancellables)
     }
     
-    
-    private func mappingFromFRC() -> [HomeWorkoutPresentationItem] {
-        guard let fw = frc?.fetchedObjects as? [Workout] else {return []}
-        
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        
-        return fw.map { workout in
-            HomeWorkoutPresentationItem(id: workout.objectID.uriRepresentation().absoluteString,
-                                        title: workout.name ?? "",
-                                        dateString: dateFormatter.string(from: workout.date ?? Date()),
-                                        time: formatDuration(seconds: workout.duration),
-                                        volume: String(workout.volume)
-            )
-        }
+    private func bindRepository(){
+        workoutRepo.workoutPublisher
+            .map {domainModels in
+                
+                return domainModels.map { workout in
+                    HomeWorkoutPresentationItem(
+                        id: workout.id,
+                        title: workout.name,
+                        dateString: DateFormatter.localizedString(from: workout.date, dateStyle: .medium, timeStyle: .none),
+                        time: self.formatDuration(seconds: workout.duration),
+                        volume: String(workout.volume),
+                        exerciseSummar: self.generateExerciseSummary(for: workout.workoutExercises),
+                        moreText: workout.workoutExercises.count > 3 ? "+ \(workout.workoutExercises.count - 3) more exercises" : nil
+                    )
+                }
+            }
+            .sink { [weak self] presentationItems in
+                self?.output.workouts.send(presentationItems)
+            }
+            .store(in: &cancellables)
     }
     
-    private func startFeatchedResultsController(){
-        let sort = NSSortDescriptor(key: "date", ascending: false)
-        let predicate = NSPredicate(format: "duration > 0")
+    private func generateExerciseSummary(for exercises: [WorkoutExerciseDomainModel]) -> [ExerciseSummaryItem]{
+        let topExercises = exercises.prefix(3)
+        var summaryItems: [ExerciseSummaryItem] = []
         
-        frc = workoutRepo.makeFetchResultsController(sortDescriptors: [sort], predicate: predicate)
-        frc?.delegate = self
-        
-        do{
-            try frc?.performFetch()
+        for workoutExercise in topExercises{
+            let exerciseName = workoutExercise.exercise?.name ?? "Unknown Exercise"
+            let activeSetsCount = workoutExercise.workoutSets.count
+            let title = "\(activeSetsCount) sets of \(exerciseName)"
             
-            let presentationItems = mappingFromFRC()
-            output.workouts.send(presentationItems)
-        }catch{
-            print("Home FRC Error: \(error)")
+            let item = ExerciseSummaryItem(exerciseName: title, imageURl: nil)
+            summaryItems.append(item)
         }
+ 
+        return summaryItems
     }
+    
+ 
     
     private func formatDuration(seconds: Double) -> String{
         let totalSeconds = Int(seconds)
@@ -127,24 +128,11 @@ final class HomeVM: NSObject {
             return String(format: "%02dh %02dmin %02dsec", hours, minutes, seconds)
         }
     }
-    
-    private func deleteWorkout(with id: String){
-        workoutRepo.delete(by: id)
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
-            .store(in: &cancellables)
-    }
+ 
     
     private func getShareText(for id: String) -> String{
-        guard let workout = frc?.fetchedObjects?.first(where: { $0.objectID.uriRepresentation().absoluteString == id }) else { return "No Workout Found" }
+        guard let workout = workoutRepo.getWorkout(by: id) else { return "Workout not found"}
         
         return shareService.generateShareText(from: workout)
-    }
-}
-
-//MARK: - FRC Delegate Extension
-extension HomeVM: NSFetchedResultsControllerDelegate{
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        output.workouts.send(mappingFromFRC())
     }
 }
