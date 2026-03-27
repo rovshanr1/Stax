@@ -85,7 +85,7 @@ final class HomeVM {
                         id: workout.id,
                         title: workout.name,
                         dateString: DateFormatter.localizedString(from: workout.date, dateStyle: .medium, timeStyle: .none),
-                        time: self.formatDuration(seconds: workout.duration),
+                        time: workout.duration.formatDuration(),
                         volume: String(workout.volume),
                         exerciseSummar: self.generateExerciseSummary(for: workout.workoutExercises),
                         moreText: workout.workoutExercises.count > 3 ? "+ \(workout.workoutExercises.count - 3) more exercises" : nil
