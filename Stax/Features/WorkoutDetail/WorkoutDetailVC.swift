@@ -6,16 +6,19 @@
 //
 
 import UIKit
+import SwiftUI
 import Combine
 
 final class WorkoutDetailVC: UIViewController{
     //MARK: - Diffable Data Source
     nonisolated enum Section: Hashable, Sendable {
         case summary
+        case muscleSplit
         case exercises(id: UUID)
     }
     nonisolated enum RowItem: Hashable, Sendable {
         case summaryInfo(DetailSummaryItems)
+        case muscleSplitChart(MuscleSplitItem)
         case exerciseTitle(DetailExerciseHeaderItem)
         case setDetail(DetailSetRowItem)
     }
@@ -72,6 +75,14 @@ final class WorkoutDetailVC: UIViewController{
             
         }
         
+        let muscleSplitRegistration = UICollectionView.CellRegistration<UICollectionViewCell, MuscleSplitItem> { (cell, indexPath, item) in
+            cell.contentConfiguration = UIHostingConfiguration{
+                MuscleSplitChartView(chartData: item.muscleData)
+            }
+            
+            cell.backgroundColor = .systemBackground
+        }
+        
         let exerciseTitle = UICollectionView.CellRegistration<WorkoutExerciseHeaderCell, DetailExerciseHeaderItem> { (cell, indexPath, item) in
             
             cell.backgroundColor = .systemRed
@@ -88,6 +99,8 @@ final class WorkoutDetailVC: UIViewController{
             switch itemIdentifier{
             case .summaryInfo(let summaryData):
                 return collectionView.dequeueConfiguredReusableCell(using: summaryRegistration, for: indexPath, item: summaryData)
+            case .muscleSplitChart(let splitData):
+                return collectionView.dequeueConfiguredReusableCell(using: muscleSplitRegistration, for: indexPath, item: splitData)
             case .exerciseTitle(let title):
                 return collectionView.dequeueConfiguredReusableCell(using: exerciseTitle, for: indexPath, item: title)
             case .setDetail(let detail):
@@ -114,15 +127,27 @@ final class WorkoutDetailVC: UIViewController{
     }
     
     //MARK: - Update Snapshot
-    private func updateSnapshot(with summaryInfo: [DetailSummaryItems]){
-         var snapshot = Snapshot()
-        snapshot.appendSections([.summary])
-        
-        let summaryInfo = summaryInfo.map { RowItem.summaryInfo($0)}
-        snapshot.appendItems(summaryInfo, toSection: .summary)
-        
-        dataSource.apply(snapshot, animatingDifferences: true)
-    }
+        private func updateSnapshot(with summaryInfo: [DetailSummaryItems]){
+            var snapshot = Snapshot()
+            
+            snapshot.appendSections([.summary, .muscleSplit])
+            
+            
+            let mappedSummaryItems = summaryInfo.map { RowItem.summaryInfo($0) }
+            snapshot.appendItems(mappedSummaryItems, toSection: .summary)
+            
+  
+            let dummyMuscleData = [
+                MuscleData(muscleName: "Chest", percentage: 45.0),
+                MuscleData(muscleName: "Back", percentage: 30.0),
+                MuscleData(muscleName: "Triceps", percentage: 25.0)
+            ]
+            
+            let dummySplitItem = MuscleSplitItem(muscleData: dummyMuscleData)
+            snapshot.appendItems([.muscleSplitChart(dummySplitItem)], toSection: .muscleSplit)
+            
+            dataSource.apply(snapshot, animatingDifferences: true)
+        }
 }
 
 extension WorkoutDetailVC: UICollectionViewDelegate{

@@ -29,3 +29,14 @@ nonisolated struct DetailSetRowItem: Hashable, Sendable{
     let repsString: String
     let isCompleted: Bool
 }
+
+
+nonisolated struct MuscleData: Hashable, Sendable{
+    let muscleName: String
+    let percentage: Double
+}
+
+nonisolated struct MuscleSplitItem: Hashable, Sendable{
+    let id = UUID()
+    let muscleData: [MuscleData]
+}
