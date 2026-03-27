@@ -11,4 +11,5 @@ struct WorkoutStats{
     let duration: TimeInterval
     let volume: Double
     let totalSets: Int
+    let caloriesBurned: Double?
 }

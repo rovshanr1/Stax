@@ -66,8 +66,8 @@ final class WorkoutDetailVM {
                 workoutName: selectedWorkout.name,
                 durationString: selectedWorkout.duration.formatDuration(),
                 volumeString: volumeString,
-                setsLabel: "12",
-                caloriesBurnedString: "300kcal")
+                setsLabel: "\(selectedWorkout.sets)",
+                caloriesBurnedString: "\(selectedWorkout.caloriesBurned)kcal")
             
             output.summaryData.send(summaryItem)
         }else{
