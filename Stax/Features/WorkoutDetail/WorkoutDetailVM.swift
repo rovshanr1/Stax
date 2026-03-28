@@ -19,6 +19,7 @@ final class WorkoutDetailVM {
     struct Output{
         let screenTitle: CurrentValueSubject<String, Never>
         let summaryData: CurrentValueSubject<DetailSummaryItems?, Never>
+        let muscleSplitData: CurrentValueSubject<MuscleSplitItem?, Never>
     }
     
     //MARK: - Properties
@@ -37,7 +38,8 @@ final class WorkoutDetailVM {
         self.input = .init(viewDidLoad: .init())
       
         self.output = .init(screenTitle: .init(""),
-                            summaryData: .init(nil)
+                            summaryData: .init(nil),
+                            muscleSplitData: .init(nil)
         )
         
         transform()
@@ -70,9 +72,39 @@ final class WorkoutDetailVM {
                 caloriesBurnedString: "\(selectedWorkout.caloriesBurned)kcal")
             
             output.summaryData.send(summaryItem)
+            
+            let calculatedMuscleData = self.calculateMuscleSplit(from: selectedWorkout)
+            
+            if !calculatedMuscleData.isEmpty {
+                let splitItem = MuscleSplitItem(muscleData: calculatedMuscleData)
+                self.output.muscleSplitData.send(splitItem)
+            }
         }else{
             print("VM cant find workout with id: \(self.workoutID)")
         }
+    }
+    
+    private func calculateMuscleSplit(from workout: WorkoutDomainModel) -> [MuscleData] {
+        var muscleSetCounts: [String: Int] = [:]
+        var totalValidSets = 0
+        
+        for workoutExercise in workout.workoutExercises {
+            let muscleName = workoutExercise.exercise?.targetMuscleGroups ?? "Unknown"
+            
+            let setCount = workoutExercise.workoutSets.filter {$0.isCompleted}.count
+            
+            muscleSetCounts[muscleName, default: 0] += setCount
+            totalValidSets += setCount
+        }
+        
+        guard totalValidSets > 0 else {return [] }
+        
+        let chartDataArray = muscleSetCounts.map {(muscle, count) -> MuscleData in
+            let percentage = (Double(count) / Double(totalValidSets)) * 100.0
+            return MuscleData(muscleName: muscle, percentage: percentage)
+        }
+        
+        return chartDataArray.sorted { $0.percentage > $1.percentage }
     }
     
     

@@ -27,10 +27,7 @@ struct MuscleSplitChartView: View {
                             .foregroundStyle(.secondary)
                             .fontWeight(.bold)
                     }
-                
-                
-                
-                
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
             }
             .chartXAxis(.hidden)
             .chartYAxis {
@@ -38,11 +35,10 @@ struct MuscleSplitChartView: View {
                     AxisValueLabel()
                 }
             }
-            .frame(height: CGFloat(max(1, chartData.count) * 40))
+            .frame(height: CGFloat(max(1, chartData.count) * 50))
             .chartLegend(.hidden)
             .listRowSeparator(.hidden)
-            
-            
+     
         }
     }
 }

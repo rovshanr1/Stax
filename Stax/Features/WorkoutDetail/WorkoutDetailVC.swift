@@ -112,14 +112,17 @@ final class WorkoutDetailVC: UIViewController{
     
     private func bindViewModel(){
         
-        vm.output.summaryData
-            .compactMap { $0 }
+        Publishers.CombineLatest(vm.output.summaryData, vm.output.muscleSplitData)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] summaryItem in
-                self?.updateSnapshot(with: [summaryItem])
+            .sink { [weak self] summaryInfo, muscleSplit in
+                guard let self = self,
+                      let realSummary = summaryInfo,
+                      let realSplit = muscleSplit else { return }
+                
+                self.updateSnapshot(with: realSummary, muscleSplit: realSplit)
             }
             .store(in: &cancellables)
-        
+            
         
         DispatchQueue.main.async {[weak self] in
             self?.vm.input.viewDidLoad.send()
@@ -127,24 +130,14 @@ final class WorkoutDetailVC: UIViewController{
     }
     
     //MARK: - Update Snapshot
-        private func updateSnapshot(with summaryInfo: [DetailSummaryItems]){
+    private func updateSnapshot(with summaryInfo: DetailSummaryItems,  muscleSplit: MuscleSplitItem){
             var snapshot = Snapshot()
             
             snapshot.appendSections([.summary, .muscleSplit])
             
+            snapshot.appendItems([.summaryInfo(summaryInfo)], toSection: .summary)
+            snapshot.appendItems([.muscleSplitChart(muscleSplit)], toSection: .muscleSplit)
             
-            let mappedSummaryItems = summaryInfo.map { RowItem.summaryInfo($0) }
-            snapshot.appendItems(mappedSummaryItems, toSection: .summary)
-            
-  
-            let dummyMuscleData = [
-                MuscleData(muscleName: "Chest", percentage: 45.0),
-                MuscleData(muscleName: "Back", percentage: 30.0),
-                MuscleData(muscleName: "Triceps", percentage: 25.0)
-            ]
-            
-            let dummySplitItem = MuscleSplitItem(muscleData: dummyMuscleData)
-            snapshot.appendItems([.muscleSplitChart(dummySplitItem)], toSection: .muscleSplit)
             
             dataSource.apply(snapshot, animatingDifferences: true)
         }
