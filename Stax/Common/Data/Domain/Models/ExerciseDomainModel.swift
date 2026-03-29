@@ -10,6 +10,6 @@ import Foundation
 struct ExerciseDomainModel: Hashable, Codable{
     let id: String
     let name: String
-    let targetMuscleGroups: String?
+    let targetMuscleGroups: MuscleGroup?
     let videoURL: String?
 }

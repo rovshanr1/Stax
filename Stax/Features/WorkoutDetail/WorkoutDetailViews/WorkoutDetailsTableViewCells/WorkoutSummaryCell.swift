@@ -24,7 +24,11 @@ final class WorkoutSummaryCell: UICollectionViewCell {
         contentView.addSubview(summaryCell)
         
         summaryCell.snp.makeConstraints { (make) in
-            make.edges.equalTo(contentView).inset(16)
+            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 12,
+                                                               left: 16,
+                                                               bottom: 4,
+                                                               right: 16)
+            )
         }
     }
     

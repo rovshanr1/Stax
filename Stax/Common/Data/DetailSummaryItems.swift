@@ -20,6 +20,7 @@ nonisolated struct DetailExerciseHeaderItem: Hashable, Sendable {
     let id = UUID()
     let exerciseName: String
     let muscleGroups: [String]?
+    let imageURL: String?
 }
 
 nonisolated struct DetailSetRowItem: Hashable, Sendable{
@@ -31,12 +32,4 @@ nonisolated struct DetailSetRowItem: Hashable, Sendable{
 }
 
 
-nonisolated struct MuscleData: Hashable, Sendable{
-    let muscleName: String
-    let percentage: Double
-}
 
-nonisolated struct MuscleSplitItem: Hashable, Sendable{
-    let id = UUID()
-    let muscleData: [MuscleData]
-}

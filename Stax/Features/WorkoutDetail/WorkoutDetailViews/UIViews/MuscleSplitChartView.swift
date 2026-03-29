@@ -39,6 +39,8 @@ struct MuscleSplitChartView: View {
             .chartLegend(.hidden)
             .listRowSeparator(.hidden)
      
+            Divider()
+                .background(Color(uiColor: .separator))
         }
     }
 }

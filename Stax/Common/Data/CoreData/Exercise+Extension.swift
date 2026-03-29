@@ -10,10 +10,14 @@ import CoreData
 
 extension Exercise{
     func toDomain() -> ExerciseDomainModel {
-        ExerciseDomainModel(
+        
+        let rawMuscleString = self.targetMuscle ?? ""
+        let safeMusleGroup = MuscleGroup(rawValue: rawMuscleString) ?? .other
+        
+       return ExerciseDomainModel(
             id: self.objectID.uriRepresentation().absoluteString,
             name: self.name ?? "",
-            targetMuscleGroups: self.targetMuscle,
+            targetMuscleGroups: safeMusleGroup,
             videoURL: self.videoURL ?? ""
         )
     }

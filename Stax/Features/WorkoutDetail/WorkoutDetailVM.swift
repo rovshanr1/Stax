@@ -20,6 +20,7 @@ final class WorkoutDetailVM {
         let screenTitle: CurrentValueSubject<String, Never>
         let summaryData: CurrentValueSubject<DetailSummaryItems?, Never>
         let muscleSplitData: CurrentValueSubject<MuscleSplitItem?, Never>
+        let exerciseData: CurrentValueSubject<[ExerciseSectionData]?, Never>
     }
     
     //MARK: - Properties
@@ -36,10 +37,11 @@ final class WorkoutDetailVM {
         self.workoutRepo = workoutRepo
         
         self.input = .init(viewDidLoad: .init())
-      
+        
         self.output = .init(screenTitle: .init(""),
                             summaryData: .init(nil),
-                            muscleSplitData: .init(nil)
+                            muscleSplitData: .init(nil),
+                            exerciseData: .init(nil)
         )
         
         transform()
@@ -60,52 +62,62 @@ final class WorkoutDetailVM {
     private func getWorkoutDetails(){
         self.workoutRepo.fetchWorkouts()
         
-        if let selectedWorkout = self.workoutRepo.getWorkout(by: self.workoutID) {
-            
-            let volumeString = "\(selectedWorkout.volume) kg"
-            
-            let summaryItem = DetailSummaryItems(
-                workoutName: selectedWorkout.name,
-                durationString: selectedWorkout.duration.formatDuration(),
-                volumeString: volumeString,
-                setsLabel: "\(selectedWorkout.sets)",
-                caloriesBurnedString: "\(selectedWorkout.caloriesBurned)kcal")
-            
-            output.summaryData.send(summaryItem)
-            
-            let calculatedMuscleData = self.calculateMuscleSplit(from: selectedWorkout)
-            
-            if !calculatedMuscleData.isEmpty {
-                let splitItem = MuscleSplitItem(muscleData: calculatedMuscleData)
-                self.output.muscleSplitData.send(splitItem)
-            }
-        }else{
-            print("VM cant find workout with id: \(self.workoutID)")
+        guard let selectedWorkout = self.workoutRepo.getWorkout(by: self.workoutID) else {
+            print(("VM cant find workout with id: \(self.workoutID)"))
+            return
         }
+        
+        let summaryItem  = createSummaryItem(from: selectedWorkout)
+        output.summaryData.send(summaryItem)
+        
+        let realMuscleData = MuscleSplitCalculation.calculateMuscleSplit(from: selectedWorkout)
+        if !realMuscleData.isEmpty {
+            self.output.muscleSplitData.send(MuscleSplitItem(muscleData: realMuscleData))
+        }
+        
+        let exerciseSection = createExerciseSections(from: selectedWorkout)
+        output.exerciseData.send(exerciseSection)
     }
     
-    private func calculateMuscleSplit(from workout: WorkoutDomainModel) -> [MuscleData] {
-        var muscleSetCounts: [String: Int] = [:]
-        var totalValidSets = 0
+    private func createSummaryItem(from workout: WorkoutDomainModel) -> DetailSummaryItems {
+        return  DetailSummaryItems(
+            workoutName: workout.name,
+            durationString: workout.duration.formatDuration(),
+            volumeString: "\(workout.volume) kg",
+            setsLabel: "\(workout.sets)",
+            caloriesBurnedString: "\(workout.caloriesBurned)kcal")
+    }
+    
+    private func createExerciseSections(from workout: WorkoutDomainModel) -> [ExerciseSectionData] {
+        var section: [ExerciseSectionData] = []
         
         for workoutExercise in workout.workoutExercises {
-            let muscleName = workoutExercise.exercise?.targetMuscleGroups ?? "Unknown"
+            let exerciseName = workoutExercise.exercise?.name ?? ""
+            let muscleName = workoutExercise.exercise?.targetMuscleGroups?.rawValue
             
-            let setCount = workoutExercise.workoutSets.filter {$0.isCompleted}.count
+            let headerItem = DetailExerciseHeaderItem(
+                exerciseName: exerciseName,
+                muscleGroups: muscleName != nil ? [muscleName!] : nil,
+                imageURL: nil)
             
-            muscleSetCounts[muscleName, default: 0] += setCount
-            totalValidSets += setCount
+            var setRowItems: [DetailSetRowItem] = []
+            
+            let sortedSets = workoutExercise.workoutSets.sorted {$0.orderIndex < $1.orderIndex }
+            
+            for (index, set) in sortedSets.enumerated() {
+                let weightStr = floor(set.weight) == set.weight ? "\(Int(set.weight))" : String(format: "%.1f", set.weight)
+                let setItem = DetailSetRowItem(
+                    setIndex: index + 1,
+                    weightString: "\(weightStr) kg",
+                    repsString: "\(set.reps)",
+                    isCompleted: set.isCompleted)
+                setRowItems.append(setItem)
+            }
+            
+            let sectionData = ExerciseSectionData(headerItem: headerItem, items: setRowItems)
+            section.append(sectionData)
         }
         
-        guard totalValidSets > 0 else {return [] }
-        
-        let chartDataArray = muscleSetCounts.map {(muscle, count) -> MuscleData in
-            let percentage = (Double(count) / Double(totalValidSets)) * 100.0
-            return MuscleData(muscleName: muscle, percentage: percentage)
-        }
-        
-        return chartDataArray.sorted { $0.percentage > $1.percentage }
+        return section
     }
-    
-    
 }

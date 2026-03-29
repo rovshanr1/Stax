@@ -96,7 +96,7 @@ class HomeTableViewCell: UITableViewCell {
         exerciseStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         
         for exerciseItem in exercise{
-            let exerciseView = HomeWorkoutView()
+            let exerciseView = ExerciseInfoView()
             exerciseView.configure(title: exerciseItem.exerciseName, image: exerciseItem.imageURl)
             
             exerciseStackView.addArrangedSubview(exerciseView)
