@@ -9,7 +9,7 @@ import UIKit
 import Combine
 
 class HomeVC: UIViewController {
-    //MARK: - Diffable DataSource
+    //MARK: - Diffable Data Source
     nonisolated enum Section: CaseIterable, Sendable {case main}
     nonisolated enum RowItem: Hashable, Sendable {case workout(HomeWorkoutPresentationItem)}
     
@@ -27,7 +27,7 @@ class HomeVC: UIViewController {
     var vm: HomeVM!
     
     //private properties
-    private let contentView = HomeUiView()
+    private let contentView = HomeUIView()
     private var dataSource: DataSource!
     private var cancellables = Set<AnyCancellable>()
     

@@ -11,7 +11,7 @@ import HealthKit
 protocol HealthKitServiceInterface{
     var isAvailable: Bool { get }
     func requestAuthorization(completion: @escaping (Bool, Error?) -> Void)
-    func saveWorkout(duration: TimeInterval, volume: Double, sets: Int, date: Date, completion: @escaping (Bool, Error?) -> Void)
+    func saveWorkout(duration: TimeInterval, volume: Double, sets: Int, calories: Double, date: Date, completion: @escaping (Bool, Error?) -> Void)
 }
 
 final class HealthKitService: HealthKitServiceInterface{
@@ -61,7 +61,7 @@ final class HealthKitService: HealthKitServiceInterface{
         }
     }
     
-    func saveWorkout(duration: TimeInterval, volume: Double, sets: Int, date: Date, completion: @escaping (Bool, (any Error)?) -> Void) {
+    func saveWorkout(duration: TimeInterval, volume: Double, sets: Int,calories: Double, date: Date, completion: @escaping (Bool, (any Error)?) -> Void) {
         //Date calculation
         let endDate = date
         let startDate = endDate.addingTimeInterval( -duration )
@@ -80,15 +80,11 @@ final class HealthKitService: HealthKitServiceInterface{
                 return
             }
             
-            // Calorie sample
-            let durationInMinutes = duration / 60.0
-            let estimatedCalories = durationInMinutes * 5.0
-            
             guard let activeEnergyBurnedType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
                 completion(false, NSError(domain: "Stax", code: 3, userInfo: [NSLocalizedDescriptionKey: "Type Error"]))
                 return
             }
-            let energyBurnedQuantity = HKQuantity(unit: .kilocalorie(), doubleValue: estimatedCalories)
+            let energyBurnedQuantity = HKQuantity(unit: .kilocalorie(), doubleValue: calories)
             
             
             let energySample = HKQuantitySample(
@@ -127,7 +123,7 @@ final class HealthKitService: HealthKitServiceInterface{
                     
                     hKWorkoutBuilder.finishWorkout { (workout, error) in
                         if workout != nil {
-                            print("Calorie: \(estimatedCalories)")
+                            print("Calorie: \(calories)")
                             completion(true, nil)
                         }else{
                             print("Builder finish workout error: \(error?.localizedDescription ?? "Unknown error")")

@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 import Kingfisher
 
-class HomeWorkoutView: UIView {
+final class ExerciseInfoView: UIView {
     
     private var exerciseNameLabel: UILabel = {
        let label = UILabel()
@@ -35,12 +35,6 @@ class HomeWorkoutView: UIView {
         return stackView
     }()
     
-    private lazy var mainStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [stackView])
-        stackView.axis = .vertical
-        stackView.spacing = 12
-        return stackView
-    }()
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -58,7 +52,7 @@ class HomeWorkoutView: UIView {
         }
         
         exerciseImage.snp.makeConstraints { make in
-            make.width.height.equalTo(60)
+            make.width.height.equalTo(60).priority(999)
         }
         
         exerciseImage.layer.cornerRadius = 30

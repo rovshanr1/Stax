@@ -8,14 +8,21 @@
 import UIKit
 import SnapKit
 
-class WorkoutDetailView: UIView {
+final class WorkoutDetailView: UIView {
     
-    private let tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.register(WorkoutDetailTableViewCell.self, forCellReuseIdentifier: WorkoutDetailTableViewCell.identifier)
-        return tableView
+    private static func createLayout() -> UICollectionViewCompositionalLayout{
+        var config = UICollectionLayoutListConfiguration(appearance: .plain)
+        config.showsSeparators = false
+        return UICollectionViewCompositionalLayout.list(using: config)
+    }
+    
+    let collectionView: UICollectionView = {
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
+        collectionView.backgroundColor = .systemBackground
+        
+        return collectionView
     }()
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -26,10 +33,10 @@ class WorkoutDetailView: UIView {
     }
     
     private func setupUI(){
-        addSubview(tableView)
+        addSubview(collectionView)
         backgroundColor = .systemBackground
         
-        tableView.snp.makeConstraints { make in
+        collectionView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
     }

@@ -39,9 +39,11 @@ final class WorkoutDetailCoordinator: Coordinator{
         let workoutDetailVC = WorkoutDetailVC()
         
         //Repo injection
+        let genericRepo = DataRepository<Workout>(context: context)
+        let workoutRepo = WorkoutRepository(genericRoository: genericRepo)
         
         //VM injection
-        self.vm = WorkoutDetailVM()
+        self.vm = WorkoutDetailVM(workoutID: workoutID, workoutRepo: workoutRepo)
         workoutDetailVC.vm = self.vm
         
         workoutDetailVC.didSendEventClosure = {[weak self] event in

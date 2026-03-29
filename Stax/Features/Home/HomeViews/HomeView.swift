@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class HomeUiView: UIView {
+class HomeUIView: UIView {
     var headerMoreButtonOnTap: (() -> Void)?
 
     let tableView: UITableView = {

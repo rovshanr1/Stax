@@ -129,8 +129,13 @@ final class WorkoutSessionViewModel: NSObject{
                 
                 self.timerService.stop()
                 
-                workout.duration = Double(self.timerService.seconsElapsed)
+                let finalDuration = Double(self.timerService.seconsElapsed)
+                let estimatedCalories = (finalDuration / 60.0) * 6.0
+                
+                workout.duration = finalDuration
                 workout.volume = self.currentStats.volume
+                workout.sets = Int16(self.currentStats.sets)
+                workout.calories = Int16(estimatedCalories)
                 self.output.finishWorkoutEvent.send()
             }
             .store(in: &cancellables)

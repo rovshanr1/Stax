@@ -97,18 +97,7 @@ final class WorkoutSummaryViewModel{
                 }
             }, receiveValue: { [weak self] _ in
                 guard let self else { return }
-                if self.preferencesService.isHealthKitSyncEnabled {
-                    self.healthKitService?.saveWorkout(
-                        duration: self.stats.duration,
-                        volume: self.stats.volume,
-                        sets: self.stats.totalSets,
-                        date: self.workout.date ?? Date()) { success, error in
-                            DispatchQueue.main.async {
-                                self.output.finished.send()
-                            }
-                        }}else{
-                            self.output.finished.send()
-                        }
+                self.updateHelathKit()
                 
             })
             .store(in: &self.cancellables)
@@ -195,5 +184,21 @@ final class WorkoutSummaryViewModel{
         }else{
             workout.workoutDescription = cleanDescription
         }
+    }
+    
+    private func updateHelathKit(){
+        if self.preferencesService.isHealthKitSyncEnabled {
+            self.healthKitService?.saveWorkout(
+                duration: self.stats.duration,
+                volume: self.stats.volume,
+                sets: self.stats.totalSets,
+                calories: Double(self.workout.calories),
+                date: self.workout.date ?? Date()) { success, error in
+                    DispatchQueue.main.async {
+                        self.output.finished.send()
+                    }
+                }}else{
+                    self.output.finished.send()
+                }
     }
 }

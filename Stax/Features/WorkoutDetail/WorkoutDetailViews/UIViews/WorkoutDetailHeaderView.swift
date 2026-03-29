@@ -118,7 +118,7 @@ class WorkoutDetailHeaderView: UIView {
     }()
     
     private lazy var informationStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [timeStackView, volumeStackView, setsStackView, caloriesLabel])
+        let stackView = UIStackView(arrangedSubviews: [timeStackView, volumeStackView, setsStackView])
         stackView.axis = .horizontal
         stackView.distribution = .fillEqually
         stackView.spacing = 4
@@ -126,14 +126,11 @@ class WorkoutDetailHeaderView: UIView {
     }()
     
     private lazy var mainStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [workoutTitleLabel, separatorView, informationStackView])
+        let stackView = UIStackView(arrangedSubviews: [workoutTitleLabel, informationStackView, caloriesStackView, separatorView])
         stackView.axis = .vertical
-        stackView.spacing = 16
+        stackView.spacing = 8
         return stackView
     }()
-    
-    
-   
     
     
     override init(frame: CGRect) {
@@ -153,6 +150,18 @@ class WorkoutDetailHeaderView: UIView {
         mainStackView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
+        
+        separatorView.snp.makeConstraints { make in
+            make.height.equalTo(1)
+        }
+    }
+    
+    func configureDetailHeader(title: String, time: String, volume: String, sets: String, calories: String? ){
+        workoutTitleLabel.text = title
+        timeValueLabel.text = time
+        volumeValueLabel.text = volume
+        setsValueLabel.text = sets
+        caloriesValueLabel.text = calories
     }
     
 }

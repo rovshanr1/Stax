@@ -121,7 +121,8 @@ final class WorkoutSessionCoordinator: Coordinator{
         let summaryStats = WorkoutStats(
             duration: TimeInterval(duration),
             volume: stats.volume,
-            totalSets: stats.sets
+            totalSets: stats.sets,
+            caloriesBurned: nil
         )
         
         let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout, stats: summaryStats)

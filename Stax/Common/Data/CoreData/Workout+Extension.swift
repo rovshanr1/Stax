@@ -23,6 +23,8 @@ extension Workout{
             volume: self.volume,
             workoutDescription: self.workoutDescription,
             date: self.date ?? Date(),
+            caloriesBurned: self.calories,
+            sets: self.sets,
             workoutExercises: sortedExerciseDomain)
     }
 }

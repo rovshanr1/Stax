@@ -14,6 +14,8 @@ struct WorkoutDomainModel: Hashable, Codable {
     let volume: Double
     let workoutDescription: String?
     let date: Date
+    let caloriesBurned: Int16
+    let sets: Int16
     
     //relationships
     let workoutExercises: [WorkoutExerciseDomainModel]
