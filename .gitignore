@@ -32,3 +32,5 @@ Carthage/Build/
 *.swp
 *.lock
 
+# Plist
+GoogleService-Info.plist

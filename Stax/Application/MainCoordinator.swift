@@ -10,7 +10,7 @@ import CoreData
 
 //MARK: - MainCoordinator
 protocol MainCoordinatorProtocol: Coordinator{
-    func onboardingFlow()
+    func authFlow()
     func showMainFlow()
 }
 
@@ -32,10 +32,17 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func start() {
+        
+        if let _ = KeychainHelper.shared.read(){
+            showMainFlow()
+        }else{
+            authFlow()
+        }
+        
        showMainFlow()
     }
     
-    func onboardingFlow() {
+    func authFlow() {
         print("onboarding flow")
     }
     
@@ -57,8 +64,10 @@ extension MainCoordinator: CoordinatorFinishDelegate{
         switch childCoordinator.type {
         case .tab:
             navigationController.viewControllers.removeAll()
+            authFlow()
+        case .auth:
+            navigationController.viewControllers.removeAll()
             showMainFlow()
-            
         default:
             break
         }
