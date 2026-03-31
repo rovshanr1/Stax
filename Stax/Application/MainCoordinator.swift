@@ -17,13 +17,9 @@ protocol MainCoordinatorProtocol: Coordinator{
 
 class MainCoordinator: MainCoordinatorProtocol{
     weak var finishDelegate: CoordinatorFinishDelegate? = nil
-    
     var childCoordinators = [Coordinator]()
-    
     var navigationController: UINavigationController
-    
     var type: CoordinatorType { return .app }
-    
     let context: NSManagedObjectContext
     
     init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
@@ -32,18 +28,19 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func start() {
-        
         if let _ = KeychainHelper.shared.read(){
             showMainFlow()
         }else{
             authFlow()
         }
-        
-       showMainFlow()
     }
     
     func authFlow() {
-        print("onboarding flow")
+        let authCoordinator = AuthCoordinator(navigationController, context: context)
+        authCoordinator.finishDelegate = self
+        authCoordinator.start()
+        navigationController.setNavigationBarHidden(true, animated: false)
+        childCoordinators.append(authCoordinator)
     }
     
     func showMainFlow() {
@@ -60,7 +57,6 @@ class MainCoordinator: MainCoordinatorProtocol{
 extension MainCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({ $0 !== childCoordinator})
-        
         switch childCoordinator.type {
         case .tab:
             navigationController.viewControllers.removeAll()
