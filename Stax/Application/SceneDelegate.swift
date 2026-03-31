@@ -8,6 +8,7 @@
 import UIKit
 import CoreData
 
+
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
@@ -33,7 +34,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         coordinator = MainCoordinator.init(navigationViewController, context: context)
         coordinator?.start()
-        
 
     }
 

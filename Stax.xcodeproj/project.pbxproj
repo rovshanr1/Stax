@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		447A78322F7B24F000C1FDA0 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 447A78312F7B24F000C1FDA0 /* FirebaseAuth */; };
+		447A78342F7B24F000C1FDA0 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 447A78332F7B24F000C1FDA0 /* FirebaseCore */; };
+		447A78362F7B24F000C1FDA0 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 447A78352F7B24F000C1FDA0 /* FirebaseFirestore */; };
 		448A77562EF496DE00AF19E2 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 448A77552EF496DE00AF19E2 /* Kingfisher */; };
 		44AEDA052EDE3F8600C33816 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 44AEDA042EDE3F8600C33816 /* SnapKit */; };
 /* End PBXBuildFile section */
@@ -55,6 +58,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				448A77562EF496DE00AF19E2 /* Kingfisher in Frameworks */,
+				447A78322F7B24F000C1FDA0 /* FirebaseAuth in Frameworks */,
+				447A78342F7B24F000C1FDA0 /* FirebaseCore in Frameworks */,
+				447A78362F7B24F000C1FDA0 /* FirebaseFirestore in Frameworks */,
 				44AEDA052EDE3F8600C33816 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -101,6 +107,9 @@
 			packageProductDependencies = (
 				44AEDA042EDE3F8600C33816 /* SnapKit */,
 				448A77552EF496DE00AF19E2 /* Kingfisher */,
+				447A78312F7B24F000C1FDA0 /* FirebaseAuth */,
+				447A78332F7B24F000C1FDA0 /* FirebaseCore */,
+				447A78352F7B24F000C1FDA0 /* FirebaseFirestore */,
 			);
 			productName = Stax;
 			productReference = 44AED9AA2ED4E25700C33816 /* Stax.app */;
@@ -133,6 +142,7 @@
 			packageReferences = (
 				44AEDA032EDE3F8600C33816 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				448A77542EF496DE00AF19E2 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				447A78302F7B24F000C1FDA0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 44AED9AB2ED4E25700C33816 /* Products */;
@@ -386,6 +396,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		447A78302F7B24F000C1FDA0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.11.0;
+			};
+		};
 		448A77542EF496DE00AF19E2 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
@@ -405,6 +423,21 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		447A78312F7B24F000C1FDA0 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 447A78302F7B24F000C1FDA0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		447A78332F7B24F000C1FDA0 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 447A78302F7B24F000C1FDA0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		447A78352F7B24F000C1FDA0 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 447A78302F7B24F000C1FDA0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
 		448A77552EF496DE00AF19E2 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 448A77542EF496DE00AF19E2 /* XCRemoteSwiftPackageReference "Kingfisher" */;
