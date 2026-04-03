@@ -15,17 +15,26 @@ enum WelcomeEventsFlow{
 class WelcomeVC: UIViewController {
     
     //Closures
-    var didSendEventClosure: ((WelcomeEventsFlow) -> Void)?
+    var onToLogin: (() -> Void)?
     
     //ViewModel
     var vm: WelcomeVM!
     
-    //Coordinator
-    weak var authCoordinator: AuthCoordinator?
+    private let welcomeView = WelcomeView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        view.backgroundColor = .red
+        
+        setupBind()
+    }
+    
+    override func loadView() {
+        self.view = welcomeView
+    }
+    
+    private func setupBind(){
+        welcomeView.onGetStartedTapped = { [weak self] in
+            self?.onToLogin?()
+        }
     }
 }

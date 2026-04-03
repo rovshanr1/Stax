@@ -61,7 +61,11 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
         let vm = WelcomeVM()
         let welcomeVC = WelcomeVC()
         welcomeVC.vm = vm
-        welcomeVC.authCoordinator = self
+        
+        welcomeVC.onToLogin = { [weak self] in
+            self?.navigate(to: .login)
+        }
+        
         navigationController.setViewControllers([welcomeVC], animated: false)
     }
     
