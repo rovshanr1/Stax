@@ -37,6 +37,7 @@ class WorkoutSessionVC: UIViewController {
     private var dataSource: DataSource!
     private var sessionExercise: [WorkoutExercise] = []
     private var isViewApeared: Bool = false
+    private var keyboardManager: KeyboardManager?
     
     
     override func viewDidLoad() {
@@ -45,9 +46,10 @@ class WorkoutSessionVC: UIViewController {
         configureDataSource()
         bindVM()
         bindEvents()
-        setupKeyboardObserver()
+        
        
         
+        keyboardManager = KeyboardManager(scrollView: contentView.tableView)
         contentView.tableView.keyboardDismissMode = .onDrag
     }
     
@@ -313,35 +315,35 @@ extension WorkoutSessionVC{
 }
 
 //MARK: - Keyboard Handling
-extension WorkoutSessionVC {
-    private func setupKeyboardObserver() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
-    
-    @objc private func keyboardWillShow(_ notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-        
-        let extraBuffer: CGFloat = 50
-        let bottomPadding = keyboardFrame.height + extraBuffer
-        
-        var contentInset = contentView.tableView.contentInset
-        contentInset.bottom = bottomPadding
-        
-        var scrollIndicatorInsets = contentView.tableView.verticalScrollIndicatorInsets
-        scrollIndicatorInsets.bottom = bottomPadding
-        
-        UIView.animate(withDuration: 0.3) {
-            self.contentView.tableView.contentInset = contentInset
-            self.contentView.tableView.verticalScrollIndicatorInsets = scrollIndicatorInsets
-        }
-    }
-    
-    @objc private func keyboardWillHide(_ notification: Notification) {
-        let contentInset = UIEdgeInsets.zero
-        contentView.tableView.contentInset = contentInset
-        contentView.tableView.verticalScrollIndicatorInsets = contentInset
-    }
-    
-}
+//extension WorkoutSessionVC {
+//    private func setupKeyboardObserver() {
+//        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+//        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+//    }
+//    
+//    @objc private func keyboardWillShow(_ notification: Notification) {
+//        guard let userInfo = notification.userInfo,
+//              let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+//        
+//        let extraBuffer: CGFloat = 50
+//        let bottomPadding = keyboardFrame.height + extraBuffer
+//        
+//        var contentInset = contentView.tableView.contentInset
+//        contentInset.bottom = bottomPadding
+//        
+//        var scrollIndicatorInsets = contentView.tableView.verticalScrollIndicatorInsets
+//        scrollIndicatorInsets.bottom = bottomPadding
+//        
+//        UIView.animate(withDuration: 0.3) {
+//            self.contentView.tableView.contentInset = contentInset
+//            self.contentView.tableView.verticalScrollIndicatorInsets = scrollIndicatorInsets
+//        }
+//    }
+//    
+//    @objc private func keyboardWillHide(_ notification: Notification) {
+//        let contentInset = UIEdgeInsets.zero
+//        contentView.tableView.contentInset = contentInset
+//        contentView.tableView.verticalScrollIndicatorInsets = contentInset
+//    }
+//    
+//}

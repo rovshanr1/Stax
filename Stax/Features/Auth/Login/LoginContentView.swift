@@ -132,18 +132,16 @@ class LoginContentView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesBegan(touches, with: event)
-        self.endEditing(true)
-    }
-    
     private func setupUI() {
         addSubview(mainStackView)
         
         mainStackView.snp.makeConstraints { (make) in
-            make.top.equalTo(safeAreaLayoutGuide.snp.top).offset(100)
+            make.top.equalToSuperview().offset(100)
             
             make.leading.trailing.equalToSuperview().inset(24)
+            
+            make.bottom.equalToSuperview().offset(-20)
+            
         }
         
         emailTextField.snp.makeConstraints { (make) in

@@ -6,15 +6,45 @@
 //
 
 import UIKit
+import SnapKit
 
 class LoginView: UIView {
+    
+    private var keyboardManager: KeyboardManager?
+    
+    private let scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.keyboardDismissMode = .interactive
+        scrollView.alwaysBounceVertical = true
+        return scrollView
+    }()
+    
+    private let contentView = LoginContentView()
 
-    /*
-    // Only override draw() if you perform custom drawing.
-    // An empty implementation adversely affects performance during animation.
-    override func draw(_ rect: CGRect) {
-        // Drawing code
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
     }
-    */
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
+    private func setupUI(){
+        addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        scrollView.snp.makeConstraints { (make) in
+            make.edges.equalTo(safeAreaLayoutGuide)
+        }
+        
+        contentView.snp.makeConstraints { (make) in
+            make.edges.equalToSuperview()
+            make.width.equalTo(scrollView.snp.width)
+        }
+        
+        keyboardManager = KeyboardManager(scrollView: scrollView)
+    }
 }
+

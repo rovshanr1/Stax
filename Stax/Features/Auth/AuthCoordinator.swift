@@ -73,10 +73,8 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
         
         let vm = LoginVM(authService: authService)
         
-        let loginVC = LoginVC()
-        loginVC.vm = vm
+        let loginVC = LoginVC(vm: vm)
         
-        loginVC.coordinator = self
         
         navigationController.pushViewController(loginVC, animated: true)
     }
