@@ -75,6 +75,9 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
         
         let loginVC = LoginVC(vm: vm)
         
+        loginVC.tappedSignUp = { [weak self] in
+            self?.showSignUpScreen( )
+        }
         
         navigationController.pushViewController(loginVC, animated: true)
     }
@@ -93,6 +96,7 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
     func didFinishAuth() {
         finish()
     }
+    
 }
 
 extension AuthCoordinator: CoordinatorFinishDelegate {

@@ -10,6 +10,8 @@ import SnapKit
 
 class LoginContentView: UIView {
     
+    var onTappedSignUp: (() -> Void)?
+    
     private let loginText: UILabel = {
         let label = UILabel()
         label.text = "Login"
@@ -28,6 +30,8 @@ class LoginContentView: UIView {
         textField.layer.borderColor = UIColor.secondaryLabel.cgColor
         textField.layer.cornerRadius = 12
         textField.returnKeyType = .next
+        textField.autocorrectionType = .no
+        
         
         let iconView = UIImageView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
         iconView.image = UIImage(systemName: "envelope.fill")
@@ -55,6 +59,7 @@ class LoginContentView: UIView {
         textField.isSecureTextEntry = true
         textField.returnKeyType = .done
         
+        
         let iconView = UIImageView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
         iconView.image = UIImage(systemName: "lock.fill")
         iconView.tintColor = .secondaryLabel
@@ -81,7 +86,7 @@ class LoginContentView: UIView {
         config.title = "Forgot Password?"
         config.baseBackgroundColor = .clear
         config.baseForegroundColor = .secondaryLabel
-        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0)
+        config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0)
         
         let button = UIButton()
         button.configuration = config
@@ -102,6 +107,62 @@ class LoginContentView: UIView {
         return button
     }()
     
+    private let orText: UITextField = {
+        let textField = UITextField()
+        textField.text = "Or Sign Up With"
+        textField.font = .systemFont(ofSize: 14, weight: .regular)
+        textField.textColor = .secondaryLabel
+        textField.textAlignment = .center
+        textField.isUserInteractionEnabled = false
+        return textField
+    }()
+    
+    private let signUp: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.title = "Sign Up"
+        config.baseBackgroundColor = .clear
+        config.baseForegroundColor = .label
+        
+        let button = UIButton()
+        button.configuration = config
+        button.contentHorizontalAlignment = .center
+        
+        return button
+    }()
+    
+    private lazy var orStackView: UIStackView = {
+        let leftLine = UIView()
+        leftLine.backgroundColor = .separator
+        leftLine.snp.makeConstraints { (make) in
+            make.height.equalTo(1)
+        }
+        
+        let rightLine = UIView()
+        rightLine.backgroundColor = .separator
+        rightLine.snp.makeConstraints { (make) in
+            make.height.equalTo(1)
+        }
+        
+        let stackView = UIStackView(arrangedSubviews: [leftLine, orText, rightLine])
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.spacing = 16
+        
+        
+        leftLine.snp.makeConstraints { make in
+            make.width.equalTo(rightLine.snp.width)
+        }
+        
+        return stackView
+    }()
+    
+    
+    private lazy var signUpStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [orStackView, signUp])
+        stackView.axis = .vertical
+        stackView.spacing = 16
+        return stackView
+    }()
     
     private lazy var textFieldStack: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [emailTextField, passwordTextField, forgotPassword])
@@ -113,7 +174,7 @@ class LoginContentView: UIView {
     
     
     private lazy var mainStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [loginText, textFieldStack, loginButton])
+        let stackView = UIStackView(arrangedSubviews: [loginText, textFieldStack, loginButton, signUpStackView])
         stackView.axis = .vertical
         stackView.spacing = 32
         stackView.alignment = .fill
@@ -125,7 +186,7 @@ class LoginContentView: UIView {
         super.init(frame: frame)
         self.backgroundColor = .systemBackground
         setupUI()
-        
+        bindAction()
     }
     
     required init?(coder: NSCoder) {
@@ -134,6 +195,9 @@ class LoginContentView: UIView {
     
     private func setupUI() {
         addSubview(mainStackView)
+        
+        emailTextField.delegate = self
+        passwordTextField.delegate = self
         
         mainStackView.snp.makeConstraints { (make) in
             make.top.equalToSuperview().offset(100)
@@ -158,4 +222,26 @@ class LoginContentView: UIView {
     }
     
     
+    private func bindAction() {
+        signUp.addTarget(self, action: #selector(handleSignUp), for: .touchUpInside)
+    }
+    
+    
+    @objc private func handleSignUp() {
+        onTappedSignUp?()
+        print("sign up")
+    }
+}
+
+
+extension LoginContentView: UITextFieldDelegate{
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField == emailTextField {
+            passwordTextField.becomeFirstResponder()
+        }else if textField == passwordTextField {
+            textField.resignFirstResponder()
+        }
+        
+        return true
+    }
 }

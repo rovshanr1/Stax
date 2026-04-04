@@ -42,11 +42,11 @@ final class LoginVM{
     
     
     private func transform(){
-        input.viewDidLoad
-            .sink { [weak self] in
-                guard let self else { return }
-            }
-            .store(in: &cancellables)
+//        input.viewDidLoad
+//            .sink { [weak self] in
+//                guard let self else { return }
+//            }
+//            .store(in: &cancellables)
     }
 
     

@@ -8,6 +8,8 @@
 import UIKit
 
 class LoginVC: UIViewController {
+    //Closures
+    var tappedSignUp: (() -> Void)?
 
     //ViewModel
     var vm: LoginVM
@@ -17,8 +19,9 @@ class LoginVC: UIViewController {
     
     init(vm: LoginVM) {
         self.vm = vm
-        
         super.init(nibName: nil, bundle: nil)
+        
+        bindActions()
     }
     
     required init?(coder: NSCoder) {
@@ -33,4 +36,9 @@ class LoginVC: UIViewController {
         self.view = contentView
     }
 
+    private func bindActions() {
+        contentView.onTapSignUp = { [weak self] in
+            self?.tappedSignUp?()
+        }
+    }
 }

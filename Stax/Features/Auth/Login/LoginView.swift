@@ -10,6 +10,10 @@ import SnapKit
 
 class LoginView: UIView {
     
+    //Closurese
+    var onTapSignUp: (() -> Void)?
+    
+    
     private var keyboardManager: KeyboardManager?
     
     private let scrollView: UIScrollView = {
@@ -25,6 +29,7 @@ class LoginView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
+        bindActions()
     }
     
     required init?(coder: NSCoder) {
@@ -45,6 +50,12 @@ class LoginView: UIView {
         }
         
         keyboardManager = KeyboardManager(scrollView: scrollView)
+    }
+    
+    private func bindActions(){
+        contentView.onTappedSignUp = { [weak self] in
+            self?.onTapSignUp?()
+        }
     }
 }
 
