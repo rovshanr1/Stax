@@ -12,7 +12,9 @@ class LoginView: UIView {
     
     //Closurese
     var onTapSignUp: (() -> Void)?
-    
+    var onTapLogin: (() -> Void)?
+    var didChangeEmail: ((String) -> Void)?
+    var didChangePassword: ((String) -> Void)?
     
     private var keyboardManager: KeyboardManager?
     
@@ -59,13 +61,36 @@ class LoginView: UIView {
         self.addGestureRecognizer(tapGesture)
     }
     
+    
     @objc private func dismissKeyboard(){
         self.endEditing(true)
     }
+    
+    
     private func bindActions(){
         contentView.onTappedSignUp = { [weak self] in
             self?.onTapSignUp?()
         }
+        
+        contentView.onTappedLogin = { [weak self] in
+            self?.onTapLogin?()
+        }
+        
+        contentView.didChangeEmail = { [weak self] email in
+            self?.didChangeEmail?(email)
+        }
+        
+        contentView.didChangePassword = { [weak self] password in
+            self?.didChangePassword?(password)
+        }
+    }
+    
+    func configurationLoginView(isLoading: Bool){
+        contentView.isLoginEnabled(isLoading)
+    }
+    
+    func configureLoginButton(isEnabled: Bool){
+        contentView.setButtonState(isEnabled)
     }
 }
 

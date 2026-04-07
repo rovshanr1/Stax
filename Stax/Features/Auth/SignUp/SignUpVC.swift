@@ -12,7 +12,7 @@ class SignUpVC: UIViewController {
     
     private let contentView = SignUpView()
     
-    private var didSentEventClosure: ((AuthEvent) -> Void)?
+    var didSentEventClosure: ((AuthEvent) -> Void)?
     
     private var vm: SignUpVM
     
@@ -43,13 +43,7 @@ class SignUpVC: UIViewController {
     override func loadView() {
         self.view = contentView
     }
-    
-    override func didMove(toParent parent: UIViewController?) {
-        super.didMove(toParent: parent)
-        if parent == nil {
-            didSentEventClosure?(.dismissSignUpScreen)
-        }
-    }
+  
     
     deinit{
         print("SignUpVC deinited")
@@ -69,7 +63,7 @@ class SignUpVC: UIViewController {
         }
         
         contentView.signInTapped = { [weak self] in
-            self?.vm.input.didTapSignIn.send(())
+            self?.didSentEventClosure?(.dismissSignUpScreen)
         }
         
         contentView.signUpTapped = { [weak self] in
@@ -107,7 +101,7 @@ class SignUpVC: UIViewController {
                 guard let self else { return }
                 guard success else { return }
                 
-                self.didSentEventClosure?(.dismissSignUpScreen)
+                self.didSentEventClosure?(.authSuccess)
             }
             .store(in: &cancellables)
         

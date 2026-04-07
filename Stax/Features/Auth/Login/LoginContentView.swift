@@ -11,6 +11,10 @@ import SnapKit
 class LoginContentView: UIView {
     
     var onTappedSignUp: (() -> Void)?
+    var onTappedLogin: (() -> Void)?
+    
+    var didChangeEmail: ((String) -> Void)?
+    var didChangePassword: ((String) -> Void)?
     
     private let loginText: UILabel = {
         let label = UILabel()
@@ -224,12 +228,50 @@ class LoginContentView: UIView {
     
     private func bindAction() {
         signUp.addTarget(self, action: #selector(handleSignUp), for: .touchUpInside)
+        loginButton.addTarget(self, action: #selector(handleLogin), for: .touchUpInside)
+        
+        emailTextField.addTarget(self, action: #selector(handleEmailTextField), for: .editingChanged)
+        passwordTextField.addTarget(self, action: #selector(handlePasswordTextField), for: .editingChanged)
     }
     
+    
+    
+    @objc private func handleEmailTextField(){
+        let text = emailTextField.text ?? ""
+        self.didChangeEmail?(text)
+    }
+    
+    @objc private func handlePasswordTextField(){
+        let text = passwordTextField.text ?? ""
+        self.didChangePassword?(text)
+    }
+    
+    @objc private func handleLogin() {
+        onTappedLogin?()
+    }
     
     @objc private func handleSignUp() {
         onTappedSignUp?()
     }
+    
+    
+    func isLoginEnabled(_ isLoading: Bool) {
+        if isLoading{
+            loginButton.isUserInteractionEnabled = false
+            loginButton.configuration?.showsActivityIndicator = true
+            loginButton.configuration?.title = ""
+        }else{
+            loginButton.isUserInteractionEnabled = true
+            loginButton.configuration?.showsActivityIndicator = false
+            loginButton.configuration?.title = "Login"
+        }
+    }
+    
+    func setButtonState(_ isEnabled: Bool){
+        loginButton.isEnabled = isEnabled
+        loginButton.configuration?.baseBackgroundColor = isEnabled ? .activeItems : .systemGray2
+    }
+    
 }
 
 

@@ -16,7 +16,8 @@ enum AuthRoute{
 
 enum AuthEvent{
     case dismissSignUpScreen
-    case authSucces
+    case authSuccess
+    case showSignUp
 }
 
 
@@ -36,6 +37,10 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
     
     private lazy var authService: AuthServiceProtocol = {
         return AuthService()
+    }()
+    
+    private lazy var userService: UserServiceProtocol = {
+        return UserService()
     }()
     
     init(_ navigationController: UINavigationController) {
@@ -65,8 +70,10 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
         switch event{
         case .dismissSignUpScreen:
             self.navigationController.popViewController(animated: true)
-        case .authSucces:
+        case .authSuccess:
             didFinishAuth()
+        case .showSignUp:
+            self.showSignUpScreen()
         }
     }
     
@@ -86,8 +93,12 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
         let loginVM = LoginVM(authService: authService)
         let loginVC = LoginVC(vm: loginVM)
         
+        loginVC.didSentEventClosure = { [weak self] event in
+            self?.handle(event)
+        }
+        
         loginVC.tappedSignUp = { [weak self] in
-            self?.showSignUpScreen( )
+            self?.handle(.showSignUp)
         }
         
         
@@ -95,9 +106,12 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
     }
     
     func showSignUpScreen() {
-        let signUpVM = SignUpVM(authService: authService)
+        let signUpVM = SignUpVM(authService: authService, userService: userService)
         let signUpVC = SignUpVC(vm: signUpVM)
         
+        signUpVC.didSentEventClosure = {[weak self] event in
+            self?.handle(event)
+        }
         
         navigationController.pushViewController(signUpVC, animated: true)
     }

@@ -36,12 +36,13 @@ final class SignUpVM{
     //Combine
     private var cancellables = Set<AnyCancellable>()
     
-    
+    //Services
     let authService: AuthServiceProtocol
+    let userService: UserServiceProtocol
     
-    init(authService: AuthServiceProtocol) {
+    init(authService: AuthServiceProtocol, userService: UserServiceProtocol) {
         self.authService = authService
-        
+        self.userService = userService
         
         self.input = .init(didTapSignUp: .init(),
                            didTapSignIn: .init(),
@@ -92,10 +93,20 @@ final class SignUpVM{
                     
                     switch result {
                     case .success(let userModel):
-//                        KeychainHelper.shared.save(userModel.id)
+
+                        self.userService.saveUser(user: userModel) { saveResult in
+                            self.output.isLoading.send(false)
+                            switch saveResult{
+                            case .success:
+                                KeychainHelper.shared.save(userModel.id)
+                                self.output.success.send(true)
+                            case .failure(let error):
+                                self.output.errorMessage.send(error.localizedDescription)
+                            }
+                        }
                         
-                        self.output.success.send(true)
                     case .failure(let error):
+                        
                         self.output.errorMessage.send(error.localizedDescription)
                     }
                 }
