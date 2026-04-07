@@ -6,22 +6,38 @@
 //
 
 import Foundation
-import CoreData
 import FirebaseAuth
 
 protocol AuthServiceProtocol{
-    func register(email: String, password: String, completion: @escaping (Result<Bool, Error>) -> Void)
+    func register(name: String, email: String, password: String, completion: @escaping (Result<UserModel, Error>) -> Void)
 }
 
 final class AuthService: AuthServiceProtocol {
-    let context: NSManagedObjectContext
     
-    init(context: NSManagedObjectContext) {
-        self.context = context
-    }
+    private let auth = Auth.auth()
     
-    
-    func register(email: String, password: String, completion: @escaping (Result<Bool, any Error>) -> Void) {
-        
+    func register(name: String, email: String, password: String, completion: @escaping (Result<UserModel, Error>) -> Void) {
+        auth.createUser(withEmail: email, password: password) { result, error in
+            
+            
+           if let error = error {
+               completion(.failure(error))
+               return
+            }
+            
+            guard let user = result?.user else { return }
+            
+            let changeRequest = result?.user.createProfileChangeRequest()
+            changeRequest?.displayName = name
+            
+            changeRequest?.commitChanges() { error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                let data = UserModel(id: user.uid, name: name , email: email)
+                completion(.success(data))
+            }
+        }
     }
 }

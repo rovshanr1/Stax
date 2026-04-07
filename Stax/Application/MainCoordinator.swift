@@ -36,7 +36,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func authFlow() {
-        let authCoordinator = AuthCoordinator(navigationController, context: context)
+        let authCoordinator = AuthCoordinator(navigationController)
         authCoordinator.finishDelegate = self
         authCoordinator.start()
         navigationController.setNavigationBarHidden(true, animated: false)

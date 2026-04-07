@@ -20,18 +20,22 @@ class LoginVC: UIViewController {
     init(vm: LoginVM) {
         self.vm = vm
         super.init(nibName: nil, bundle: nil)
-        
-        bindActions()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        bindActions()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
     override func loadView() {
         self.view = contentView
     }
@@ -40,5 +44,9 @@ class LoginVC: UIViewController {
         contentView.onTapSignUp = { [weak self] in
             self?.tappedSignUp?()
         }
+    }
+    
+    deinit{
+        print("LoginVC Deinited")
     }
 }

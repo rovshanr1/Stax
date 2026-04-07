@@ -229,7 +229,6 @@ class LoginContentView: UIView {
     
     @objc private func handleSignUp() {
         onTappedSignUp?()
-        print("sign up")
     }
 }
 

@@ -1,18 +1,21 @@
 //
-//  LoginView.swift
+//  SignUpView.swift
 //  Stax
 //
-//  Created by Rovshan Rasulov on 04.04.26.
+//  Created by Rovshan Rasulov on 05.04.26.
 //
 
 import UIKit
 import SnapKit
 
-class LoginView: UIView {
+class SignUpView: UIView {
     
-    //Closurese
-    var onTapSignUp: (() -> Void)?
+    var signUpTapped: (() -> Void)?
+    var signInTapped: (() -> Void)?
     
+    var updateName: ((String) -> Void)?
+    var updateEmail: ((String) -> Void)?
+    var updatePassword: ((String) -> Void)?
     
     private var keyboardManager: KeyboardManager?
     
@@ -24,13 +27,14 @@ class LoginView: UIView {
         return scrollView
     }()
     
-    private let contentView = LoginContentView()
-
+    private let contentView = SignUpContentView()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
         setupUI()
-        bindActions()
         gestureRecignizer()
+        bindAction()
     }
     
     required init?(coder: NSCoder) {
@@ -40,6 +44,7 @@ class LoginView: UIView {
     private func setupUI(){
         addSubview(scrollView)
         scrollView.addSubview(contentView)
+        scrollView.keyboardDismissMode = .interactive
         
         scrollView.snp.makeConstraints { (make) in
             make.edges.equalTo(safeAreaLayoutGuide)
@@ -59,13 +64,39 @@ class LoginView: UIView {
         self.addGestureRecognizer(tapGesture)
     }
     
+    
     @objc private func dismissKeyboard(){
         self.endEditing(true)
     }
-    private func bindActions(){
-        contentView.onTappedSignUp = { [weak self] in
-            self?.onTapSignUp?()
+    
+    private func bindAction(){
+        contentView.signInOnTapped = { [weak self] in
+            self?.signInTapped?()
+        }
+        
+        contentView.signUpOnTapped = { [weak self] in
+            self?.signUpTapped?()
+        }
+        
+        contentView.updateName = { [weak self] text in
+            self?.updateName?(text)
+        }
+        
+        contentView.updateEmail = { [weak self] text in
+            self?.updateEmail?(text)
+        }
+        
+        contentView.updatePassword = { [weak self] text in
+            self?.updatePassword?(text)
         }
     }
+    
+    func configurationContentView(isLoading: Bool){
+        contentView.toggleLoading(isLoading)
+    }
+    
+    func configureButtonSignUp(_ isEnabled: Bool){
+        contentView.setButtonState(isEnabled: isEnabled)
+    }
+    
 }
-

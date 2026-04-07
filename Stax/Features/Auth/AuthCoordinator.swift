@@ -14,6 +14,12 @@ enum AuthRoute{
     case signUp
 }
 
+enum AuthEvent{
+    case dismissSignUpScreen
+    case authSucces
+}
+
+
 protocol AuthCoordinatorProtocol: Coordinator{
     func navigate(to route: AuthRoute)
     func didFinishAuth()
@@ -27,19 +33,17 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
     
     var type: CoordinatorType { .auth }
     
-    let context: NSManagedObjectContext
     
     private lazy var authService: AuthServiceProtocol = {
-            return AuthService(context: self.context)
+        return AuthService()
     }()
     
-    init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
+    init(_ navigationController: UINavigationController) {
         self.navigationController = navigationController
-        self.context = context
     }
     
     
-
+    
     
     func start() {
         navigate(to: .welcome)
@@ -57,6 +61,15 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
         }
     }
     
+    func handle(_ event: AuthEvent){
+        switch event{
+        case .dismissSignUpScreen:
+            self.navigationController.popViewController(animated: true)
+        case .authSucces:
+            didFinishAuth()
+        }
+    }
+    
     func showWelcomeScreen() {
         let vm = WelcomeVM()
         let welcomeVC = WelcomeVC()
@@ -70,25 +83,21 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
     }
     
     func showLoginScreen() {
-        
-        let vm = LoginVM(authService: authService)
-        
-        let loginVC = LoginVC(vm: vm)
+        let loginVM = LoginVM(authService: authService)
+        let loginVC = LoginVC(vm: loginVM)
         
         loginVC.tappedSignUp = { [weak self] in
             self?.showSignUpScreen( )
         }
+        
         
         navigationController.pushViewController(loginVC, animated: true)
     }
     
     func showSignUpScreen() {
         let signUpVM = SignUpVM(authService: authService)
+        let signUpVC = SignUpVC(vm: signUpVM)
         
-        let signUpVC = SignUpVC()
-        signUpVC.vm = signUpVM
-        
-        signUpVC.coordinator = self
         
         navigationController.pushViewController(signUpVC, animated: true)
     }
