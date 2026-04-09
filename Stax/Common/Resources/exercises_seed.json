@@ -1,82 +1,22 @@
 [
-    {
-        "name": "Bench Press",
-        "targetMuscle": "Chest"
-    },
-    {
-        "name": "Squat",
-        "targetMuscle": "Legs"
-    },
-    {
-        "name": "Pull Up",
-        "targetMuscle": "Back"
-    },
-    {
-        "name": "Deadlift",
-        "targetMuscle": "Back"
-    },
-    {
-        "name": "Overhead Press",
-        "targetMuscle": "Shoulders"
-    },
-    {
-        "name": "Barbell Row",
-        "targetMuscle": "Back"
-    },
-    {
-        "name": "Lat Pulldown",
-        "targetMuscle": "Back"
-    },
-    {
-        "name": "Leg Press",
-        "targetMuscle": "Legs"
-    },
-    {
-        "name": "Romanian Deadlift",
-        "targetMuscle": "Hamstrings"
-    },
-    {
-        "name": "Lateral Raise",
-        "targetMuscle": "Shoulders"
-    },
-    {
-        "name": "Bicep Curl",
-        "targetMuscle": "Biceps"
-    },
-    {
-        "name": "Tricep Pushdown",
-        "targetMuscle": "Triceps"
-    },
-    {
-        "name": "Chest Fly",
-        "targetMuscle": "Chest"
-    },
-    {
-        "name": "Hip Thrust",
-        "targetMuscle": "Glutes"
-    },
-    {
-        "name": "Leg Curl",
-        "targetMuscle": "Hamstrings"
-    },
-    {
-        "name": "Leg Extension",
-        "targetMuscle": "Quads"
-    },
-    {
-        "name": "Face Pull",
-        "targetMuscle": "Rear Delts"
-    },
-    {
-        "name": "Calf Raise",
-        "targetMuscle": "Calves"
-    },
-    {
-        "name": "Incline Bench Press",
-        "targetMuscle": "Upper Chest"
-    },
-    {
-        "name": "Seated Cable Row",
-        "targetMuscle": "Back"
-    }
+    { "id": 1, "name": "Bench Press", "targetMuscle": "Chest" },
+    { "id": 2, "name": "Squat", "targetMuscle": "Legs" },
+    { "id": 3, "name": "Pull Up", "targetMuscle": "Back" },
+    { "id": 4, "name": "Deadlift", "targetMuscle": "Back" },
+    { "id": 5, "name": "Overhead Press", "targetMuscle": "Shoulders" },
+    { "id": 6, "name": "Barbell Row", "targetMuscle": "Back" },
+    { "id": 7, "name": "Lat Pulldown", "targetMuscle": "Back" },
+    { "id": 8, "name": "Leg Press", "targetMuscle": "Legs" },
+    { "id": 9, "name": "Romanian Deadlift", "targetMuscle": "Hamstrings" },
+    { "id": 10, "name": "Lateral Raise", "targetMuscle": "Shoulders" },
+    { "id": 11, "name": "Bicep Curl", "targetMuscle": "Biceps" },
+    { "id": 12, "name": "Tricep Pushdown", "targetMuscle": "Triceps" },
+    { "id": 13, "name": "Chest Fly", "targetMuscle": "Chest" },
+    { "id": 14, "name": "Hip Thrust", "targetMuscle": "Glutes" },
+    { "id": 15, "name": "Leg Curl", "targetMuscle": "Hamstrings" },
+    { "id": 16, "name": "Leg Extension", "targetMuscle": "Quads" },
+    { "id": 17, "name": "Face Pull", "targetMuscle": "Rear Delts" },
+    { "id": 18, "name": "Calf Raise", "targetMuscle": "Calves" },
+    { "id": 19, "name": "Incline Bench Press", "targetMuscle": "Upper Chest" },
+    { "id": 20, "name": "Seated Cable Row", "targetMuscle": "Back" }
 ]

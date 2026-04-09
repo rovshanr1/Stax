@@ -41,7 +41,8 @@ final class WorkoutSummaryViewModel{
     
     //Preferance Service
     private var preferencesService: AppPreferencesServiceInterface
-    private var healthKitService: HealthKitServiceInterface?
+    private let healthKitService: HealthKitServiceInterface?
+    private let syncService: FirebaseSyncServiceInterface
     
     private var cancellables: Set<AnyCancellable> = []
     
@@ -51,7 +52,8 @@ final class WorkoutSummaryViewModel{
          workoutRepository: DataRepository<Workout>,
          stats: WorkoutStats,
          preferancesService: AppPreferencesServiceInterface = AppPreferencesService(),
-         healthKitService: HealthKitServiceInterface = HealthKitService()
+         healthKitService: HealthKitServiceInterface = HealthKitService(),
+         syncService: FirebaseSyncServiceInterface = FirebaseSyncService()
          
     ){
         self.workout = workout
@@ -59,6 +61,7 @@ final class WorkoutSummaryViewModel{
         self.stats = stats
         self.preferencesService = preferancesService
         self.healthKitService = healthKitService
+        self.syncService = syncService
         
         self.input = Input(
             viewDidLoad: .init(),
@@ -97,6 +100,8 @@ final class WorkoutSummaryViewModel{
                 }
             }, receiveValue: { [weak self] _ in
                 guard let self else { return }
+                
+                self.syncToFirebase()
                 self.updateHelathKit()
                 
             })
@@ -200,5 +205,18 @@ final class WorkoutSummaryViewModel{
                 }}else{
                     self.output.finished.send()
                 }
+    }
+    
+    private func syncToFirebase(){
+        let domainModel = self.workout.toDomain()
+        
+        self.syncService.syncWorkoutToCloud(workout: domainModel) { result in
+            switch result{
+            case .success:
+                print("Workout save to Firebase")
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
     }
 }

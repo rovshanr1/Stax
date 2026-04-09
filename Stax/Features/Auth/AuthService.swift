@@ -18,8 +18,7 @@ final class AuthService: AuthServiceProtocol {
     private let auth = Auth.auth()
     
     func register(name: String, email: String, password: String, completion: @escaping (Result<UserModel, Error>) -> Void) {
-        auth.createUser(withEmail: email, password: password) {[weak self] result, error in
-            guard let self else { return }
+        auth.createUser(withEmail: email, password: password) { result, error in
             
            if let error = error {
                completion(.failure(error))
@@ -43,8 +42,8 @@ final class AuthService: AuthServiceProtocol {
     }
     
     func login(email: String, password: String, completion: @escaping (Result<UserModel, Error>) -> Void){
-        auth.signIn(withEmail: email, password: password) {[weak self] result, error in
-            guard let self else { return }
+        auth.signIn(withEmail: email, password: password) { result, error in
+            
             
             if let error = error{
                 completion(.failure(error))

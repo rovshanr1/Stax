@@ -40,11 +40,23 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     }
     
     func fetch(by id: String) -> T? {
-        guard let url = URL(string: id),
-              let objectID = context.persistentStoreCoordinator?.managedObjectID(forURIRepresentation: url) else{
-            return nil 
+        guard let entityName = T.entity().name else { return nil }
+        let request = NSFetchRequest<T>(entityName: entityName)
+        
+        if let targetUUID = UUID(uuidString: id) {
+            request.predicate = NSPredicate(format: "id == %@", targetUUID as CVarArg)
+        } else {
+            
+            request.predicate = NSPredicate(format: "id == %@", id)
         }
-        return try? context.existingObject(with: objectID) as? T
+        request.fetchLimit = 1
+        
+        do {
+            return try context.fetch(request).first
+        } catch {
+            print("Fetch by ID Error: \(error)")
+            return nil
+        }
     }
     
     func fetchAll() -> AnyPublisher<[T], Error> {
@@ -95,26 +107,21 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     }
     
     func delete(by id: String) -> AnyPublisher<Void, Error> {
-       guard let url = URL(string: id) else {
-            return Fail(error: URLError(.badServerResponse)).eraseToAnyPublisher()
-        }
         return Future { promise in
             self.context.perform {
-                guard let objectID = self.context.persistentStoreCoordinator?.managedObjectID(forURIRepresentation: url) else{
+                guard let objectToDelete = self.fetch(by: id) else {
                     promise(.failure(URLError(.fileDoesNotExist)))
                     return
                 }
                 
-                do{
-                    let object = try self.context.existingObject(with: objectID) as! T
-                    self.context.delete(object)
-                    
+                do {
+                    self.context.delete(objectToDelete)
                     try self.context.save()
                     promise(.success(()))
-                }catch{
+                } catch {
                     promise(.failure(error))
                 }
-
+                
             }
         }.eraseToAnyPublisher()
     }
