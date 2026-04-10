@@ -49,8 +49,9 @@ final class WorkoutRepository: NSObject, WorkoutRepositoryInterface {
             .sink(receiveCompletion: {_ in }, receiveValue: {_ in})
             .store(in: &cancellables)
     }
+    
     func getWorkout(by id: String) -> WorkoutDomainModel? {
-        guard let workout = frc?.fetchedObjects?.first(where: { $0.objectID.uriRepresentation().absoluteString == id}) else {return nil}
+        guard let workout = frc?.fetchedObjects?.first(where: { $0.id?.uuidString == id}) else {return nil}
         return workout.toDomain()
     }
     

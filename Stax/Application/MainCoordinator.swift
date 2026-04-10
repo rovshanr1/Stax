@@ -7,11 +7,13 @@
 
 import UIKit
 import CoreData
+import Combine
 
 //MARK: - MainCoordinator
 protocol MainCoordinatorProtocol: Coordinator{
     func authFlow()
     func showMainFlow()
+    func showSplashView()
 }
 
 
@@ -21,6 +23,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     var navigationController: UINavigationController
     var type: CoordinatorType { return .app }
     let context: NSManagedObjectContext
+    var cancellables: Set<AnyCancellable> = []
     
     init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
@@ -29,10 +32,37 @@ class MainCoordinator: MainCoordinatorProtocol{
     
     func start() {
         if let _ = KeychainHelper.shared.read(){
-            showMainFlow()
+            showSplashView()
         }else{
             authFlow()
         }
+    }
+    
+    func showSplashView(){
+        let workoutRepo = DataRepository<Workout>(context: context)
+        let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
+        let setRepo = DataRepository<WorkoutSet>(context: context)
+        let exerciseDefRepo = DataRepository<Exercise>(context: context)
+        
+        let firebaseService = FirebaseSyncService()
+        let syncManager = SyncManager(workoutRepo: workoutRepo,
+                                      exerciseRepo: exerciseRepo,
+                                      setRepo: setRepo,
+                                      exercise: exerciseDefRepo)
+        
+        let splashVM = SplashVM(firebaseSyncService: firebaseService, syncManager: syncManager)
+        let splashVC = SplashVC(vm: splashVM)
+        
+        navigationController.setNavigationBarHidden(true, animated: false)
+        navigationController.setViewControllers([splashVC], animated: false)
+        
+        splashVM.output.syncCompleted
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self = self else { return }
+                self.showMainFlow()
+            }
+            .store(in: &cancellables)
     }
     
     func authFlow() {
@@ -63,7 +93,7 @@ extension MainCoordinator: CoordinatorFinishDelegate{
             authFlow()
         case .auth:
             navigationController.viewControllers.removeAll()
-            showMainFlow()
+            showSplashView()
         default:
             break
         }

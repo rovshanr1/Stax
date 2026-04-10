@@ -11,6 +11,8 @@ import FirebaseAuth
 
 protocol FirebaseSyncServiceInterface{
     func syncWorkoutToCloud(workout: WorkoutDomainModel, completion: @escaping (Result<Void, Error>) -> Void)
+    func deleteWorkoutFromCloud(workoutId: String, completion: @escaping (Result<Void, Error>) -> Void)
+    func fetchInitialWorkoutsFromCloud(completion: @escaping (Result<[WorkoutDomainModel], Error>) -> Void)
 }
 
 
@@ -40,6 +42,55 @@ final class FirebaseSyncService: FirebaseSyncServiceInterface {
             completion(.failure(error))
         }
         
+    }
+    
+    func deleteWorkoutFromCloud(workoutId: String, completion: @escaping (Result<Void, any Error>) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            let error = NSError(domain: "Auth Error", code: 401, userInfo: [NSLocalizedDescriptionKey: "User do not signin!"])
+            completion(.failure(error))
+            return
+        }
+        
+        let documentRef = dataBase.collection("users").document(uid).collection("workouts").document(workoutId)
+        
+        documentRef.delete() { error in
+            if let error = error {
+                completion(.failure(error))
+            }else{
+                completion(.success(()))
+            }
+        }
+    }
+    
+    func fetchInitialWorkoutsFromCloud(completion: @escaping (Result<[WorkoutDomainModel], Error>) -> Void){
+        guard let uid = Auth.auth().currentUser?.uid else {
+            let error = NSError(domain: "Auth Error", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not signed in!"])
+            completion(.failure(error))
+            return
+        }
+        
+        let collectionRef = dataBase.collection("users").document(uid).collection("workouts")
+        
+        collectionRef.getDocuments { snapshot, error in
+            
+            Task{@MainActor in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    completion(.success([]))
+                    return
+                }
+                
+                
+                let workouts = documents.compactMap { try? $0.data(as: WorkoutDomainModel.self) }
+                
+                completion(.success(workouts))
+            }
+           
+        }
     }
 }
 
