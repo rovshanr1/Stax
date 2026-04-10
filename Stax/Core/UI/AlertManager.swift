@@ -29,4 +29,19 @@ final class AlertManager{
         }
         
     }
+    
+    static func showErrorAlert(on vc: UIViewController,
+                               title: String = "Opps!",
+                               message: String,
+                               buttonTitle: String = "OK"){
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let okAction = UIAlertAction(title: buttonTitle, style: .default, handler: nil)
+        
+        alert.addAction(okAction)
+        
+        DispatchQueue.main.async {
+            vc.present(alert, animated: true, completion: nil)
+        }
+    }
+    
 }

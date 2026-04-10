@@ -30,14 +30,16 @@ final class HomeVM {
     //Repositorys & Services
     private let workoutRepo: WorkoutRepositoryInterface
     private let shareService: WorkoutShareServiceProtocol
+    private let syncService: FirebaseSyncServiceInterface
 
     
     //Combine
     private var cancellables = Set<AnyCancellable>()
     
-    init(workoutRepo: WorkoutRepositoryInterface, shareService: WorkoutShareServiceProtocol){
+    init(workoutRepo: WorkoutRepositoryInterface, shareService: WorkoutShareServiceProtocol, synService: FirebaseSyncServiceInterface = FirebaseSyncService()){
         self.workoutRepo = workoutRepo
         self.shareService = shareService
+        self.syncService = synService
         
         self.input = .init(viewDidLoad: .init(),
                            deleteWorkout: .init(),
@@ -63,7 +65,10 @@ final class HomeVM {
         input.deleteWorkout
             .sink { [weak self] id in
                 guard let self else { return }
-                self.workoutRepo.deleteWorkout(by: id)
+                workoutRepo.deleteWorkout(by: id)
+                
+                self.deleteWorkout(withId: id)
+                
             }
             .store(in: &cancellables)
         input.shareWorkout
@@ -134,5 +139,17 @@ final class HomeVM {
         guard let workout = workoutRepo.getWorkout(by: id) else { return "Workout not found"}
         
         return shareService.generateShareText(from: workout)
+    }
+    
+    private func deleteWorkout(withId id: String){
+        
+        syncService.deleteWorkoutFromCloud(workoutId: id){ result in
+            switch result {
+            case .success:
+                print("workout deleted: \(id)")
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
     }
 }

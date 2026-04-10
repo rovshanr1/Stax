@@ -11,7 +11,7 @@ import CoreData
 extension WorkoutSet{
     func toDomain() -> WorkoutSetDomainModel {
         return WorkoutSetDomainModel(
-            id: self.objectID.uriRepresentation().absoluteString,
+            id: self.id?.uuidString ?? UUID().uuidString,
             isCompleted: self.isComplated,
             orderIndex: self.orderIndex,
             previous: self.previous ?? "",

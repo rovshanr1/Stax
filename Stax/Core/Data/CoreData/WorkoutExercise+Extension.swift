@@ -18,7 +18,7 @@ extension WorkoutExercise{
             .map { $0.toDomain() }
         
         return WorkoutExerciseDomainModel(
-            id: self.objectID.uriRepresentation().absoluteString,
+            id: self.id?.uuidString ?? UUID().uuidString,
             notes: self.note,
             orderIndex: self.orderIndex,
             exercise: exerciseDomain,

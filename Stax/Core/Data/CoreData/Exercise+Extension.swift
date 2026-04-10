@@ -15,7 +15,7 @@ extension Exercise{
         let safeMusleGroup = MuscleGroup(rawValue: rawMuscleString) ?? .other
         
        return ExerciseDomainModel(
-            id: self.objectID.uriRepresentation().absoluteString,
+        id: self.id?.uuidString ?? UUID().uuidString,
             name: self.name ?? "",
             targetMuscleGroups: safeMusleGroup,
             videoURL: self.videoURL ?? ""

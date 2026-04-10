@@ -17,7 +17,7 @@ extension Workout{
         
         
         return WorkoutDomainModel(
-            id: self.objectID.uriRepresentation().absoluteString,
+            id: self.id?.uuidString ?? UUID().uuidString,
             name: self.name ?? "Unknown Wokrout",
             duration: self.duration,
             volume: self.volume,
