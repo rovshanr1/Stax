@@ -8,6 +8,7 @@
 import UIKit
 import CoreData
 import Combine
+import FirebaseAuth
 
 //MARK: - MainCoordinator
 protocol MainCoordinatorProtocol: Coordinator{
@@ -31,7 +32,10 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func start() {
-        if let _ = KeychainHelper.shared.read(){
+        
+        handleIsFirshLaunchComplated()
+        
+        if Auth.auth().currentUser != nil{
             showSplashView()
         }else{
             authFlow()
@@ -79,6 +83,17 @@ class MainCoordinator: MainCoordinatorProtocol{
         navigationController.setNavigationBarHidden(true, animated: false)
         tabCoordinator.start()
         childCoordinators.append(tabCoordinator)
+    }
+    
+    func handleIsFirshLaunchComplated() {
+        let defaults = UserDefaults.standard
+        
+        if defaults.bool(forKey: "isFirshLaunchComplated") == false{
+            
+            try? Auth.auth().signOut()
+            
+            defaults.set(true, forKey: "isFirshLaunchComplated")
+        }
     }
 }
 

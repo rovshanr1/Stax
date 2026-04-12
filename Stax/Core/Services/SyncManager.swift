@@ -62,15 +62,15 @@ final class SyncManager: SyncManagerInterface{
             localExercise.id = UUID(uuidString: cloudExercise.id)
             localExercise.note = cloudExercise.notes
             localExercise.orderIndex = Int16(cloudExercise.orderIndex)
-            localExercise.workout = localWorkout // İdmana bağladık!
+            localExercise.workout = localWorkout
             
-            // 🔥 EKSİK 2: Temel hareketi ansiklopediden bul ve bağla
+            
             if let baseExerciseId = cloudExercise.exercise?.id,
                let baseExercise = exercise.fetch(by: baseExerciseId) {
                 localExercise.exercise = baseExercise
             }
             
-            // 🔥 EKSİK 3: Setleri Dön (Nested Loop)
+            
             for cloudSet in cloudExercise.workoutSets {
                 let localSet = setRepo.create()
                 
