@@ -8,7 +8,7 @@
 import UIKit
 
 enum ProfileEvent{
-    
+    case showProfilePhoto
 }
 
 final class ProfileCoordinator: Coordinator{
@@ -25,17 +25,23 @@ final class ProfileCoordinator: Coordinator{
     }
     
     func start() {
-        let profileVC = ProfileVC()
+        let vm = ProfileVM()
         
-        //TODO: - event handling is here
-//        profileVC.didSendEventClosure = { [weak self] event in
-//            
-//        }
+        let profileVC = ProfileVC(viewModel: vm)
+        
+        
+        profileVC.didSendEventClosure = { [weak self] event in
+            self?.handle(event)
+        }
+        
         profileVC.navigationItem.largeTitleDisplayMode = .always
         navigationController.setViewControllers([profileVC], animated: false)
     }
     
     private func handle(_ event: ProfileEvent) {
-        
+        switch event {
+        case .showProfilePhoto:
+            print("")
+        }
     }
 }

@@ -78,9 +78,7 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
     }
     
     func showWelcomeScreen() {
-        let vm = WelcomeVM()
         let welcomeVC = WelcomeVC()
-        welcomeVC.vm = vm
         
         welcomeVC.onToLogin = { [weak self] in
             self?.navigate(to: .login)
