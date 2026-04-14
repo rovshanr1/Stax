@@ -17,8 +17,6 @@ class WelcomeVC: UIViewController {
     //Closures
     var onToLogin: (() -> Void)?
     
-    //ViewModel
-    var vm: WelcomeVM!
     
     private let welcomeView = WelcomeView()
 

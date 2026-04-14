@@ -79,7 +79,7 @@ final class LoginVM{
                 let email = self.input.updateEmail.value
                 let password = self.input.updatePassword.value
                 
-                self.authService.login(email: email, password: password) { result in
+                self.authService.login(email: email, password: password, profileImage: nil) { result in
                     self.output.isLoading.send(false)
                     
                     switch result{

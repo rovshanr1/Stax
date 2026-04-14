@@ -88,7 +88,7 @@ final class SignUpVM{
                 let email = self.input.updateEmail.value
                 let password = self.input.updatePassword.value
                 
-                self.authService.register(name: name, email: email, password: password) { result in
+                self.authService.register(name: name, email: email, password: password, profileImage: nil) { result in
                     self.output.isLoading.send(false)
                     
                     switch result {

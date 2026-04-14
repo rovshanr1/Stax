@@ -33,6 +33,7 @@ final class SyncManager: SyncManagerInterface{
         self.setRepo = setRepo
         self.exercise = exercise
     }
+    
     func saveCloudWorkoutToLocal(cloudWorkout: WorkoutDomainModel) {
         
         let localWorkout = workoutRepo.fetch(by: cloudWorkout.id) ?? workoutRepo.create()

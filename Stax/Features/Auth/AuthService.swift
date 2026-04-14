@@ -9,15 +9,15 @@ import Foundation
 import FirebaseAuth
 
 protocol AuthServiceProtocol{
-    func register(name: String, email: String, password: String, completion: @escaping (Result<UserModel, Error>) -> Void)
-    func login(email: String, password: String, completion: @escaping (Result<UserModel, Error>) -> Void)
+    func register(name: String, email: String, password: String, profileImage: String?, completion: @escaping (Result<UserModel, Error>) -> Void)
+    func login(email: String, password: String, profileImage: String?, completion: @escaping (Result<UserModel, Error>) -> Void)
 }
 
 final class AuthService: AuthServiceProtocol {
     
     private let auth = Auth.auth()
     
-    func register(name: String, email: String, password: String, completion: @escaping (Result<UserModel, Error>) -> Void) {
+    func register(name: String, email: String, password: String, profileImage: String?, completion: @escaping (Result<UserModel, Error>) -> Void) {
         auth.createUser(withEmail: email, password: password) { result, error in
             
            if let error = error {
@@ -35,13 +35,13 @@ final class AuthService: AuthServiceProtocol {
                     completion(.failure(error))
                     return
                 }
-                let data = UserModel(id: user.uid, name: name , email: email)
+                let data = UserModel(id: user.uid, name: name , email: email, profileImage: profileImage)
                 completion(.success(data))
             }
         }
     }
     
-    func login(email: String, password: String, completion: @escaping (Result<UserModel, Error>) -> Void){
+    func login(email: String, password: String, profileImage: String?, completion: @escaping (Result<UserModel, Error>) -> Void){
         auth.signIn(withEmail: email, password: password) { result, error in
             
             
@@ -53,7 +53,7 @@ final class AuthService: AuthServiceProtocol {
             guard let user = result?.user else { return }
             let name = user.displayName ?? "New User"
             
-            let model = UserModel(id: user.uid, name: name, email: email)
+            let model = UserModel(id: user.uid, name: name, email: email, profileImage: profileImage)
             completion(.success(model))
         }
     }
