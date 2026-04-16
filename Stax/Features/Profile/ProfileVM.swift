@@ -31,12 +31,14 @@ final class ProfileVM{
     
     //Services
     private let userService: UserServiceProtocol
+    private let workoutRepo: WorkoutRepositoryInterface
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(userService: UserServiceProtocol = UserService()){
+    init(userService: UserServiceProtocol = UserService(), workoutRepo: WorkoutRepositoryInterface){
         
         self.userService = userService
+        self.workoutRepo = workoutRepo
         
         self.input = .init( viewDidLoad: .init(),
                             logoutTapped: .init()

@@ -26,12 +26,17 @@ class TabCoordinator: NSObject, Coordinator {
     var tabBarController: UITabBarController
     let context: NSManagedObjectContext
     
+    private let sharedWorkoutRepo: WorkoutRepositoryInterface
+    
     var type: CoordinatorType { .tab }
     
     init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
         self.tabBarController = MainTabBarController()
         self.context = context
+        
+        let dataRepository = DataRepository<Workout>(context: context)
+        self.sharedWorkoutRepo = WorkoutRepository(genericRepository: dataRepository)
     }
     
     deinit{
@@ -71,7 +76,7 @@ class TabCoordinator: NSObject, Coordinator {
         
         switch page {
         case .home:
-            let homeCoordinator = HomeCoordinator(navigationController: navController, context: context)
+            let homeCoordinator = HomeCoordinator(navigationController: navController, context: context, workoutRepo: sharedWorkoutRepo)
             homeCoordinator.finishDelegate = self
             childCoordinators.append(homeCoordinator)
             homeCoordinator.start()
@@ -81,7 +86,7 @@ class TabCoordinator: NSObject, Coordinator {
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()
         case .profile:
-            let profileCoordinator = ProfileCoordinator(navController)
+            let profileCoordinator = ProfileCoordinator(navController, workoutRepo: sharedWorkoutRepo)
             profileCoordinator.finishDelegate = self
             childCoordinators.append(profileCoordinator)
             profileCoordinator.start()

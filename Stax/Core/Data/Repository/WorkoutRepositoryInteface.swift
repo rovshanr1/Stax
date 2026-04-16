@@ -21,12 +21,12 @@ final class WorkoutRepository: NSObject, WorkoutRepositoryInterface {
     
     var workoutPublisher = CurrentValueSubject<[WorkoutDomainModel], Never>([])
     
-    private let genericRoository: DataRepository<Workout>
+    private let genericRepository: DataRepository<Workout>
     private var frc: NSFetchedResultsController<Workout>?
     private var cancellables: Set<AnyCancellable> = []
     
-    init(genericRoository: DataRepository<Workout>) {
-        self.genericRoository = genericRoository
+    init(genericRepository: DataRepository<Workout>) {
+        self.genericRepository = genericRepository
         super.init()
         setupFRC()
     }
@@ -35,7 +35,7 @@ final class WorkoutRepository: NSObject, WorkoutRepositoryInterface {
         let sort = NSSortDescriptor(key: "date", ascending: false)
         let predicate = NSPredicate(format: "duration > 0")
         
-        frc = genericRoository.makeFetchResultsController(sortDescriptors: [sort], predicate: predicate)
+        frc = genericRepository.makeFetchResultsController(sortDescriptors: [sort], predicate: predicate)
         frc?.delegate = self
     }
     
@@ -45,7 +45,7 @@ final class WorkoutRepository: NSObject, WorkoutRepositoryInterface {
     }
     
     func deleteWorkout(by id: String) {
-        genericRoository.delete(by: id)
+        genericRepository.delete(by: id)
             .sink(receiveCompletion: {_ in }, receiveValue: {_ in})
             .store(in: &cancellables)
     }

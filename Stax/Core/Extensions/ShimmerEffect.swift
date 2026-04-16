@@ -14,6 +14,8 @@ extension UIView {
     }
     
     private func startShimmering() {
+        guard !isShimmering else {return}
+        
         self.layoutIfNeeded()
         
         let light = UIColor.white.cgColor
@@ -39,6 +41,7 @@ extension UIView {
     }
     
     private func stopShimmering() {
+        self.layer.mask?.removeAllAnimations()
         self.layer.mask = nil
     }
 }
