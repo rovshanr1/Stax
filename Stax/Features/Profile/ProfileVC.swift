@@ -65,8 +65,9 @@ class ProfileVC: UIViewController {
     private func configureDataSource() {
         contentView.collectionView.delegate = self
         
-        let profileInfoRegistration = UICollectionView.CellRegistration<ProfileInfoCell, UserModel> { (cell, _, userModel) in
-            cell.configurationCell(with: userModel)
+        let profileInfoRegistration = UICollectionView.CellRegistration<ProfileInfoCell, UserModel> {[weak self] (cell, _, userModel) in
+            let isLoading = self?.viewModel.output.isLoading.value ?? false
+            cell.configurationCell(with: userModel, isLoading: isLoading)
         }
         
         
@@ -92,7 +93,28 @@ class ProfileVC: UIViewController {
             }
             .store(in: &cancellables)
         
+        viewModel.output.isLoading
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isLoading in
+                guard let self else { return }
+                if isLoading{
+                    self.showLoadingSnapshot()
+                }
+            }
+            .store(in: &cancellables)
+        
         viewModel.input.viewDidLoad.send()
+    }
+    
+    private func showLoadingSnapshot() {
+        var snapshot = Snapshot()
+        snapshot.appendSections([.profile])
+        
+     
+        let dummyUser = UserModel(id: "dummy", name: "", email: "", profileImage: nil)
+        snapshot.appendItems([.profileInfo(dummyUser)])
+        
+        dataSource.apply(snapshot, animatingDifferences: false)
     }
     
     private func updateSnapshot(with profileInfo: UserModel){

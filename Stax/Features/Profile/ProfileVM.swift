@@ -22,6 +22,7 @@ final class ProfileVM{
         let totalWorkouts: CurrentValueSubject<Int, Never>
         let logoutComplated: PassthroughSubject<Void, Never>
         let errorMessag: PassthroughSubject<String, Never>
+        let isLoading: CurrentValueSubject<Bool, Never>
     }
     
     //MARK: - Properties
@@ -44,7 +45,8 @@ final class ProfileVM{
         self.output = .init( userInfo: .init(nil),
                              totalWorkouts: .init(0),
                              logoutComplated: .init(),
-                             errorMessag: .init()
+                             errorMessag: .init(),
+                             isLoading: .init(false)
         )
         
         transform()
@@ -61,10 +63,14 @@ final class ProfileVM{
     
     //Helper Methods
     private func getUser(){
+        self.output.isLoading.send(true)
+        
         userService.getUser { [weak self] result in
             guard let self else { return }
-            
+        
             DispatchQueue.main.async {
+                self.output.isLoading.send(false)
+                
                 switch result{
                 case .success(let user):
                     self.output.userInfo.send(user)
