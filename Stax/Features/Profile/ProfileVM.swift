@@ -21,8 +21,8 @@ final class ProfileVM{
         let userInfo: CurrentValueSubject<UserModel?, Never>
         let userStats: CurrentValueSubject<UserStatsModel, Never>
         let chartData: CurrentValueSubject<[MonthlyChartData], Never>
-        let logoutComplated: PassthroughSubject<Void, Never>
-        let errorMessag: PassthroughSubject<String, Never>
+        let logoutCompleted: PassthroughSubject<Void, Never>
+        let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
     }
     
@@ -50,8 +50,8 @@ final class ProfileVM{
         self.output = .init( userInfo: .init(nil),
                              userStats: .init(UserStatsModel(workouts: 0, volume: 0.0, duration:  0.0)),
                              chartData: .init([]),
-                             logoutComplated: .init(),
-                             errorMessag: .init(),
+                             logoutCompleted: .init(),
+                             errorMessage: .init(),
                              isLoading: .init(false)
         )
         

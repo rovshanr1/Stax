@@ -10,7 +10,7 @@ import Charts
 
 enum MonthlyChartMetric: String, CaseIterable{
     case volume = "Volume"
-    case workout = "Workout"
+    case workouts = "Workouts"
     case duration = "Duration"
 }
 
@@ -28,7 +28,7 @@ struct MonthlyChart: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("Thiw Week")
+                    Text("This Week")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -69,7 +69,7 @@ struct MonthlyChart: View {
             return item.volume
         case .duration:
             return item.duration
-        case .workout:
+        case .workouts:
             return Double(item.workout)
         }
     }
@@ -82,7 +82,7 @@ struct MonthlyChart: View {
             return total.formatWeight()
         case .duration:
             return total.formatDurationFromProfile()
-        case .workout:
+        case .workouts:
             return "\(Int(total)) workouts"
         }
     }
