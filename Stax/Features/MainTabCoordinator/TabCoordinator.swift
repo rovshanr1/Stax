@@ -26,7 +26,7 @@ class TabCoordinator: NSObject, Coordinator {
     var tabBarController: UITabBarController
     let context: NSManagedObjectContext
     
-    private let sharedWorkoutRepo: WorkoutRepositoryInterface
+    private let sharedWorkoutRepo: WorkoutRepositoryProtocol
     
     var type: CoordinatorType { .tab }
     
@@ -37,10 +37,6 @@ class TabCoordinator: NSObject, Coordinator {
         
         let dataRepository = DataRepository<Workout>(context: context)
         self.sharedWorkoutRepo = WorkoutRepository(genericRepository: dataRepository)
-    }
-    
-    deinit{
-        print("TabCoordinator deinit")
     }
   
     func start() {

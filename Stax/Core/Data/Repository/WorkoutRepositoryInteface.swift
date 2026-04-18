@@ -9,14 +9,14 @@ import Foundation
 import CoreData
 import Combine
 
-protocol WorkoutRepositoryInterface{
+protocol WorkoutRepositoryProtocol{
     var workoutPublisher: CurrentValueSubject<[WorkoutDomainModel], Never> { get }
     func fetchWorkouts()
     func deleteWorkout(by id: String)
     func getWorkout(by id: String) -> WorkoutDomainModel?
 }
 
-final class WorkoutRepository: NSObject, WorkoutRepositoryInterface {
+final class WorkoutRepository: NSObject, WorkoutRepositoryProtocol {
    
     
     var workoutPublisher = CurrentValueSubject<[WorkoutDomainModel], Never>([])

@@ -21,10 +21,10 @@ final class ProfileCoordinator: Coordinator{
     var type: CoordinatorType { .page }
     
     
-    var workoutRepo: WorkoutRepositoryInterface
+    var workoutRepo: WorkoutRepositoryProtocol
     
     
-    init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryInterface) {
+    init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryProtocol) {
         self.navigationController = navigationController
         self.workoutRepo = workoutRepo
     }

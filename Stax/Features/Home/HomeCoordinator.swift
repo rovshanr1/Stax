@@ -26,10 +26,10 @@ final class HomeCoordinator: Coordinator{
     
     
     private let context: NSManagedObjectContext
-    private let workoutRepo: WorkoutRepositoryInterface
+    private let workoutRepo: WorkoutRepositoryProtocol
     var vm: HomeVM?
     
-    init(navigationController: UINavigationController, context: NSManagedObjectContext, workoutRepo: WorkoutRepositoryInterface) {
+    init(navigationController: UINavigationController, context: NSManagedObjectContext, workoutRepo: WorkoutRepositoryProtocol) {
         self.navigationController = navigationController
         self.context = context
         self.workoutRepo = workoutRepo

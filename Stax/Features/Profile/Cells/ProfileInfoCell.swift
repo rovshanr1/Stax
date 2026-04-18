@@ -25,7 +25,7 @@ class ProfileInfoCell: UICollectionViewCell {
         return label
     }()
     
-    private var totalWorkoutsText: UILabel = {
+    private let totalWorkoutsText: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 14, weight: .regular)
         label.textColor = .secondaryLabel
@@ -40,18 +40,72 @@ class ProfileInfoCell: UICollectionViewCell {
         return label
     }()
     
+    private let totalVolumeText: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14, weight: .regular)
+        label.textColor = .secondaryLabel
+        label.text = "Volume"
+        return label
+    }()
     
+    private var totalVolumeValueText: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14, weight: .regular)
+        label.textColor = .label
+        label.text = "0"
+        return label
+    }()
+    
+    private let totalWorkoutTimeText: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14, weight: .regular)
+        label.textColor = .secondaryLabel
+        label.text = "Duration"
+        return label
+    }()
+    
+    private var totalWorkoutTimeValueText: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14, weight: .regular)
+        label.textColor = .label
+        label.text = "0"
+        return label
+    }()
     
     //StackViews
     private lazy var workoutsStackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [totalWorkoutsText, totalWorkoutsValueText])
         stackView.axis = .vertical
+        stackView.spacing = 4
+        return stackView
+    }()
+    
+    private lazy var totalVolumeStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [totalVolumeText, totalVolumeValueText])
+        stackView.axis = .vertical
+        stackView.spacing = 4
+        return stackView
+    }()
+    
+    
+    private lazy var totalWorkoutTimeStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [totalWorkoutTimeText, totalWorkoutTimeValueText])
+        stackView.axis = .vertical
+        stackView.spacing = 4
+        return stackView
+    }()
+    
+    private lazy var  combinedStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [workoutsStackView, totalVolumeStackView, totalWorkoutTimeStackView])
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
         stackView.alignment = .center
+        stackView.spacing = 8
         return stackView
     }()
     
     private lazy var userInfoStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [userNameText, workoutsStackView])
+        let stackView = UIStackView(arrangedSubviews: [userNameText, combinedStackView])
         stackView.axis = .vertical
         stackView.spacing = 4
         return stackView
@@ -88,27 +142,41 @@ class ProfileInfoCell: UICollectionViewCell {
         profileImage.layer.cornerRadius = 40
     }
     
-    func configurationCell(with item: UserModel?, isLoading: Bool) {
+    func configurationCell(with item: UserModel?, isLoading: Bool, totalWorkouts: Int, totalVolumes: Double, totalWorkoutTime: Double) {
         if isLoading {
-            userNameText.text = "Kullanıcı Adı Yükleniyor..."
+            userNameText.text = "User is loading..."
             totalWorkoutsValueText.text = "000"
+            totalVolumeValueText.text = "000"
+            totalWorkoutTimeValueText.text = "00:00"
+            
             userNameText.textColor = .clear
             totalWorkoutsValueText.textColor = .clear
+            totalVolumeValueText.textColor = .clear
+            totalWorkoutTimeValueText.textColor = .clear
             
             userNameText.backgroundColor = .systemGray5
             totalWorkoutsValueText.backgroundColor = .systemGray5
             profileImage.backgroundColor = .systemGray5
+            totalVolumeValueText.backgroundColor = .systemGray5
+            totalWorkoutTimeValueText.backgroundColor = .systemGray5
             
             userNameText.layer.masksToBounds = true
             userNameText.layer.cornerRadius = 4
             totalWorkoutsValueText.layer.masksToBounds = true
             totalWorkoutsValueText.layer.cornerRadius = 4
+            totalVolumeValueText.layer.masksToBounds = true
+            totalVolumeValueText.layer.cornerRadius = 4
+            totalWorkoutTimeValueText.layer.masksToBounds = true
+            totalWorkoutTimeValueText.layer.cornerRadius = 4
             
             self.layoutIfNeeded()
             
             profileImage.isShimmering = true
             userNameText.isShimmering = true
             totalWorkoutsValueText.isShimmering = true
+            totalVolumeValueText.isShimmering = true
+            totalWorkoutTimeValueText.isShimmering = true
+            
         } else {
             guard let item = item else { return }
             
@@ -117,20 +185,31 @@ class ProfileInfoCell: UICollectionViewCell {
                 self.profileImage.isShimmering = false
                 self.userNameText.isShimmering = false
                 self.totalWorkoutsValueText.isShimmering = false
+                self.totalVolumeValueText.isShimmering = false
+                self.totalWorkoutTimeValueText.isShimmering = false
+                
                 
                 self.userNameText.backgroundColor = .clear
                 self.totalWorkoutsValueText.backgroundColor = .clear
                 self.profileImage.backgroundColor = .secondarySystemBackground
+                self.totalVolumeValueText.backgroundColor = .clear
+                self.totalWorkoutTimeValueText.backgroundColor = .clear
                 
                 self.userNameText.textColor = .label
                 self.totalWorkoutsValueText.textColor = .label
+                self.totalVolumeValueText.textColor = .label
+                self.totalWorkoutTimeValueText.textColor = .label
+                
                 
                 self.userNameText.text = item.name
+                self.totalWorkoutsValueText.text = "\(totalWorkouts)"
+                self.totalVolumeValueText.text = totalVolumes.formatWeight()
+                self.totalWorkoutTimeValueText.text = totalWorkoutTime.formatDurationFromProfile()
                 
                 if let url = URL(string: item.profileImage ?? "") {
-                    self.profileImage.kf.setImage(with: url, placeholder: UIImage(systemName: "person.circle.fill"))
+                    self.profileImage.kf.setImage(with: url, placeholder: UIImage(systemName: "person.circle"))
                 } else {
-                    self.profileImage.image = UIImage(systemName: "person.circle.fill")
+                    self.profileImage.image = UIImage(systemName: "person.circle")
                     self.profileImage.tintColor = .systemGray
                 }
                 

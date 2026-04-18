@@ -26,10 +26,10 @@ final class WorkoutDetailCoordinator: Coordinator{
     
     //States
     private let workoutID: String
-    private let workoutRepo: WorkoutRepositoryInterface
+    private let workoutRepo: WorkoutRepositoryProtocol
     
     
-    init(navigationController: UINavigationController, workoutID: String, workoutRepo: WorkoutRepositoryInterface) {
+    init(navigationController: UINavigationController, workoutID: String, workoutRepo: WorkoutRepositoryProtocol) {
         self.navigationController = navigationController
         self.workoutID = workoutID
         self.workoutRepo = workoutRepo
