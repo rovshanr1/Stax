@@ -20,27 +20,23 @@ final class WorkoutDetailCoordinator: Coordinator{
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
     var type: CoordinatorType { .workoutDetail }
-    let context: NSManagedObjectContext
     
     //Injection
     var vm: WorkoutDetailVM?
     
     //States
-    let workoutID: String
+    private let workoutID: String
+    private let workoutRepo: WorkoutRepositoryProtocol
     
     
-    init(navigationController: UINavigationController, context: NSManagedObjectContext, workoutID: String) {
+    init(navigationController: UINavigationController, workoutID: String, workoutRepo: WorkoutRepositoryProtocol) {
         self.navigationController = navigationController
-        self.context = context
         self.workoutID = workoutID
+        self.workoutRepo = workoutRepo
     }
     
     func start() {
         let workoutDetailVC = WorkoutDetailVC()
-        
-        //Repo injection
-        let genericRepo = DataRepository<Workout>(context: context)
-        let workoutRepo = WorkoutRepository(genericRoository: genericRepo)
         
         //VM injection
         self.vm = WorkoutDetailVM(workoutID: workoutID, workoutRepo: workoutRepo)

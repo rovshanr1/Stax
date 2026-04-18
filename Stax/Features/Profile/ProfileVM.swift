@@ -19,9 +19,11 @@ final class ProfileVM{
     ///Output: "Data" to VC (Data Streams)
     struct Output{
         let userInfo: CurrentValueSubject<UserModel?, Never>
-        let totalWorkouts: CurrentValueSubject<Int, Never>
-        let logoutComplated: PassthroughSubject<Void, Never>
-        let errorMessag: PassthroughSubject<String, Never>
+        let userStats: CurrentValueSubject<UserStatsModel, Never>
+        let chartData: CurrentValueSubject<[MonthlyChartData], Never>
+        let logoutCompleted: PassthroughSubject<Void, Never>
+        let errorMessage: PassthroughSubject<String, Never>
+        let isLoading: CurrentValueSubject<Bool, Never>
     }
     
     //MARK: - Properties
@@ -30,41 +32,70 @@ final class ProfileVM{
     
     //Services
     private let userService: UserServiceProtocol
+    private let workoutRepo: WorkoutRepositoryProtocol
+    private let chartService: MonthlyChartServiceProtocol
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(userService: UserServiceProtocol = UserService()){
+    init(userService: UserServiceProtocol = UserService(), workoutRepo: WorkoutRepositoryProtocol, chartService: MonthlyChartServiceProtocol = MonthlyChartService()){
         
         self.userService = userService
+        self.workoutRepo = workoutRepo
+        self.chartService = chartService
         
         self.input = .init( viewDidLoad: .init(),
                             logoutTapped: .init()
         )
         
         self.output = .init( userInfo: .init(nil),
-                             totalWorkouts: .init(0),
-                             logoutComplated: .init(),
-                             errorMessag: .init()
+                             userStats: .init(UserStatsModel(workouts: 0, volume: 0.0, duration:  0.0)),
+                             chartData: .init([]),
+                             logoutCompleted: .init(),
+                             errorMessage: .init(),
+                             isLoading: .init(false)
         )
         
         transform()
     }
     
     private func transform(){
+        workoutRepo.workoutPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] workouts in
+                guard let self else { return }
+                
+                let count = workouts.count
+                let totalVolume = workouts.reduce(0.0) { $0 + $1.volume }
+                let totalTime = workouts.reduce(0.0) {$0 + $1.duration}
+                
+                let stats = UserStatsModel(workouts: count, volume: totalVolume, duration: totalTime)
+                self.output.userStats.send(stats)
+                
+                let chartData = self.chartService.generateChartData(from: workouts)
+                self.output.chartData.send(chartData)
+            }
+            .store(in: &cancellables)
+        
         input.viewDidLoad
             .sink { [weak self] in
                 self?.getUser()
+                self?.workoutRepo.fetchWorkouts()
             }
             .store(in: &cancellables)
     }
     
     
     //Helper Methods
+    
     private func getUser(){
+        self.output.isLoading.send(true)
+        
         userService.getUser { [weak self] result in
             guard let self else { return }
             
             DispatchQueue.main.async {
+                self.output.isLoading.send(false)
+                
                 switch result{
                 case .success(let user):
                     self.output.userInfo.send(user)

@@ -25,20 +25,20 @@ final class HomeCoordinator: Coordinator{
     var type: CoordinatorType { .page }
     
     
-    let context: NSManagedObjectContext
+    private let context: NSManagedObjectContext
+    private let workoutRepo: WorkoutRepositoryProtocol
     var vm: HomeVM?
     
-    init(navigationController: UINavigationController, context: NSManagedObjectContext) {
+    init(navigationController: UINavigationController, context: NSManagedObjectContext, workoutRepo: WorkoutRepositoryProtocol) {
         self.navigationController = navigationController
         self.context = context
+        self.workoutRepo = workoutRepo
     }
     
     func start() {
         let homeVC = HomeVC()
         
         //Repo injection
-        let genericRepo = DataRepository<Workout>(context: context)
-        let workoutRepo = WorkoutRepository(genericRoository: genericRepo)
         let shareService = WorkoutTextShareService()
         
         //VM injection
@@ -106,7 +106,7 @@ final class HomeCoordinator: Coordinator{
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, context: self.context, workoutId: id)
+        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, context: context, workoutId: id)
         
         sessionCoordinator.finishDelegate = self
         
@@ -117,7 +117,7 @@ final class HomeCoordinator: Coordinator{
     }
     
     private func handleWorkoutDetailView(for id: String){
-        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, context: context, workoutID: id)
+        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, workoutID: id, workoutRepo: workoutRepo)
         
         workoutDetailCoordinator.finishDelegate = self
         childCoordinators.append(workoutDetailCoordinator)

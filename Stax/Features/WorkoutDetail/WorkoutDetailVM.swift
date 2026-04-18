@@ -29,10 +29,10 @@ final class WorkoutDetailVM {
     
     //MARK: - Dependencies
     private let workoutID: String
-    private let workoutRepo: WorkoutRepositoryInterface
+    private let workoutRepo: WorkoutRepositoryProtocol
     private var cancellables: Set<AnyCancellable> = []
     
-    init(workoutID: String, workoutRepo: WorkoutRepositoryInterface) {
+    init(workoutID: String, workoutRepo: WorkoutRepositoryProtocol) {
         self.workoutID = workoutID
         self.workoutRepo = workoutRepo
         

@@ -20,12 +20,18 @@ final class ProfileCoordinator: Coordinator{
     
     var type: CoordinatorType { .page }
     
-    init(_ navigationController: UINavigationController) {
+    
+    var workoutRepo: WorkoutRepositoryProtocol
+    
+    
+    init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryProtocol) {
         self.navigationController = navigationController
+        self.workoutRepo = workoutRepo
     }
     
     func start() {
-        let vm = ProfileVM()
+        
+        let vm = ProfileVM(workoutRepo: workoutRepo)
         
         let profileVC = ProfileVC(viewModel: vm)
         

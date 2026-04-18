@@ -28,7 +28,7 @@ final class HomeVM {
     let output: Output
     
     //Repositorys & Services
-    private let workoutRepo: WorkoutRepositoryInterface
+    private let workoutRepo: WorkoutRepositoryProtocol
     private let shareService: WorkoutShareServiceProtocol
     private let syncService: FirebaseSyncServiceInterface
 
@@ -36,7 +36,7 @@ final class HomeVM {
     //Combine
     private var cancellables = Set<AnyCancellable>()
     
-    init(workoutRepo: WorkoutRepositoryInterface, shareService: WorkoutShareServiceProtocol, synService: FirebaseSyncServiceInterface = FirebaseSyncService()){
+    init(workoutRepo: WorkoutRepositoryProtocol, shareService: WorkoutShareServiceProtocol, synService: FirebaseSyncServiceInterface = FirebaseSyncService()){
         self.workoutRepo = workoutRepo
         self.shareService = shareService
         self.syncService = synService

@@ -20,4 +20,14 @@ extension TimeInterval{
             return String(format: "%02dh %02dmin %02dsec", hours, minutes, seconds)
         }
     }
+    
+    func formatDurationFromProfile() -> String{
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .short
+        
+        return formatter.string(from: self) ?? "0 min"
+    }
 }
+
+
