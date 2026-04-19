@@ -21,6 +21,7 @@ final class ProfileVM{
         let userInfo: CurrentValueSubject<UserModel?, Never>
         let userStats: CurrentValueSubject<UserStatsModel, Never>
         let chartData: CurrentValueSubject<[MonthlyChartData], Never>
+        let profileWorkouts: CurrentValueSubject<[WorkoutDomainModel], Never>
         let logoutCompleted: PassthroughSubject<Void, Never>
         let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
@@ -50,6 +51,7 @@ final class ProfileVM{
         self.output = .init( userInfo: .init(nil),
                              userStats: .init(UserStatsModel(workouts: 0, volume: 0.0, duration:  0.0)),
                              chartData: .init([]),
+                             profileWorkouts: .init([]),
                              logoutCompleted: .init(),
                              errorMessage: .init(),
                              isLoading: .init(false)
@@ -73,6 +75,10 @@ final class ProfileVM{
                 
                 let chartData = self.chartService.generateChartData(from: workouts)
                 self.output.chartData.send(chartData)
+                
+                let sortedWorkouts = workouts.sorted { $0.date > $1.date }
+                let recentWorkouts = Array(sortedWorkouts.prefix(5))
+                self.output.profileWorkouts.send(recentWorkouts)
             }
             .store(in: &cancellables)
         
@@ -86,7 +92,6 @@ final class ProfileVM{
     
     
     //Helper Methods
-    
     private func getUser(){
         self.output.isLoading.send(true)
         
@@ -100,7 +105,7 @@ final class ProfileVM{
                 case .success(let user):
                     self.output.userInfo.send(user)
                 case .failure(let error):
-                    self.output.errorMessag.send(error.localizedDescription)
+                    self.output.errorMessage.send(error.localizedDescription)
                 }
             }
         }

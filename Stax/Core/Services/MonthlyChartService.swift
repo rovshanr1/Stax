@@ -31,13 +31,13 @@ final class MonthlyChartService: MonthlyChartServiceProtocol {
         for (day, dailyWorkouts) in groupedByDay {
             let totalVolume = dailyWorkouts.reduce(0.0) {$0 + ($1.volume)}
             let totalDuration = dailyWorkouts.reduce(0.0) { $0 + ($1.duration)}
-            let totalWorkouts = dailyWorkouts.count
+            let totalWorkouts = dailyWorkouts.reduce(0.0) { $0 + Double(($1.sets))}
             
             let chartData = MonthlyChartData(
                 date: day,
                 volume: totalVolume,
                 duration: totalDuration,
-                workout: totalWorkouts
+                sets: totalWorkouts
             )
             
             chartDataArray.append(chartData)

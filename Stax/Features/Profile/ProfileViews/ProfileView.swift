@@ -11,9 +11,21 @@ import SnapKit
 class ProfileUIView: UIView {
     
     private static func createLayout() -> UICollectionViewCompositionalLayout {
-        var config = UICollectionLayoutListConfiguration(appearance: .plain)
-        config.showsSeparators = false
-        return UICollectionViewCompositionalLayout.list(using: config)
+            
+            return UICollectionViewCompositionalLayout { sectionIndex, layoutEnvironment in
+                
+                var config = UICollectionLayoutListConfiguration(appearance: .plain)
+                config.showsSeparators = false
+                
+                
+                if sectionIndex == 2 {
+                    config.headerMode = .supplementary
+                } else {
+                    config.headerMode = .none
+                }
+                
+                return NSCollectionLayoutSection.list(using: config, layoutEnvironment: layoutEnvironment)
+            }
     }
     
     let collectionView: UICollectionView = {

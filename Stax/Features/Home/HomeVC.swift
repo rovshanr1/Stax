@@ -33,7 +33,7 @@ class HomeVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Home"
+        setupLeftAlignedNavigationTitle(with: "Home")
     
         configureDataSource()
         bindVM()

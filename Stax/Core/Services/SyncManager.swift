@@ -78,7 +78,7 @@ final class SyncManager: SyncManagerInterface{
                 localSet.id = UUID(uuidString: cloudSet.id)
                 localSet.weight = cloudSet.weight
                 localSet.reps = Int16(cloudSet.reps)
-                localSet.isComplated = cloudSet.isCompleted
+                localSet.isCompleted = cloudSet.isCompleted
                 localSet.orderIndex = Int16(cloudSet.orderIndex)
                 localSet.previous = cloudSet.previous 
                 localSet.restTime = cloudSet.restTime ?? 0.0

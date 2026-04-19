@@ -82,7 +82,7 @@ class WorkoutSetsView: UIView {
                     previous: set.previous ?? "-",
                     weight: set.weight,
                     reps: Int(set.reps),
-                    isDone: set.isComplated
+                    isDone: set.isCompleted
                 )
                 
                 bindRowClosures(rowView, set: set)

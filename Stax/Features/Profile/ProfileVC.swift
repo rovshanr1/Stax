@@ -20,7 +20,7 @@ class ProfileVC: UIViewController {
     nonisolated enum RowItem: Hashable, Sendable {
         case profileInfo(UserModel)
         case chart([MonthlyChartData])
-        case workout
+        case workout(WorkoutDomainModel)
     }
     
     typealias DataSource = UICollectionViewDiffableDataSource<Section, RowItem>
@@ -48,7 +48,8 @@ class ProfileVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Profile"
+        
+        setupLeftAlignedNavigationTitle(with: "Profile")
         
         configureDataSource()
         bindViewModel()
@@ -77,7 +78,7 @@ class ProfileVC: UIViewController {
             cell.configurationCell(with: userModel, isLoading: isLoading, totalWorkouts: totalWokrouts, totalVolumes: volumeText, totalWorkoutTime: durationText)
         }
         
-        let monthlyChartregistration = UICollectionView.CellRegistration<UICollectionViewCell, [MonthlyChartData]>{(cell, indexPath, item) in
+        let monthlyChartregistration = UICollectionView.CellRegistration<UICollectionViewCell, [MonthlyChartData]>{(cell, _, item) in
             cell.contentConfiguration = UIHostingConfiguration{
                 MonthlyChart(data: item)
             }
@@ -87,6 +88,22 @@ class ProfileVC: UIViewController {
             cell.backgroundConfiguration = background
         }
         
+        let profileWorkoutsRegistration = UICollectionView.CellRegistration<ProfileWorkoutsCell, WorkoutDomainModel>  { (cell, _, workoutsData) in
+            cell.configureProfileWorkoutCell(with: workoutsData)
+        }
+        
+        let headerRegistration = UICollectionView.SupplementaryRegistration<SectionHeaderView>(elementKind: UICollectionView.elementKindSectionHeader) { supplementaryView, elementKind, indexPath in
+            
+            
+            let section = self.dataSource.snapshot().sectionIdentifiers[indexPath.section]
+            
+            
+            if section == .workouts {
+                supplementaryView.titleLabel.text = "Workouts"
+            } else {
+                supplementaryView.titleLabel.text = nil
+            }
+        }
         
         dataSource = DataSource(collectionView: contentView.collectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
             switch itemIdentifier{
@@ -95,23 +112,31 @@ class ProfileVC: UIViewController {
                 return collectionView.dequeueConfiguredReusableCell(using: profileInfoRegistration, for: indexPath, item: userData)
             case .chart(let chartDataArry):
                 return collectionView.dequeueConfiguredReusableCell(using: monthlyChartregistration, for: indexPath, item: chartDataArry)
-            default:
-                fatalError("Unhandled case")
-                
+            case .workout(let workoutsData):
+                return collectionView.dequeueConfiguredReusableCell(using: profileWorkoutsRegistration, for: indexPath, item: workoutsData)
             }
         })
+        
+        dataSource.supplementaryViewProvider = { (collectionView, _, indexPath) in
+            return collectionView.dequeueConfiguredReusableSupplementary(using: headerRegistration, for: indexPath)
+        }
     }
     
+    //MARK: - ViewModel configuration
     private func bindViewModel(){
-        viewModel.output.userInfo
-            .combineLatest(viewModel.output.chartData)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] (userData, chartData) in
-                guard let self else {return}
-                guard let userData else {return}
-                self.updateSnapshot(with: userData, chartData: chartData)
-            }
-            .store(in: &cancellables)
+        
+        Publishers.CombineLatest3(
+            viewModel.output.userInfo,
+            viewModel.output.chartData,
+            viewModel.output.profileWorkouts
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] ( userData, chartData, profileWorkoutsData) in
+            guard let self = self, let userData = userData else { return }
+            
+            self.updateSnapshot(with: userData, chartData: chartData, profileWorkouts: profileWorkoutsData)
+        }
+        .store(in: &cancellables)
         
         viewModel.output.isLoading
             .receive(on: DispatchQueue.main)
@@ -142,6 +167,7 @@ class ProfileVC: UIViewController {
         viewModel.input.viewDidLoad.send()
     }
     
+    //MARK: - Snapshot configuration
     private func showLoadingSnapshot() {
         var snapshot = Snapshot()
         snapshot.appendSections([.profile])
@@ -153,19 +179,23 @@ class ProfileVC: UIViewController {
         dataSource.apply(snapshot, animatingDifferences: false)
     }
     
-    private func updateSnapshot(with profileInfo: UserModel, chartData: [MonthlyChartData]){
+    private func updateSnapshot(with profileInfo: UserModel, chartData: [MonthlyChartData], profileWorkouts: [WorkoutDomainModel]){
         var snapshot = Snapshot()
         
-        snapshot.appendSections([.profile, .charts])
-        snapshot.appendItems([.profileInfo(profileInfo)])
+        snapshot.appendSections([.profile, .charts, .workouts])
         
+        snapshot.appendItems([.profileInfo(profileInfo)], toSection: .profile)
         snapshot.appendItems([.chart(chartData)], toSection: .charts)
+        
+        let workoutItems = profileWorkouts.map {RowItem.workout($0)}
+        snapshot.appendItems(workoutItems, toSection: .workouts)
         
         
         dataSource.apply(snapshot, animatingDifferences: false)
     }
 }
 
+//MARK: - CollectionView delegate
 extension ProfileVC: UICollectionViewDelegate{
     func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return true }
