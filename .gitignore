@@ -9,6 +9,8 @@ xcuserdata/
 *.xccheckout
 *.moved-aside
 *.xcuserstate
+*.xcconfig
+.xcconfig
 
 # macOS
 .DS_Store
@@ -31,6 +33,7 @@ Carthage/Build/
 # Temporary
 *.swp
 *.lock
+.env
 
 # Plist
 GoogleService-Info.plist

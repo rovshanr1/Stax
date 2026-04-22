@@ -14,6 +14,7 @@ final class ProfileVM{
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
         let logoutTapped: PassthroughSubject<Void, Never>
+        let profileItemSelected: PassthroughSubject<Data, Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -35,17 +36,20 @@ final class ProfileVM{
     private let userService: UserServiceProtocol
     private let workoutRepo: WorkoutRepositoryProtocol
     private let chartService: MonthlyChartServiceProtocol
+    private let imageService: ImageKitServiceProtocol
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(userService: UserServiceProtocol = UserService(), workoutRepo: WorkoutRepositoryProtocol, chartService: MonthlyChartServiceProtocol = MonthlyChartService()){
+    init(userService: UserServiceProtocol = UserService(), workoutRepo: WorkoutRepositoryProtocol, chartService: MonthlyChartServiceProtocol = MonthlyChartService(), imageService: ImageKitServiceProtocol = ImageKitService()){
         
         self.userService = userService
         self.workoutRepo = workoutRepo
         self.chartService = chartService
+        self.imageService = imageService
         
         self.input = .init( viewDidLoad: .init(),
-                            logoutTapped: .init()
+                            logoutTapped: .init(),
+                            profileItemSelected: .init()
         )
         
         self.output = .init( userInfo: .init(nil),
@@ -88,6 +92,13 @@ final class ProfileVM{
                 self?.workoutRepo.fetchWorkouts()
             }
             .store(in: &cancellables)
+        
+        input.profileItemSelected
+            .sink { [weak self] imageData in
+                guard let self else { return }
+               uploadImage(imageData: imageData)
+            }
+            .store(in: &cancellables)
     }
     
     
@@ -107,6 +118,37 @@ final class ProfileVM{
                 case .failure(let error):
                     self.output.errorMessage.send(error.localizedDescription)
                 }
+            }
+        }
+    }
+    
+    private func uploadImage(imageData: Data){
+        self.output.isLoading.send(true)
+        
+        self.imageService.uploadProfileImage(image: imageData) { [weak self] result in
+            guard let self else { return }
+            
+            switch result{
+            case .success(let imageURL):
+                
+                self.userService.updateUserProfileImage(imageUrl: imageURL) { updateResult in
+                    self.output.isLoading.send(false)
+                    
+                    switch updateResult{
+                    case .success():
+                        if var updateUser = self.output.userInfo.value{
+                            updateUser.profileImage = imageURL
+                            self.output.userInfo.send(updateUser)
+                        }
+                        
+                    case .failure(let error):
+                        self.output.errorMessage.send(error.localizedDescription)
+                    }
+                }
+                
+            case .failure(let error):
+                self.output.isLoading.send(false)
+                self.output.errorMessage.send(error.localizedDescription)
             }
         }
     }

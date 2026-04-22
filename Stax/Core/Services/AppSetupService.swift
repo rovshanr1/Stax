@@ -8,6 +8,7 @@
 import Foundation
 import Kingfisher
 import FirebaseCore
+import ImageKitIO
 
 final class AppSetupService{
     static let shared = AppSetupService()
@@ -16,6 +17,7 @@ final class AppSetupService{
     func setupAllServices() {
         configureFirebase()
         configureKingfisher()
+        configureImageKitIO()
     }
     
    private func configureKingfisher(){
@@ -27,5 +29,12 @@ final class AppSetupService{
     
     private func configureFirebase(){
         FirebaseApp.configure()
+    }
+    
+    private func configureImageKitIO(){
+       _ =  ImageKit.init(
+            publicKey: Secrets.imageKitPublicKey,
+            urlEndpoint: "https://ik.imagekit.io/wgp06waey"
+        )
     }
 }

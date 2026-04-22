@@ -12,6 +12,7 @@
 		447A78362F7B24F000C1FDA0 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 447A78352F7B24F000C1FDA0 /* FirebaseFirestore */; };
 		448A77562EF496DE00AF19E2 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 448A77552EF496DE00AF19E2 /* Kingfisher */; };
 		44AEDA052EDE3F8600C33816 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 44AEDA042EDE3F8600C33816 /* SnapKit */; };
+		44F0ED552F97E7C600F85666 /* ImageKitIO in Frameworks */ = {isa = PBXBuildFile; productRef = 44F0ED542F97E7C600F85666 /* ImageKitIO */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -62,6 +63,7 @@
 				447A78342F7B24F000C1FDA0 /* FirebaseCore in Frameworks */,
 				447A78362F7B24F000C1FDA0 /* FirebaseFirestore in Frameworks */,
 				44AEDA052EDE3F8600C33816 /* SnapKit in Frameworks */,
+				44F0ED552F97E7C600F85666 /* ImageKitIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -110,6 +112,7 @@
 				447A78312F7B24F000C1FDA0 /* FirebaseAuth */,
 				447A78332F7B24F000C1FDA0 /* FirebaseCore */,
 				447A78352F7B24F000C1FDA0 /* FirebaseFirestore */,
+				44F0ED542F97E7C600F85666 /* ImageKitIO */,
 			);
 			productName = Stax;
 			productReference = 44AED9AA2ED4E25700C33816 /* Stax.app */;
@@ -143,6 +146,7 @@
 				44AEDA032EDE3F8600C33816 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				448A77542EF496DE00AF19E2 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				447A78302F7B24F000C1FDA0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				44F0ED532F97E7C600F85666 /* XCRemoteSwiftPackageReference "imagekit-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 44AED9AB2ED4E25700C33816 /* Products */;
@@ -177,6 +181,8 @@
 /* Begin XCBuildConfiguration section */
 		44AED9C12ED4E25900C33816 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 44AED9AC2ED4E25700C33816 /* Stax */;
+			baseConfigurationReferenceRelativePath = Support/Key.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -214,6 +220,8 @@
 		};
 		44AED9C22ED4E25900C33816 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 44AED9AC2ED4E25700C33816 /* Stax */;
+			baseConfigurationReferenceRelativePath = Support/Key.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -251,6 +259,8 @@
 		};
 		44AED9C32ED4E25900C33816 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 44AED9AC2ED4E25700C33816 /* Stax */;
+			baseConfigurationReferenceRelativePath = Support/Key.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -316,6 +326,8 @@
 		};
 		44AED9C42ED4E25900C33816 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 44AED9AC2ED4E25700C33816 /* Stax */;
+			baseConfigurationReferenceRelativePath = Support/Key.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -420,6 +432,14 @@
 				minimumVersion = 5.7.1;
 			};
 		};
+		44F0ED532F97E7C600F85666 /* XCRemoteSwiftPackageReference "imagekit-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/imagekit-developer/imagekit-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -447,6 +467,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 44AEDA032EDE3F8600C33816 /* XCRemoteSwiftPackageReference "SnapKit" */;
 			productName = SnapKit;
+		};
+		44F0ED542F97E7C600F85666 /* ImageKitIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 44F0ED532F97E7C600F85666 /* XCRemoteSwiftPackageReference "imagekit-ios" */;
+			productName = ImageKitIO;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

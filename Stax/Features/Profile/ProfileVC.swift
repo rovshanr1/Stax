@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import PhotosUI
 import Combine
 
 class ProfileVC: UIViewController {
@@ -31,6 +32,7 @@ class ProfileVC: UIViewController {
     
     //Private properties
     private let contentView = ProfileUIView()
+    private let alertManager = AlertManager()
     private let viewModel: ProfileVM
     
     private var dataSource: DataSource!
@@ -76,6 +78,9 @@ class ProfileVC: UIViewController {
             let durationText = stats?.duration ?? 0
             
             cell.configurationCell(with: userModel, isLoading: isLoading, totalWorkouts: totalWokrouts, totalVolumes: volumeText, totalWorkoutTime: durationText)
+            cell.profileImageTapped = {[weak self] in
+                self?.presentImagePicker()
+            }
         }
         
         let monthlyChartregistration = UICollectionView.CellRegistration<UICollectionViewCell, [MonthlyChartData]>{(cell, _, item) in
@@ -144,7 +149,22 @@ class ProfileVC: UIViewController {
                 guard let self else { return }
                 if isLoading{
                     self.showLoadingSnapshot()
+                }else{
+                    if let currentUser = self.viewModel.output.userInfo.value {
+                        let charts = self.viewModel.output.chartData.value
+                        let workouts = self.viewModel.output.profileWorkouts.value
+                        
+                        self.updateSnapshot(with: currentUser, chartData: charts, profileWorkouts: workouts)
+                    }
                 }
+            }
+            .store(in: &cancellables)
+        
+        viewModel.output.errorMessage
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] message in
+                guard let self else {return}
+                AlertManager.showErrorAlert(on: self, message: message)
             }
             .store(in: &cancellables)
         
@@ -193,6 +213,19 @@ class ProfileVC: UIViewController {
         
         dataSource.apply(snapshot, animatingDifferences: false)
     }
+    
+    //MARK: - ImagePicker configuration
+    private func presentImagePicker(){
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 1
+        config.filter = .images
+        
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+        
+        self.present(picker, animated: true)
+    }
+    
 }
 
 //MARK: - CollectionView delegate
@@ -206,6 +239,24 @@ extension ProfileVC: UICollectionViewDelegate{
             return false
         case .workout:
             return true
+        }
+    }
+}
+
+//MARK: - UIPicker delegate
+extension ProfileVC: PHPickerViewControllerDelegate{
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        
+        guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else { return }
+        
+        provider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
+            guard let self = self, let uiImage = image as? UIImage else { return }
+            
+            guard let imageData = uiImage.jpegData(compressionQuality: 0.5) else { return }
+            
+            self.viewModel.input.profileItemSelected.send(imageData)
+            
         }
     }
 }

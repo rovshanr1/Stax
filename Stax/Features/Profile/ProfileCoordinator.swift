@@ -7,6 +7,7 @@
 
 import UIKit
 
+
 enum ProfileEvent{
     case showProfilePhoto
 }
@@ -50,4 +51,8 @@ final class ProfileCoordinator: Coordinator{
             print("")
         }
     }
+    
+    
+  
 }
+
