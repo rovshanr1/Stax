@@ -14,7 +14,9 @@ class WorkoutVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationItem.title = "Workout"
+        
+        setupLeftAlignedNavigationTitle(with: "Workout")
+        
         bindEvent()
         setupTableView()
     }

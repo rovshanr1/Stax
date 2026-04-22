@@ -58,7 +58,7 @@ struct DataSeeder{
         do{
             try context.save()
             userDefaults.set(true, forKey: "seeded")
-            print("Seeding data complated")
+            print("Seeding data completed")
         } catch{
             print("Error\(DatabaseError.unknown(error.localizedDescription))")
         }

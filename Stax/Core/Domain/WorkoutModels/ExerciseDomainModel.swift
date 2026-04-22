@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ExerciseDomainModel: Hashable, Codable{
+nonisolated struct ExerciseDomainModel: Hashable, Codable, Sendable{
     let id: String
     let name: String
     let targetMuscleGroups: MuscleGroup?

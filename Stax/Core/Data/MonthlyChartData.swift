@@ -12,5 +12,5 @@ nonisolated struct MonthlyChartData: Identifiable, Sendable, Hashable{
     let date: Date
     let volume: Double
     let duration: Double
-    let workout: Int
+    let sets: Double
 }

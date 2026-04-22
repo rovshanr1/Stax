@@ -33,7 +33,7 @@ class HomeVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Home"
+        setupLeftAlignedNavigationTitle(with: "Home")
     
         configureDataSource()
         bindVM()
@@ -100,7 +100,9 @@ class HomeVC: UIViewController {
         let rowItems = items.map { RowItem.workout($0)}
         snaphot.appendItems(rowItems, toSection: .main)
         
-        dataSource.apply(snaphot, animatingDifferences: true)
+        let isVisible = self.view.window != nil
+        
+        dataSource.apply(snaphot, animatingDifferences: isVisible)
     }
 }
 

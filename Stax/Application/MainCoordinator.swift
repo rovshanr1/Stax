@@ -33,7 +33,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     
     func start() {
         
-        handleIsFirshLaunchComplated()
+        handleIsFirshLaunchCompleted()
         
         if Auth.auth().currentUser != nil{
             showSplashView()
@@ -85,14 +85,14 @@ class MainCoordinator: MainCoordinatorProtocol{
         childCoordinators.append(tabCoordinator)
     }
     
-    func handleIsFirshLaunchComplated() {
+    func handleIsFirshLaunchCompleted() {
         let defaults = UserDefaults.standard
         
-        if defaults.bool(forKey: "isFirshLaunchComplated") == false{
+        if defaults.bool(forKey: "isFirshLaunchCompleted") == false{
             
             try? Auth.auth().signOut()
             
-            defaults.set(true, forKey: "isFirshLaunchComplated")
+            defaults.set(true, forKey: "isFirshLaunchCompleted")
         }
     }
 }

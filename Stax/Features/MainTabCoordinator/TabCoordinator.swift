@@ -82,7 +82,7 @@ class TabCoordinator: NSObject, Coordinator {
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()
         case .profile:
-            let profileCoordinator = ProfileCoordinator(navController, workoutRepo: sharedWorkoutRepo)
+            let profileCoordinator = ProfileCoordinator(navController, workoutRepo: sharedWorkoutRepo, context: context)
             profileCoordinator.finishDelegate = self
             childCoordinators.append(profileCoordinator)
             profileCoordinator.start()

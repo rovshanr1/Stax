@@ -35,7 +35,7 @@ class InformationView: UIView {
         let label = UILabel()
         label.textColor = .secondaryLabel
         label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.text = "Complated"
+        label.text = "Completed"
         return label
     }()
     

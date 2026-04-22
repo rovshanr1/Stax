@@ -10,6 +10,10 @@ import SnapKit
 import Kingfisher
 
 class ProfileInfoCell: UICollectionViewCell {
+    
+    //Closures
+    var profileImageTapped: (() -> Void)?
+    
     private var profileImage: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -121,6 +125,7 @@ class ProfileInfoCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
+        imageGestureRecognizerTapped()
     }
     
     required init?(coder: NSCoder) {
@@ -128,7 +133,7 @@ class ProfileInfoCell: UICollectionViewCell {
     }
     
     private func setupUI(){
-        addSubview(mainStackView)
+        contentView.addSubview(mainStackView)
         
         mainStackView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview().inset(UIEdgeInsets(top: 12, left: 16, bottom: 12, right: 16)).priority(999)
@@ -140,6 +145,7 @@ class ProfileInfoCell: UICollectionViewCell {
         
         
         profileImage.layer.cornerRadius = 40
+        
     }
     
     func configurationCell(with item: UserModel?, isLoading: Bool, totalWorkouts: Int, totalVolumes: Double, totalWorkoutTime: Double) {
@@ -215,5 +221,15 @@ class ProfileInfoCell: UICollectionViewCell {
                 
             }, completion: nil)
         }
+    }
+    
+    private func imageGestureRecognizerTapped() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTapped))
+        profileImage.isUserInteractionEnabled = true
+        profileImage.addGestureRecognizer(tapGesture)
+    }
+    
+    @objc private func handleImageTapped() {
+        profileImageTapped?()
     }
 }

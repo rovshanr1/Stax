@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct WorkoutSetDomainModel: Hashable, Codable{
+nonisolated struct WorkoutSetDomainModel: Hashable, Codable, Sendable{
     let id: String
     let isCompleted: Bool
     let orderIndex: Int16

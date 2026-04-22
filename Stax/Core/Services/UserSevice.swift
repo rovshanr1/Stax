@@ -12,6 +12,8 @@ import FirebaseAuth
 protocol UserServiceProtocol {
     func saveUser(user: UserModel, completion: @escaping (Result<Void, Error>) -> Void)
     func getUser(completion: @escaping (Result<UserModel, Error>) -> Void)
+    func updateUserProfileImage(imageUrl: String, completion: @escaping (Result<Void, Error>) -> Void)
+    
 }
 
 final class UserService: UserServiceProtocol{
@@ -68,6 +70,24 @@ final class UserService: UserServiceProtocol{
             
             let user = UserModel(id: id, name: name, email: email, profileImage: image)
             completion(.success(user))
+        }
+    }
+    
+    func updateUserProfileImage(imageUrl: String, completion: @escaping (Result<Void, Error>) -> Void){
+        guard let currentUID = Auth.auth().currentUser?.uid else {
+            let error = NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
+            completion(.failure(error))
+            return
+        }
+        
+        let userRef = firestore.collection("users").document(currentUID)
+        
+        userRef.updateData(["profileImage": imageUrl]){error in
+            if let error = error {
+                completion(.failure(error))
+            }else{
+                completion(.success(()))
+            }
         }
     }
 }

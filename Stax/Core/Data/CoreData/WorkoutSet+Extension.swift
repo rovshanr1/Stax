@@ -12,7 +12,7 @@ extension WorkoutSet{
     func toDomain() -> WorkoutSetDomainModel {
         return WorkoutSetDomainModel(
             id: self.id?.uuidString ?? UUID().uuidString,
-            isCompleted: self.isComplated,
+            isCompleted: self.isCompleted,
             orderIndex: self.orderIndex,
             previous: self.previous ?? "",
             reps: self.reps,

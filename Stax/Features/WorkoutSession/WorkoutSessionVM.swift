@@ -314,7 +314,7 @@ final class WorkoutSessionViewModel: NSObject{
         newSet.previous = self.getPreviousHistory(for: exerciseDef, setIndex: Int(currentSets))
         newSet.reps = 0
         newSet.weight = 0.0
-        newSet.isComplated = false
+        newSet.isCompleted = false
         
         workoutSets.save()
             .sink(receiveCompletion: { complation in
@@ -338,7 +338,7 @@ final class WorkoutSessionViewModel: NSObject{
         workoutSets.update(id: targetSet.objectID) { set in
             set.weight = weight
             set.reps = Int16(reps)
-            set.isComplated = isDone
+            set.isCompleted = isDone
             
         }
         .sink { completion in
@@ -397,7 +397,7 @@ final class WorkoutSessionViewModel: NSObject{
         
         for exercise in allExercise {
             if let sets = exercise.workoutSets as? Set<WorkoutSet> {
-                for set in sets where set.isComplated {
+                for set in sets where set.isCompleted {
                     let volume = set.weight * Double(set.reps)
                     
                     totalVolume += volume
