@@ -9,6 +9,10 @@ import UIKit
 import SnapKit
 
 class ProfileWorkoutsCell: UICollectionViewCell {
+    
+    var menuButtonTapped: (() -> Void)?
+    var navigateToDetails: ((String) -> Void)?
+    
     private let headerView = HomeHeaderView()
     
     private var separatorView: UIView = {
@@ -48,6 +52,7 @@ class ProfileWorkoutsCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
+        handleEvent()
     }
     
     required init?(coder: NSCoder) {
@@ -72,6 +77,11 @@ class ProfileWorkoutsCell: UICollectionViewCell {
         }
     }
     
+    private func handleEvent(){
+        headerView.moreButtonOnTapped = { [weak self] in
+            self?.menuButtonTapped?()
+        }
+    }
     
     func configureProfileWorkoutCell(with workout: WorkoutDomainModel){
         let volumeStr = workout.volume.formatWeight()

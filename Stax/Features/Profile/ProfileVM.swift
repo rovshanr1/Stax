@@ -15,6 +15,8 @@ final class ProfileVM{
         let viewDidLoad: PassthroughSubject<Void, Never>
         let logoutTapped: PassthroughSubject<Void, Never>
         let profileItemSelected: PassthroughSubject<Data, Never>
+        let shareWorkout: PassthroughSubject<String, Never>
+        let deleteWokrout: PassthroughSubject<String, Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -26,6 +28,7 @@ final class ProfileVM{
         let logoutCompleted: PassthroughSubject<Void, Never>
         let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
+        let showShareSheet: PassthroughSubject<String, Never>
     }
     
     //MARK: - Properties
@@ -37,19 +40,32 @@ final class ProfileVM{
     private let workoutRepo: WorkoutRepositoryProtocol
     private let chartService: MonthlyChartServiceProtocol
     private let imageService: ImageKitServiceProtocol
+    private let shareService: WorkoutShareServiceProtocol
+    private let syncService: FirebaseSyncServiceInterface
+    
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(userService: UserServiceProtocol = UserService(), workoutRepo: WorkoutRepositoryProtocol, chartService: MonthlyChartServiceProtocol = MonthlyChartService(), imageService: ImageKitServiceProtocol = ImageKitService()){
+    init(userService: UserServiceProtocol = UserService(),
+         workoutRepo: WorkoutRepositoryProtocol,
+         chartService: MonthlyChartServiceProtocol = MonthlyChartService(),
+         imageService: ImageKitServiceProtocol = ImageKitService(),
+         shareService: WorkoutShareServiceProtocol = WorkoutTextShareService(),
+         syncService: FirebaseSyncServiceInterface = FirebaseSyncService()
+    ){
         
         self.userService = userService
         self.workoutRepo = workoutRepo
         self.chartService = chartService
         self.imageService = imageService
+        self.shareService = shareService
+        self.syncService = syncService
         
         self.input = .init( viewDidLoad: .init(),
                             logoutTapped: .init(),
-                            profileItemSelected: .init()
+                            profileItemSelected: .init(),
+                            shareWorkout: .init(),
+                            deleteWokrout: .init()
         )
         
         self.output = .init( userInfo: .init(nil),
@@ -58,12 +74,14 @@ final class ProfileVM{
                              profileWorkouts: .init([]),
                              logoutCompleted: .init(),
                              errorMessage: .init(),
-                             isLoading: .init(false)
+                             isLoading: .init(false),
+                             showShareSheet: .init()
         )
         
         transform()
     }
     
+    //MARK: - Transform Method
     private func transform(){
         workoutRepo.workoutPublisher
             .receive(on: DispatchQueue.main)
@@ -97,6 +115,23 @@ final class ProfileVM{
             .sink { [weak self] imageData in
                 guard let self else { return }
                uploadImage(imageData: imageData)
+            }
+            .store(in: &cancellables)
+        
+        input.shareWorkout
+            .sink { [weak self] id in
+                guard let self = self, let workoutDomain = self.workoutRepo.getWorkout(by: id) else { return }
+                let shareText = self.shareService.generateShareText(from: workoutDomain)
+                
+                self.output.showShareSheet.send(shareText)
+            }
+            .store(in: &cancellables)
+        
+        input.deleteWokrout
+            .sink { [weak self] id in
+                guard let self else {return}
+                workoutRepo.deleteWorkout(by: id)
+                self.deleteWorkout(withId: id)
             }
             .store(in: &cancellables)
     }
@@ -149,6 +184,18 @@ final class ProfileVM{
             case .failure(let error):
                 self.output.isLoading.send(false)
                 self.output.errorMessage.send(error.localizedDescription)
+            }
+        }
+    }
+    
+    private func deleteWorkout(withId id: String){
+        
+        syncService.deleteWorkoutFromCloud(workoutId: id){ result in
+            switch result {
+            case .success:
+                print("workout deleted: \(id)")
+            case .failure(let error):
+                print(error.localizedDescription)
             }
         }
     }

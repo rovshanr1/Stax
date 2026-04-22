@@ -95,6 +95,9 @@ class ProfileVC: UIViewController {
         
         let profileWorkoutsRegistration = UICollectionView.CellRegistration<ProfileWorkoutsCell, WorkoutDomainModel>  { (cell, _, workoutsData) in
             cell.configureProfileWorkoutCell(with: workoutsData)
+            cell.menuButtonTapped = { [weak self] in
+                self?.didSendEventClosure?(.showWorkoutMenu(id: workoutsData.id))
+            }
         }
         
         let headerRegistration = UICollectionView.SupplementaryRegistration<SectionHeaderView>(elementKind: UICollectionView.elementKindSectionHeader) { supplementaryView, elementKind, indexPath in
@@ -143,6 +146,11 @@ class ProfileVC: UIViewController {
         }
         .store(in: &cancellables)
         
+        DispatchQueue.main.async { [weak self] in
+            self?.viewModel.input.viewDidLoad.send()
+        }
+       
+        
         viewModel.output.isLoading
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isLoading in
@@ -184,7 +192,15 @@ class ProfileVC: UIViewController {
             }
             .store(in: &cancellables)
         
-        viewModel.input.viewDidLoad.send()
+        viewModel.output.showShareSheet
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] text in
+                guard let self else { return }
+                self.didSendEventClosure?(.presentShareSheet(text: text))
+            }
+            .store(in: &cancellables)
+        
+       
     }
     
     //MARK: - Snapshot configuration
@@ -239,6 +255,18 @@ extension ProfileVC: UICollectionViewDelegate{
             return false
         case .workout:
             return true
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        
+        guard let selectedItem = dataSource.itemIdentifier(for: indexPath) else { return }
+        switch selectedItem{
+        case .workout(let presentetionItem):
+            didSendEventClosure?(.presentWorkoutDetails(id: presentetionItem.id))
+            default :
+            break
         }
     }
 }
