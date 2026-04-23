@@ -28,6 +28,7 @@ final class ProfileVM{
         let logoutCompleted: PassthroughSubject<Void, Never>
         let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
+        let profilePhotoIsLoading: CurrentValueSubject<Bool, Never>
         let showShareSheet: PassthroughSubject<String, Never>
     }
     
@@ -75,6 +76,7 @@ final class ProfileVM{
                              logoutCompleted: .init(),
                              errorMessage: .init(),
                              isLoading: .init(false),
+                             profilePhotoIsLoading: .init(false),
                              showShareSheet: .init()
         )
         
@@ -158,7 +160,7 @@ final class ProfileVM{
     }
     
     private func uploadImage(imageData: Data){
-        self.output.isLoading.send(true)
+        self.output.profilePhotoIsLoading.send(true)
         
         self.imageService.uploadProfileImage(image: imageData) { [weak self] result in
             guard let self else { return }
@@ -167,7 +169,7 @@ final class ProfileVM{
             case .success(let imageURL):
                 
                 self.userService.updateUserProfileImage(imageUrl: imageURL) { updateResult in
-                    self.output.isLoading.send(false)
+                    self.output.profilePhotoIsLoading.send(false)
                     
                     switch updateResult{
                     case .success():

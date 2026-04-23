@@ -71,6 +71,7 @@ class ProfileVC: UIViewController {
         
         let profileInfoRegistration = UICollectionView.CellRegistration<ProfileInfoCell, UserModel> {[weak self] (cell, _, userModel) in
             let isLoading = self?.viewModel.output.isLoading.value ?? false
+            let imageIsLoading = self?.viewModel.output.profilePhotoIsLoading.value ?? false
             
             let stats = self?.viewModel.output.userStats.value
             let totalWokrouts = stats?.workouts ?? 0
@@ -78,6 +79,8 @@ class ProfileVC: UIViewController {
             let durationText = stats?.duration ?? 0
             
             cell.configurationCell(with: userModel, isLoading: isLoading, totalWorkouts: totalWokrouts, totalVolumes: volumeText, totalWorkoutTime: durationText)
+            cell.configImage(with: userModel, imageIsLoading: imageIsLoading)
+            
             cell.profileImageTapped = {[weak self] in
                 self?.presentImagePicker()
             }
@@ -149,7 +152,7 @@ class ProfileVC: UIViewController {
         DispatchQueue.main.async { [weak self] in
             self?.viewModel.input.viewDidLoad.send()
         }
-       
+        
         
         viewModel.output.isLoading
             .receive(on: DispatchQueue.main)
@@ -164,6 +167,21 @@ class ProfileVC: UIViewController {
                         
                         self.updateSnapshot(with: currentUser, chartData: charts, profileWorkouts: workouts)
                     }
+                }
+            }
+            .store(in: &cancellables)
+        
+        viewModel.output.profilePhotoIsLoading
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isLoading in
+                guard let self else { return }
+                guard let currentUser = self.viewModel.output.userInfo.value else { return }
+                
+                var snapshot = self.dataSource.snapshot()
+                let itemToReload = RowItem.profileInfo(currentUser)
+                if snapshot.indexOfItem(itemToReload) != nil {
+                    snapshot.reloadItems([itemToReload])
+                    self.dataSource.apply(snapshot, animatingDifferences: false)
                 }
             }
             .store(in: &cancellables)
@@ -200,7 +218,7 @@ class ProfileVC: UIViewController {
             }
             .store(in: &cancellables)
         
-       
+        
     }
     
     //MARK: - Snapshot configuration
@@ -265,7 +283,7 @@ extension ProfileVC: UICollectionViewDelegate{
         switch selectedItem{
         case .workout(let presentetionItem):
             didSendEventClosure?(.presentWorkoutDetails(id: presentetionItem.id))
-            default :
+        default :
             break
         }
     }

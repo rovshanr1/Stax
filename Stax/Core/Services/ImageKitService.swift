@@ -77,7 +77,7 @@ final class ImageKitService: ImageKitServiceProtocol{
     /// - Returns: A `String` representing the URL of the uploaded image in the cloud if successful.
     func uploadProfileImage(image: Data, completion: @escaping (Result<String, any Error>) -> Void) {
         
-        guard let uiImage = UIImage(data: image) else{
+        guard let uiImage = UIImage(data: image)?.jpegData(compressionQuality: 0.5) else{
             completion(.failure(NSError(domain: "ImageKit", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid Image"])))
             return
         }

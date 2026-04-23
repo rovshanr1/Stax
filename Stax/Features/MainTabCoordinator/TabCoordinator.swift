@@ -68,7 +68,7 @@ class TabCoordinator: NSObject, Coordinator {
     private func getTabController(_ page: TabBarPage) -> UINavigationController{
         let navController = UINavigationController()
         navController.navigationBar.prefersLargeTitles = true
-        navController.tabBarItem = UITabBarItem.init(title: page.title, image: page.icon, selectedImage: page.selectedIcon)
+        navController.tabBarItem = UITabBarItem.init(title: nil, image: page.icon, selectedImage: page.selectedIcon)
         
         switch page {
         case .home:
