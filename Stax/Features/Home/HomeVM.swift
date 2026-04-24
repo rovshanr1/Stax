@@ -109,10 +109,11 @@ final class HomeVM {
         
         for workoutExercise in topExercises{
             let exerciseName = workoutExercise.exercise?.name ?? "Unknown Exercise"
+            let exerciseImage = workoutExercise.exercise?.exerciseImage ?? ""
             let activeSetsCount = workoutExercise.workoutSets.count
             let title = "\(activeSetsCount) sets of \(exerciseName)"
             
-            let item = ExerciseSummaryItem(exerciseName: title, imageURl: nil)
+            let item = ExerciseSummaryItem(exerciseName: title, imageURl: exerciseImage)
             summaryItems.append(item)
         }
  

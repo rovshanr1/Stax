@@ -96,7 +96,7 @@ final class WorkoutDetailVC: UIViewController{
         }
         
         let exerciseTitle = UICollectionView.CellRegistration<WorkoutExerciseHeaderCell, DetailExerciseHeaderItem> { (cell, indexPath, item) in
-            cell.configureWorkoutExerciseHeader(title: item.exerciseName, image: nil)
+            cell.configureWorkoutExerciseHeader(title: item.exerciseName, image: item.imageURL ?? "")
             cell.backgroundColor = .systemBackground
         }
         

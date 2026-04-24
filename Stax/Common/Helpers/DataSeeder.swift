@@ -48,6 +48,7 @@ struct DataSeeder{
             let newExercise = Exercise(context: context)
             newExercise.name = dto.name
             newExercise.targetMuscle = dto.targetMuscle
+            newExercise.exerciseImage = dto.exerciseImage
             
             if let staticUUID = UUID(uuidString: dto.id) {
                 newExercise.id = staticUUID

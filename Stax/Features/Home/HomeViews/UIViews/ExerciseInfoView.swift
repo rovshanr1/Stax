@@ -10,27 +10,28 @@ import SnapKit
 import Kingfisher
 
 final class ExerciseInfoView: UIView {
+    private let imageSize: CGFloat = 60.0
     
     private var exerciseNameLabel: UILabel = {
-       let label = UILabel()
+        let label = UILabel()
         label.textColor = .secondaryLabel
         label.font = .systemFont(ofSize: 15, weight: .regular)
         label.numberOfLines = 0
         return label
     }()
     
-    private var exerciseImage: UIImageView = {
-        let image = UIImageView()
-        image.contentMode = .scaleAspectFill
+    private var exerciseImage: CircularImageView = {
+        let image = CircularImageView()
         image.clipsToBounds = true
         image.backgroundColor = .secondarySystemBackground
         return image
     }()
     
-
+    
     private lazy var stackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [exerciseImage, exerciseNameLabel])
         stackView.axis = .horizontal
+        stackView.alignment = .center
         stackView.spacing = 12
         return stackView
     }()
@@ -40,6 +41,7 @@ final class ExerciseInfoView: UIView {
         setupUI()
     }
     
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -47,20 +49,31 @@ final class ExerciseInfoView: UIView {
     private func setupUI(){
         addSubview(stackView)
         
+        
         stackView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
         }
         
         exerciseImage.snp.makeConstraints { make in
-            make.width.height.equalTo(60).priority(999)
+            make.width.height.equalTo(imageSize).priority(999)
         }
         
-        exerciseImage.layer.cornerRadius = 30
     }
     
     
     func configure(title: String, image: String?){
         exerciseNameLabel.text = title
+        
+        if let image = image{
+            let url = URL(string: image)
+            self.exerciseImage.contentMode = .scaleAspectFill
+            self.exerciseImage.kf.setImage(with: url)
+        }else{
+            self.exerciseImage.contentMode = .center
+            let configuration = UIImage.SymbolConfiguration(pointSize: 16, weight: .regular)
+            self.exerciseImage.image = UIImage(systemName: "dumbbell.fill", withConfiguration: configuration)
+            self.exerciseImage.tintColor = .systemGray
+            
+        }
     }
-
 }
