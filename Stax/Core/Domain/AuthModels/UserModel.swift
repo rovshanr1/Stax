@@ -13,4 +13,5 @@ nonisolated struct UserModel: Codable, Hashable, Sendable {
     let name: String
     let email: String
     var profileImage: String?
+    var bio: String?
 }

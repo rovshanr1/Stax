@@ -13,6 +13,9 @@ enum ProfileEvent{
     case showWorkoutMenu(id: String)
     case presentShareSheet(text: String)
     case presentWorkoutDetails(id: String)
+    case presentSettings
+    case presentEditProfile
+    case profilePhotoTapped
 }
 
 final class ProfileCoordinator: Coordinator{
@@ -24,9 +27,9 @@ final class ProfileCoordinator: Coordinator{
     
     var type: CoordinatorType { .page }
     
-    var workoutRepo: WorkoutRepositoryProtocol
+    private var workoutRepo: WorkoutRepositoryProtocol
     private let context: NSManagedObjectContext
-    var vm: ProfileVM
+    private var vm: ProfileVM
    
     
     init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryProtocol, context: NSManagedObjectContext) {
@@ -57,6 +60,12 @@ final class ProfileCoordinator: Coordinator{
             handleShareSheet(with: text)
         case .presentWorkoutDetails(id: let id):
             handleWorkoutDetailView(for: id)
+        case .presentSettings:
+            print("settings tapped")
+        case .presentEditProfile:
+            handleEditProfile()
+        case .profilePhotoTapped:
+            handleEditProfile()
         }
     }
     
@@ -118,6 +127,18 @@ final class ProfileCoordinator: Coordinator{
         workoutDetailCoordinator.finishDelegate = self
         childCoordinators.append(workoutDetailCoordinator)
         workoutDetailCoordinator.start()
+    }
+    
+    private func handleEditProfile(){
+        guard let currentUser = vm.output.userInfo.value else {
+            return
+        }
+        
+        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, userModel: currentUser)
+        
+        editProfileCoordinator.finishDelegate = self
+        childCoordinators.append(editProfileCoordinator)
+        editProfileCoordinator.start()
     }
   
 }

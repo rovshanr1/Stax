@@ -12,7 +12,7 @@ import FirebaseAuth
 protocol UserServiceProtocol {
     func saveUser(user: UserModel, completion: @escaping (Result<Void, Error>) -> Void)
     func getUser(completion: @escaping (Result<UserModel, Error>) -> Void)
-    func updateUserProfileImage(imageUrl: String, completion: @escaping (Result<Void, Error>) -> Void)
+    func updateUserProfile(name: String, bio: String, imageUrl: String?, completion: @escaping (Result<Void, Error>) -> Void)
     
 }
 
@@ -30,7 +30,8 @@ final class UserService: UserServiceProtocol{
             "id": user.id,
             "name": user.name,
             "email": user.email,
-            "profileImage": user.profileImage ?? ""
+            "profileImage": user.profileImage ?? "",
+            "bio": user.bio ?? ""
         ]
         
         document.setData(data, merge: true) { (error) in
@@ -67,13 +68,14 @@ final class UserService: UserServiceProtocol{
             let name = data["name"] as? String ?? "Unknown User"
             let email = data["email"] as? String ?? "Unknown Email"
             let image = data["profileImage"] as? String ?? ""
+            let bio = data["bio"] as? String ?? ""
             
-            let user = UserModel(id: id, name: name, email: email, profileImage: image)
+            let user = UserModel(id: id, name: name, email: email, profileImage: image, bio: bio)
             completion(.success(user))
         }
     }
     
-    func updateUserProfileImage(imageUrl: String, completion: @escaping (Result<Void, Error>) -> Void){
+    func updateUserProfile(name: String, bio: String, imageUrl: String?, completion: @escaping (Result<Void, Error>) -> Void){
         guard let currentUID = Auth.auth().currentUser?.uid else {
             let error = NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
             completion(.failure(error))
@@ -82,7 +84,16 @@ final class UserService: UserServiceProtocol{
         
         let userRef = firestore.collection("users").document(currentUID)
         
-        userRef.updateData(["profileImage": imageUrl]){error in
+        var updateData: [String: Any] = [
+            "name" : name,
+            "bio" : bio
+        ]
+        
+        if let newImageURl = imageUrl{
+            updateData["profileImage"] = newImageURl
+        }
+        
+        userRef.updateData(updateData){error in
             if let error = error {
                 completion(.failure(error))
             }else{

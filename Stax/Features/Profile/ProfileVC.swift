@@ -52,9 +52,11 @@ class ProfileVC: UIViewController {
         super.viewDidLoad()
         
         setupLeftAlignedNavigationTitle(with: "Profile")
+        rightBarButtonConfiguration()
         
         configureDataSource()
         bindViewModel()
+        
     }
     
     override func loadView() {
@@ -71,7 +73,6 @@ class ProfileVC: UIViewController {
         
         let profileInfoRegistration = UICollectionView.CellRegistration<ProfileInfoCell, UserModel> {[weak self] (cell, _, userModel) in
             let isLoading = self?.viewModel.output.isLoading.value ?? false
-            let imageIsLoading = self?.viewModel.output.profilePhotoIsLoading.value ?? false
             
             let stats = self?.viewModel.output.userStats.value
             let totalWokrouts = stats?.workouts ?? 0
@@ -79,10 +80,10 @@ class ProfileVC: UIViewController {
             let durationText = stats?.duration ?? 0
             
             cell.configurationCell(with: userModel, isLoading: isLoading, totalWorkouts: totalWokrouts, totalVolumes: volumeText, totalWorkoutTime: durationText)
-            cell.configImage(with: userModel, imageIsLoading: imageIsLoading)
+            cell.configImage(with: userModel, imageIsLoading: isLoading)
             
             cell.profileImageTapped = {[weak self] in
-                self?.presentImagePicker()
+                self?.didSendEventClosure?(.profilePhotoTapped)
             }
         }
         
@@ -171,20 +172,6 @@ class ProfileVC: UIViewController {
             }
             .store(in: &cancellables)
         
-        viewModel.output.profilePhotoIsLoading
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isLoading in
-                guard let self else { return }
-                guard let currentUser = self.viewModel.output.userInfo.value else { return }
-                
-                var snapshot = self.dataSource.snapshot()
-                let itemToReload = RowItem.profileInfo(currentUser)
-                if snapshot.indexOfItem(itemToReload) != nil {
-                    snapshot.reloadItems([itemToReload])
-                    self.dataSource.apply(snapshot, animatingDifferences: false)
-                }
-            }
-            .store(in: &cancellables)
         
         viewModel.output.errorMessage
             .receive(on: DispatchQueue.main)
@@ -248,18 +235,28 @@ class ProfileVC: UIViewController {
         dataSource.apply(snapshot, animatingDifferences: false)
     }
     
-    //MARK: - ImagePicker configuration
-    private func presentImagePicker(){
-        var config = PHPickerConfiguration()
-        config.selectionLimit = 1
-        config.filter = .images
+    
+    //MARK: - BarButtonItem
+    private func rightBarButtonConfiguration(){
+        let editProfileImage = UIImage(systemName: "pencil")
+        let steingsImage = UIImage(systemName: "gear")
         
-        let picker = PHPickerViewController(configuration: config)
-        picker.delegate = self
         
-        self.present(picker, animated: true)
+        let editProfileButton = UIBarButtonItem(image: editProfileImage, style: .plain, target: self, action: #selector(editProfileButtonTapped))
+        let settingsButton = UIBarButtonItem(image: steingsImage, style: .plain, target: self, action: #selector(settingsButtonTapped))
+        
+
+        navigationItem.rightBarButtonItems = [settingsButton, editProfileButton]
     }
     
+    
+    @objc private func editProfileButtonTapped(){
+        didSendEventClosure?(.presentEditProfile)
+    }
+    
+    @objc private func settingsButtonTapped(){
+        didSendEventClosure?(.presentSettings)
+    }
 }
 
 //MARK: - CollectionView delegate
@@ -289,20 +286,5 @@ extension ProfileVC: UICollectionViewDelegate{
     }
 }
 
-//MARK: - UIPicker delegate
-extension ProfileVC: PHPickerViewControllerDelegate{
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        picker.dismiss(animated: true)
-        
-        guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else { return }
-        
-        provider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-            guard let self = self, let uiImage = image as? UIImage else { return }
-            
-            guard let imageData = uiImage.jpegData(compressionQuality: 0.5) else { return }
-            
-            self.viewModel.input.profileItemSelected.send(imageData)
-            
-        }
-    }
-}
+
+
