@@ -120,5 +120,7 @@ extension TabCoordinator: UITabBarControllerDelegate{
 extension TabCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator coordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({ $0 !== coordinator})
+        
+        self.finishDelegate?.coordinatorDidFinish(childCoordinator: self)
     }
 }

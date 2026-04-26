@@ -13,7 +13,7 @@ protocol UserServiceProtocol {
     func saveUser(user: UserModel, completion: @escaping (Result<Void, Error>) -> Void)
     func getUser(completion: @escaping (Result<UserModel, Error>) -> Void)
     func updateUserProfile(name: String, bio: String, imageUrl: String?, completion: @escaping (Result<Void, Error>) -> Void)
-    
+    func signOut(completion: @escaping (Result<Void, Error>) -> Void)
 }
 
 final class UserService: UserServiceProtocol{
@@ -99,6 +99,15 @@ final class UserService: UserServiceProtocol{
             }else{
                 completion(.success(()))
             }
+        }
+    }
+    
+    func signOut(completion: @escaping (Result<Void, Error>) -> Void){
+        do{
+            try Auth.auth().signOut()
+            completion(.success(()))
+        }catch let error {
+            completion(.failure(error))
         }
     }
 }

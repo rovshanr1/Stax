@@ -64,7 +64,7 @@ final class ProfileCoordinator: Coordinator{
         case .presentWorkoutDetails(id: let id):
             handleWorkoutDetailView(for: id)
         case .presentSettings:
-            print("settings tapped")
+            handleSettings()
         case .presentEditProfile:
             handleEditProfile()
         case .profilePhotoTapped:
@@ -143,10 +143,24 @@ final class ProfileCoordinator: Coordinator{
         childCoordinators.append(editProfileCoordinator)
         editProfileCoordinator.start()
     }
+    
+    private func handleSettings(){
+        let settingsCoordinator = SettingsCoordinator(navigationController, userManager: userManager)
+        
+        settingsCoordinator.finishDelegate = self
+        settingsCoordinator.settingsDelegate = self
+        
+        childCoordinators.append(settingsCoordinator)
+        settingsCoordinator.start()
+    }
   
 }
 
-extension ProfileCoordinator: CoordinatorFinishDelegate {
+extension ProfileCoordinator: CoordinatorFinishDelegate, SettingsCoordinatorDelegate {
+    func settingsCoordinatorDidLogout() {
+        finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+    }
+    
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({$0 !== childCoordinator})
     }

@@ -13,7 +13,7 @@ final class UserManager{
     
     init(){}
     
-    func upateUser(user: UserModel?){
+    func updateUser(user: UserModel?){
         currentUser.send(user)
     }
 }
