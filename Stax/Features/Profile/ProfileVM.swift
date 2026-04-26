@@ -14,7 +14,6 @@ final class ProfileVM{
     struct Input{
         let viewDidLoad: PassthroughSubject<Void, Never>
         let logoutTapped: PassthroughSubject<Void, Never>
-        let profileItemSelected: PassthroughSubject<Data, Never>
         let shareWorkout: PassthroughSubject<String, Never>
         let deleteWokrout: PassthroughSubject<String, Never>
     }
@@ -35,35 +34,36 @@ final class ProfileVM{
     let input: Input
     let output: Output
     
+    private var cancellables: Set<AnyCancellable> = []
+    
     //Services
     private let userService: UserServiceProtocol
     private let workoutRepo: WorkoutRepositoryProtocol
     private let chartService: MonthlyChartServiceProtocol
-    private let imageService: ImageKitServiceProtocol
     private let shareService: WorkoutShareServiceProtocol
     private let syncService: FirebaseSyncServiceInterface
+    private let userManager: UserManager
     
     
-    private var cancellables: Set<AnyCancellable> = []
+    
     
     init(userService: UserServiceProtocol = UserService(),
          workoutRepo: WorkoutRepositoryProtocol,
          chartService: MonthlyChartServiceProtocol = MonthlyChartService(),
-         imageService: ImageKitServiceProtocol = ImageKitService(),
          shareService: WorkoutShareServiceProtocol = WorkoutTextShareService(),
-         syncService: FirebaseSyncServiceInterface = FirebaseSyncService()
+         syncService: FirebaseSyncServiceInterface = FirebaseSyncService(),
+         userManger: UserManager
     ){
         
         self.userService = userService
         self.workoutRepo = workoutRepo
         self.chartService = chartService
-        self.imageService = imageService
         self.shareService = shareService
         self.syncService = syncService
+        self.userManager = userManger
         
         self.input = .init( viewDidLoad: .init(),
                             logoutTapped: .init(),
-                            profileItemSelected: .init(),
                             shareWorkout: .init(),
                             deleteWokrout: .init()
         )
@@ -83,6 +83,14 @@ final class ProfileVM{
     
     //MARK: - Transform Method
     private func transform(){
+        
+        userManager.currentUser
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] user in
+                self?.output.userInfo.send(user)
+            }
+            .store(in: &cancellables)
+        
         workoutRepo.workoutPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] workouts in
@@ -110,13 +118,7 @@ final class ProfileVM{
                 self?.workoutRepo.fetchWorkouts()
             }
             .store(in: &cancellables)
-        
-        input.profileItemSelected
-            .sink { [weak self] imageData in
-                guard let self else { return }
-               uploadImage(imageData: imageData)
-            }
-            .store(in: &cancellables)
+
         
         input.shareWorkout
             .sink { [weak self] id in
@@ -149,7 +151,7 @@ final class ProfileVM{
                 
                 switch result{
                 case .success(let user):
-                    self.output.userInfo.send(user)
+                    self.userManager.currentUser.send(user)
                 case .failure(let error):
                     self.output.errorMessage.send(error.localizedDescription)
                 }
@@ -157,36 +159,6 @@ final class ProfileVM{
         }
     }
     
-    private func uploadImage(imageData: Data){
-        self.output.isLoading.send(true)
-        
-        self.imageService.uploadProfileImage(image: imageData) { [weak self] result in
-            guard let self else { return }
-            
-            switch result{
-            case .success(let imageURL):
-                
-                self.userService.updateUserProfileImage(imageUrl: imageURL) { updateResult in
-                    self.output.isLoading.send(false)
-                    
-                    switch updateResult{
-                    case .success():
-                        if var updateUser = self.output.userInfo.value{
-                            updateUser.profileImage = imageURL
-                            self.output.userInfo.send(updateUser)
-                        }
-                        
-                    case .failure(let error):
-                        self.output.errorMessage.send(error.localizedDescription)
-                    }
-                }
-                
-            case .failure(let error):
-                self.output.isLoading.send(false)
-                self.output.errorMessage.send(error.localizedDescription)
-            }
-        }
-    }
     
     private func deleteWorkout(withId id: String){
         

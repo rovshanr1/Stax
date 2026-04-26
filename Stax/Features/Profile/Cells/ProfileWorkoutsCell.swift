@@ -98,7 +98,7 @@ class ProfileWorkoutsCell: UICollectionViewCell {
             if index < displayLimit{
                 let exerciseView = ExerciseInfoView()
                 
-                exerciseView.configure(title: exerciseItem.exercise?.name ?? "Unknown Exercise", image: exerciseItem.exercise?.videoURL)
+                exerciseView.configure(title: exerciseItem.exercise?.name ?? "Unknown Exercise", image: exerciseItem.exercise?.exerciseImage ?? "")
                 
                 exerciseStackView.addArrangedSubview(exerciseView)
             }

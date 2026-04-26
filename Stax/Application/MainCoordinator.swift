@@ -26,6 +26,8 @@ class MainCoordinator: MainCoordinatorProtocol{
     let context: NSManagedObjectContext
     var cancellables: Set<AnyCancellable> = []
     
+    let userManager = UserManager()
+    
     init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
         self.navigationController = navigationController
         self.context = context
@@ -78,7 +80,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func showMainFlow() {
-        let tabCoordinator = TabCoordinator(navigationController, context: context)
+        let tabCoordinator = TabCoordinator(navigationController, context: context, userManager: userManager)
         tabCoordinator.finishDelegate = self
         navigationController.setNavigationBarHidden(true, animated: false)
         tabCoordinator.start()

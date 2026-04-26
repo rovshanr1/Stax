@@ -12,4 +12,5 @@ nonisolated struct ExerciseDomainModel: Hashable, Codable, Sendable{
     let name: String
     let targetMuscleGroups: MuscleGroup?
     let videoURL: String?
+    let exerciseImage: String?
 }

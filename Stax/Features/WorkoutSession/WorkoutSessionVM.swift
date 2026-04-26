@@ -244,7 +244,7 @@ final class WorkoutSessionViewModel: NSObject{
         
         newSet.exercise = exerciseDefinition
         newSet.workout = workout
-        
+    
         let newIndex = output.exercises.value.count
         newSet.orderIndex = Int16(newIndex)
         

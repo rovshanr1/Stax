@@ -26,14 +26,16 @@ class TabCoordinator: NSObject, Coordinator {
     var tabBarController: UITabBarController
     let context: NSManagedObjectContext
     
+    private let userManager: UserManager
     private let sharedWorkoutRepo: WorkoutRepositoryProtocol
     
     var type: CoordinatorType { .tab }
     
-    init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
+    init(_ navigationController: UINavigationController, context: NSManagedObjectContext, userManager: UserManager) {
         self.navigationController = navigationController
         self.tabBarController = MainTabBarController()
         self.context = context
+        self.userManager = userManager
         
         let dataRepository = DataRepository<Workout>(context: context)
         self.sharedWorkoutRepo = WorkoutRepository(genericRepository: dataRepository)
@@ -68,7 +70,7 @@ class TabCoordinator: NSObject, Coordinator {
     private func getTabController(_ page: TabBarPage) -> UINavigationController{
         let navController = UINavigationController()
         navController.navigationBar.prefersLargeTitles = true
-        navController.tabBarItem = UITabBarItem.init(title: page.title, image: page.icon, selectedImage: page.selectedIcon)
+        navController.tabBarItem = UITabBarItem.init(title: nil, image: page.icon, selectedImage: page.selectedIcon)
         
         switch page {
         case .home:
@@ -82,7 +84,7 @@ class TabCoordinator: NSObject, Coordinator {
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()
         case .profile:
-            let profileCoordinator = ProfileCoordinator(navController, workoutRepo: sharedWorkoutRepo, context: context)
+            let profileCoordinator = ProfileCoordinator(navController, workoutRepo: sharedWorkoutRepo, context: context, userManager: userManager)
             profileCoordinator.finishDelegate = self
             childCoordinators.append(profileCoordinator)
             profileCoordinator.start()
@@ -118,5 +120,7 @@ extension TabCoordinator: UITabBarControllerDelegate{
 extension TabCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator coordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({ $0 !== coordinator})
+        
+        self.finishDelegate?.coordinatorDidFinish(childCoordinator: self)
     }
 }

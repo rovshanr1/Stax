@@ -94,11 +94,12 @@ final class WorkoutDetailVM {
         for workoutExercise in workout.workoutExercises {
             let exerciseName = workoutExercise.exercise?.name ?? ""
             let muscleName = workoutExercise.exercise?.targetMuscleGroups?.rawValue
+            let exerciseImage = workoutExercise.exercise?.exerciseImage ?? ""
             
             let headerItem = DetailExerciseHeaderItem(
                 exerciseName: exerciseName,
                 muscleGroups: muscleName != nil ? [muscleName!] : nil,
-                imageURL: nil)
+                imageURL: exerciseImage)
             
             var setRowItems: [DetailSetRowItem] = []
             

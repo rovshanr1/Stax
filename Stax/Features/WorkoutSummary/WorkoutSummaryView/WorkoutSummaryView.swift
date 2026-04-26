@@ -14,6 +14,8 @@ final class WorkoutSummaryView: UIView {
     var syncButtonOnTapped: (() -> Void)?
     var discardButtonOnTapped: (() -> Void)?
     
+    private var keyboardManager: KeyboardManager?
+    
     private let scrollView = UIScrollView()
     
     private let containerStackView: UIStackView = {
@@ -88,26 +90,19 @@ final class WorkoutSummaryView: UIView {
     
     //MARK: - Keyboard Handling
     private func setupKeyboardHandling() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+       keyboardManager = KeyboardManager(scrollView: scrollView)
+        scrollView.keyboardDismissMode = .interactive
+        setupKeyboardDismissGesture()
     }
     
-    @objc private func keyboardWillShow(notification: NSNotification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-            
-            
-        let bottomInset = keyboardFrame.height
-        scrollView.contentInset.bottom = bottomInset
-        scrollView.verticalScrollIndicatorInsets.bottom = bottomInset
+    private func setupKeyboardDismissGesture() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        addGestureRecognizer(tapGesture)
     }
     
-    @objc private func keyboardWillHide(notification: NSNotification) {
-        scrollView.contentInset = .zero
-        scrollView.verticalScrollIndicatorInsets = .zero
-    }
-    
-    deinit {
-            NotificationCenter.default.removeObserver(self)
+    @objc private func dismissKeyboard() {
+        endEditing(true)
     }
     
     //MARK: - ConfigureMethods

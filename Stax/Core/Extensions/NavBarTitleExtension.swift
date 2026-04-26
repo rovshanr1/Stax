@@ -22,12 +22,12 @@ extension UIViewController {
         leftTitleLabel.font = .systemFont(ofSize: 28, weight: .bold)
         leftTitleLabel.textColor = .label
         
-     
+        
         
         self.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: leftTitleLabel)
         
         if #available(iOS 26.0, *) {
-          navigationItem.leftBarButtonItem?.hidesSharedBackground = true
+            navigationItem.leftBarButtonItem?.hidesSharedBackground = true
         }
     }
 }

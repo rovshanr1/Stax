@@ -10,7 +10,8 @@ import Foundation
 
 nonisolated struct UserModel: Codable, Hashable, Sendable {
     let id: String
-    let name: String
-    let email: String
+    var name: String
+    var email: String
     var profileImage: String?
+    var bio: String?
 }

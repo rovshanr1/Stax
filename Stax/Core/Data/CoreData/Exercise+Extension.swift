@@ -14,11 +14,12 @@ extension Exercise{
         let rawMuscleString = self.targetMuscle ?? ""
         let safeMusleGroup = MuscleGroup(rawValue: rawMuscleString) ?? .other
         
-       return ExerciseDomainModel(
-        id: self.id?.uuidString ?? UUID().uuidString,
+        return ExerciseDomainModel(
+            id: self.id?.uuidString ?? UUID().uuidString,
             name: self.name ?? "",
             targetMuscleGroups: safeMusleGroup,
-            videoURL: self.videoURL ?? ""
+            videoURL: self.videoURL ?? "",
+            exerciseImage: self.exerciseImage ?? ""
         )
     }
 }

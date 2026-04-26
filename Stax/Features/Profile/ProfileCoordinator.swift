@@ -13,6 +13,9 @@ enum ProfileEvent{
     case showWorkoutMenu(id: String)
     case presentShareSheet(text: String)
     case presentWorkoutDetails(id: String)
+    case presentSettings
+    case presentEditProfile
+    case profilePhotoTapped
 }
 
 final class ProfileCoordinator: Coordinator{
@@ -24,22 +27,25 @@ final class ProfileCoordinator: Coordinator{
     
     var type: CoordinatorType { .page }
     
-    var workoutRepo: WorkoutRepositoryProtocol
+    //Services
+    private var workoutRepo: WorkoutRepositoryProtocol
+    private var userManager: UserManager
+    
     private let context: NSManagedObjectContext
-    var vm: ProfileVM
+    private var vm: ProfileVM
+    
    
     
-    init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryProtocol, context: NSManagedObjectContext) {
+    init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryProtocol, context: NSManagedObjectContext, userManager: UserManager) {
         self.navigationController = navigationController
         self.workoutRepo = workoutRepo
         self.context = context
-        self.vm = ProfileVM(workoutRepo: workoutRepo)
+        self.vm = ProfileVM(workoutRepo: workoutRepo, userManger: userManager)
+        self.userManager = userManager
     }
     
     func start() {
- 
         let profileVC = ProfileVC(viewModel: vm)
-        
         
         profileVC.didSendEventClosure = { [weak self] event in
             self?.handle(event)
@@ -57,6 +63,12 @@ final class ProfileCoordinator: Coordinator{
             handleShareSheet(with: text)
         case .presentWorkoutDetails(id: let id):
             handleWorkoutDetailView(for: id)
+        case .presentSettings:
+            handleSettings()
+        case .presentEditProfile:
+            handleEditProfile()
+        case .profilePhotoTapped:
+            handleEditProfile()
         }
     }
     
@@ -119,10 +131,36 @@ final class ProfileCoordinator: Coordinator{
         childCoordinators.append(workoutDetailCoordinator)
         workoutDetailCoordinator.start()
     }
+    
+    private func handleEditProfile(){
+        guard let currentUser = vm.output.userInfo.value else {
+            return
+        }
+        
+        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, userModel: currentUser, userManager: userManager)
+        
+        editProfileCoordinator.finishDelegate = self
+        childCoordinators.append(editProfileCoordinator)
+        editProfileCoordinator.start()
+    }
+    
+    private func handleSettings(){
+        let settingsCoordinator = SettingsCoordinator(navigationController, userManager: userManager)
+        
+        settingsCoordinator.finishDelegate = self
+        settingsCoordinator.settingsDelegate = self
+        
+        childCoordinators.append(settingsCoordinator)
+        settingsCoordinator.start()
+    }
   
 }
 
-extension ProfileCoordinator: CoordinatorFinishDelegate {
+extension ProfileCoordinator: CoordinatorFinishDelegate, SettingsCoordinatorDelegate {
+    func settingsCoordinatorDidLogout() {
+        finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+    }
+    
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({$0 !== childCoordinator})
     }
