@@ -41,22 +41,30 @@ final class EditProfileVM{
     private var draftBio: String
     private var draftImageData: Data?
     
+    // InitialImage
+    var initialImageURL: String?{
+        return originalUser.profileImage
+    }
+    
     //Combine
     private var cancellables: Set<AnyCancellable> = []
     
     //Services
     private let userService: UserServiceProtocol
     private let imageService: ImageKitServiceProtocol
+    private let userManager: UserManager
     
     
     init(
         userModel: UserModel,
         userService: UserServiceProtocol = UserService(),
-        imageService: ImageKitServiceProtocol = ImageKitService()
+        imageService: ImageKitServiceProtocol = ImageKitService(),
+        userManager: UserManager
     ) {
         self.originalUser = userModel
         self.userService = userService
         self.imageService = imageService
+        self.userManager = userManager
         
         self.draftName = userModel.name
         self.draftBio = userModel.bio ?? ""
@@ -125,7 +133,6 @@ final class EditProfileVM{
     //MARK: - Save Operation
     private func performSave(){
         output.isLoading.send(true)
-        
         if let imageData = draftImageData{
             imageService.uploadProfileImage(image: imageData) { [weak self] result in
                 guard let self else { return }
@@ -152,6 +159,13 @@ final class EditProfileVM{
             
             switch result {
             case .success():
+                var updateUser = self.originalUser
+                updateUser.name = self.draftName
+                updateUser.bio = self.draftBio
+                updateUser.profileImage = newURL ?? self.originalUser.profileImage
+                
+                self.userManager.upateUser(user: updateUser)
+                
                 self.output.saveCompleted.send(())
             case .failure(let error):
                 self.output.errorMessage.send(error.localizedDescription)

@@ -27,22 +27,25 @@ final class ProfileCoordinator: Coordinator{
     
     var type: CoordinatorType { .page }
     
+    //Services
     private var workoutRepo: WorkoutRepositoryProtocol
+    private var userManager: UserManager
+    
     private let context: NSManagedObjectContext
     private var vm: ProfileVM
+    
    
     
-    init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryProtocol, context: NSManagedObjectContext) {
+    init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryProtocol, context: NSManagedObjectContext, userManager: UserManager) {
         self.navigationController = navigationController
         self.workoutRepo = workoutRepo
         self.context = context
-        self.vm = ProfileVM(workoutRepo: workoutRepo)
+        self.vm = ProfileVM(workoutRepo: workoutRepo, userManger: userManager)
+        self.userManager = userManager
     }
     
     func start() {
- 
         let profileVC = ProfileVC(viewModel: vm)
-        
         
         profileVC.didSendEventClosure = { [weak self] event in
             self?.handle(event)
@@ -134,7 +137,7 @@ final class ProfileCoordinator: Coordinator{
             return
         }
         
-        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, userModel: currentUser)
+        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, userModel: currentUser, userManager: userManager)
         
         editProfileCoordinator.finishDelegate = self
         childCoordinators.append(editProfileCoordinator)

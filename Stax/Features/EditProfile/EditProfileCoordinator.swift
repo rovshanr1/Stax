@@ -23,11 +23,14 @@ final class EditProfileCoordinator: Coordinator {
     
     private var vm: EditProfileVM
     private let userModel: UserModel
+    private let userManager: UserManager
     
-    init(navigationController: UINavigationController, userModel: UserModel){
+    init(navigationController: UINavigationController, userModel: UserModel, userManager: UserManager){
         self.userModel = userModel
         self.navigationController = navigationController
-        self.vm = EditProfileVM(userModel: userModel)
+        self.userManager = userManager
+        
+        self.vm = EditProfileVM(userModel: userModel, userManager: userManager)
     }
     
     func start() {
@@ -46,7 +49,8 @@ final class EditProfileCoordinator: Coordinator {
         case .dismiss:
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
         case .saveChanges:
-            print("save changes")
+            navigationController.popViewController(animated: true)
+            finishDelegate?.coordinatorDidFinish(childCoordinator: self)
         }
     }
     

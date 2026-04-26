@@ -42,6 +42,7 @@ final class ProfileVM{
     private let chartService: MonthlyChartServiceProtocol
     private let shareService: WorkoutShareServiceProtocol
     private let syncService: FirebaseSyncServiceInterface
+    private let userManager: UserManager
     
     
     
@@ -50,7 +51,8 @@ final class ProfileVM{
          workoutRepo: WorkoutRepositoryProtocol,
          chartService: MonthlyChartServiceProtocol = MonthlyChartService(),
          shareService: WorkoutShareServiceProtocol = WorkoutTextShareService(),
-         syncService: FirebaseSyncServiceInterface = FirebaseSyncService()
+         syncService: FirebaseSyncServiceInterface = FirebaseSyncService(),
+         userManger: UserManager
     ){
         
         self.userService = userService
@@ -58,6 +60,7 @@ final class ProfileVM{
         self.chartService = chartService
         self.shareService = shareService
         self.syncService = syncService
+        self.userManager = userManger
         
         self.input = .init( viewDidLoad: .init(),
                             logoutTapped: .init(),
@@ -80,6 +83,14 @@ final class ProfileVM{
     
     //MARK: - Transform Method
     private func transform(){
+        
+        userManager.currentUser
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] user in
+                self?.output.userInfo.send(user)
+            }
+            .store(in: &cancellables)
+        
         workoutRepo.workoutPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] workouts in
@@ -140,7 +151,7 @@ final class ProfileVM{
                 
                 switch result{
                 case .success(let user):
-                    self.output.userInfo.send(user)
+                    self.userManager.currentUser.send(user)
                 case .failure(let error):
                     self.output.errorMessage.send(error.localizedDescription)
                 }

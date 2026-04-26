@@ -7,6 +7,7 @@
 
 import UIKit
 import Combine
+import PhotosUI
 
 class EditProfileVC: UIViewController {
     
@@ -35,6 +36,7 @@ class EditProfileVC: UIViewController {
         
         setupNavigationBar()
         bindViewModel()
+        bindContentView()
     }
     
     override func loadView() {
@@ -81,8 +83,39 @@ class EditProfileVC: UIViewController {
                 self?.showIndicator(isLoading)
             }
             .store(in: &cancellables)
+        
+        vm.output.currentProfileImage
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] image in
+                self?.contentView.changeProfilePhoto.setDraftImage(image)
+            }
+            .store(in: &cancellables)
     }
     
+    //MARK: - Binding ContentView
+    private func bindContentView(){
+        //Initial Image
+        contentView.changeProfilePhoto.loadInitialImage(from: vm.initialImageURL)
+        
+        contentView.changeProfilePhoto.profileImageTapped = {[weak self]  in
+            self?.presentImagePicker()
+        }
+        
+        contentView.changeProfilePhoto.changeImageOnTapped = {[weak self] in
+            self?.presentImagePicker()
+        }
+    }
+    
+    //MARK: - Image Picker
+    private func presentImagePicker(){
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 1
+        config.filter = .images
+        
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+        self.present(picker, animated: true)
+    }
     
     //MARK: - Helpers
     private func showIndicator(_ isLoading: Bool){
@@ -101,6 +134,7 @@ class EditProfileVC: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("Save", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        button.tintColor = .activeItems
         button.addTarget(self, action: #selector(handleSaveButton), for: .touchUpInside)
         return button
     }()
@@ -115,3 +149,19 @@ class EditProfileVC: UIViewController {
     }
 }
 
+extension EditProfileVC: PHPickerViewControllerDelegate{
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        
+        guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else {
+            return
+        }
+        
+        provider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
+            guard let self = self, let uiImage = image as? UIImage else { return }
+            
+            guard let imageData = uiImage.jpegData(compressionQuality: 0.5) else { return }
+            self.vm.input.profileItemSelected.send(imageData)
+        }
+    }
+}
