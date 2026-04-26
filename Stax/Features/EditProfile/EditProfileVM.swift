@@ -41,9 +41,17 @@ final class EditProfileVM{
     private var draftBio: String
     private var draftImageData: Data?
     
-    // InitialImage
+    // Initial Items
     var initialImageURL: String?{
         return originalUser.profileImage
+    }
+    
+    var initialName: String?{
+        return originalUser.name
+    }
+    
+    var initialBio: String?{
+        return originalUser.bio
     }
     
     //Combine
@@ -121,11 +129,16 @@ final class EditProfileVM{
     
     // MARK: - Validation Logic
     private func checkIfSaveShouldBeEnabled() {
-        let hasChanges = (draftName != originalUser.name) ||
-        (draftBio != (originalUser.bio ?? "")) ||
-        (draftImageData != nil)
+        let cleanName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanBio = draftBio.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        let isValid = !draftName.trimmingCharacters(in: .whitespaces).isEmpty
+        let originalBio = originalUser.bio ?? ""
+        
+        let hasChanges = (cleanName != originalUser.name) ||
+                                 (cleanBio != originalBio) ||
+                                 (draftImageData != nil)
+        
+        let isValid = !cleanName.isEmpty
         
         output.isSaveEnabled.send(hasChanges && isValid)
     }
@@ -155,13 +168,16 @@ final class EditProfileVM{
         userService.updateUserProfile(name: draftName, bio: draftBio, imageUrl: newURL) { [weak self] result in
             guard let self else { return }
             
+            let finalName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let finalBio = draftBio.trimmingCharacters(in: .whitespacesAndNewlines)
+            
             self.output.isLoading.send(false)
             
             switch result {
             case .success():
                 var updateUser = self.originalUser
-                updateUser.name = self.draftName
-                updateUser.bio = self.draftBio
+                updateUser.name = finalName
+                updateUser.bio = finalBio
                 updateUser.profileImage = newURL ?? self.originalUser.profileImage
                 
                 self.userManager.upateUser(user: updateUser)

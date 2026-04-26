@@ -104,6 +104,17 @@ class EditProfileVC: UIViewController {
         contentView.changeProfilePhoto.changeImageOnTapped = {[weak self] in
             self?.presentImagePicker()
         }
+        
+        //Initial NameAndBio
+        contentView.changeNameandBioView.configure(vm.initialName ?? "", vm.initialBio ?? "")
+        
+        contentView.changeNameandBioView.onNameChanged = {[weak self] text in
+            self?.vm.input.nameChanged.send(text)
+        }
+        
+        contentView.changeNameandBioView.onBioChanged = {[weak self] text in
+            self?.vm.input.bioChanged.send(text)
+        }
     }
     
     //MARK: - Image Picker

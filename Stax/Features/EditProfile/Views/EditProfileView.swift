@@ -28,6 +28,7 @@ class EditProfileView: UIView {
     
     //Contents
     let changeProfilePhoto = ChangeProfilePhotoView()
+    let changeNameandBioView = ChangeNameAndBioView()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -57,6 +58,7 @@ class EditProfileView: UIView {
         }
         
         containerStack.addArrangedSubview(changeProfilePhoto)
+        containerStack.addArrangedSubview(changeNameandBioView)
         
         keyboardManager = KeyboardManager(scrollView: scrollView)
         scrollView.keyboardDismissMode = .interactive
