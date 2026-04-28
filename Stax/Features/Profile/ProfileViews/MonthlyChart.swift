@@ -59,7 +59,7 @@ struct MonthlyChart: View {
             }
             .pickerStyle(.segmented)
         }
-        .padding(.vertical, 16)
+
         .animation(.easeInOut, value: selectedMetric)
     }
     
