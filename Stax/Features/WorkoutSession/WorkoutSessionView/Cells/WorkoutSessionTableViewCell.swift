@@ -123,7 +123,7 @@ final class WorkoutSessionTableViewCell: UITableViewCell {
     
     //TODO: - volume and set lable changes is here
     func updateStats(volume: Double, sets: Int){
-        volumeLabel.text = String(format: "%.1f kg", volume)
+        volumeLabel.text = volume.formatWeight()
         setsLabel.text = "\(sets)"
     }
     

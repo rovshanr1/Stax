@@ -151,7 +151,7 @@ class ProfileInfoCell: UICollectionViewCell {
         contentView.addSubview(mainStackViewWithBio)
         
         mainStackViewWithBio.snp.makeConstraints { (make) in
-            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 12, left: 16, bottom: 12, right: 16)).priority(999)
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 12, left: 16, bottom: 0, right: 16)).priority(999)
         }
         
         profileImage.snp.makeConstraints { make in
