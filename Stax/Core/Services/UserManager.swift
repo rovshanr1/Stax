@@ -9,11 +9,15 @@ import Foundation
 import Combine
 
 final class UserManager{
-    let currentUser = CurrentValueSubject<UserModel?, Never>(nil)
+    private let _currentUser = CurrentValueSubject<UserModel?, Never>(nil)
+    
+    var currentUserPublisher: AnyPublisher<UserModel?, Never>{
+        _currentUser.eraseToAnyPublisher()
+    }
     
     init(){}
     
-    func updateUser(user: UserModel?){
-        currentUser.send(user)
+    func updateUser(_ user: UserModel?){
+        _currentUser.send(user)
     }
 }

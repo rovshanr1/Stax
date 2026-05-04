@@ -4,9 +4,7 @@
 //
 //  Created by Rovshan Rasulov on 05.12.25.
 //
-
-import Foundation //MARK: - I/O Structs
-///Input: "Orders" fromd the VC (Orders)
+import Foundation
 import Combine
 import CoreData
 
