@@ -84,7 +84,7 @@ final class ProfileVM{
     //MARK: - Transform Method
     private func transform(){
         
-        userManager.currentUser
+        userManager.currentUserPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] user in
                 self?.output.userInfo.send(user)
@@ -151,7 +151,7 @@ final class ProfileVM{
                 
                 switch result{
                 case .success(let user):
-                    self.userManager.currentUser.send(user)
+                    self.userManager.updateUser(user)
                 case .failure(let error):
                     self.output.errorMessage.send(error.localizedDescription)
                 }

@@ -180,7 +180,7 @@ final class EditProfileVM{
                 updateUser.bio = finalBio
                 updateUser.profileImage = newURL ?? self.originalUser.profileImage
                 
-                self.userManager.updateUser(user: updateUser)
+                self.userManager.updateUser(updateUser)
                 
                 self.output.saveCompleted.send(())
             case .failure(let error):

@@ -57,7 +57,7 @@ final class SettingsVM {
             switch result {
             case .success():
 
-                self.userManager.updateUser(user: nil)
+                self.userManager.updateUser(nil)
                 
                 self.output.logoutCompleted.send(())
             case .failure(let error):
