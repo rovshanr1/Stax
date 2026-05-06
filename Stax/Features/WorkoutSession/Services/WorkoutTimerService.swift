@@ -10,15 +10,15 @@ import Combine
 
 protocol WorkoutTimerServiceProtocol {
     var timerPublisher: PassthroughSubject<String, Never> {get}
-    var seconsElapsed: Int{get}
+    var seconsElapsed: Double {get}
     func start()
     func stop()
-    func setInitialTime(_ seconds: Int)
+    func setInitialTime(_ seconds: Double)
 }
 
 final class WorkoutTimerService: WorkoutTimerServiceProtocol{
     let timerPublisher = PassthroughSubject<String, Never>()
-    var seconsElapsed: Int = 0
+    var seconsElapsed: Double = 0.0
     private var timer: Timer?
     
     func start() {
@@ -28,7 +28,7 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
             guard let self else {return}
             
             self.seconsElapsed += 1
-            self.timerPublisher.send(self.formatTime(self.seconsElapsed))
+            self.timerPublisher.send(self.seconsElapsed.formatDuration())
         })
         
     }
@@ -38,22 +38,9 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
         timer = nil
     }
     
-    private func formatTime(_ totalSeconds: Int) -> String {
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-        
-        if hours > 0 {
-            return String(format: "%2dh %2dm %2ds", hours, minutes, seconds)
-        } else if minutes > 0 {
-            return String(format: "%2dm %2ds", minutes, seconds)
-        } else {
-            return String(format: "%2ds", seconds)
-        }
-    }
     
-    func setInitialTime(_ seconds: Int) {
+    func setInitialTime(_ seconds: Double) {
         self.seconsElapsed = seconds
-        timerPublisher.send(formatTime(seconds))
+        timerPublisher.send(seconds.formatDuration())
     }
 }

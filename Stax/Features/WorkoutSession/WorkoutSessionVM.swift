@@ -105,6 +105,9 @@ final class WorkoutSessionViewModel{
             .sink { [weak self] in
                 guard let self else { return }
                 
+                let sessionData = self.sessionService.setupSession(workoutID: self.workoutId)
+                
+                self.timerService.setInitialTime(sessionData.initialDuration)
                 
             }
             .store(in: &cancellables)

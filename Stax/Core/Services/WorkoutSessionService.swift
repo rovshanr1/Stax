@@ -9,6 +9,9 @@ import Foundation
 import Combine
 
 protocol SessionServiceProtocol{
+    var exercisesPublisher: AnyPublisher<[WorkoutExerciseDomainModel], Never> { get }
+    var sessionStatsPublisher: AnyPublisher<(volume: Double, sets: Int), Never> { get }
+    
     func setupSession(workoutID: String?) -> (id: String, initialDuration: Double)
     func cancelWorkoutSession()
     func finishWorkout(duration: Double)
@@ -24,6 +27,18 @@ protocol SessionServiceProtocol{
 }
 
 final class WorkoutSessionService: SessionServiceProtocol{
+    //Subjects
+    private let exercisesSubject = CurrentValueSubject<[WorkoutExerciseDomainModel], Never>([])
+    private let sessionStatsSubject = CurrentValueSubject<(volume: Double, sets: Int), Never>((0, 0))
+    
+    //Publishers
+    var exercisesPublisher: AnyPublisher<[WorkoutExerciseDomainModel], Never> {
+        exercisesSubject.eraseToAnyPublisher()
+    }
+    
+    var sessionStatsPublisher: AnyPublisher<(volume: Double, sets: Int), Never> {
+        sessionStatsSubject.eraseToAnyPublisher()
+    }
     
     //Repositorys
     private let exerciseRepo: DataRepository<WorkoutExercise>
@@ -59,6 +74,8 @@ final class WorkoutSessionService: SessionServiceProtocol{
         newWorkout.date = Date()
         
         self.currentWorkout = newWorkout
+        
+        self.notifyUI()
         
         return (newWorkout.id?.uuidString ?? "" , 0)
     }
@@ -97,5 +114,78 @@ final class WorkoutSessionService: SessionServiceProtocol{
     
     func deleteSet(setID: String) {
         
+    }
+    
+    private func notifyUI(){
+        guard let id = currentWorkout?.id?.uuidString,
+              let freshWorkout = workoutRepo.fetch(by: id) else { return }
+        
+        let coreDataExercise = (freshWorkout.workoutExercises as? Set<WorkoutExercise> ?? [])
+            .sorted {$0.orderIndex < $1.orderIndex}
+        
+        var totalVolume: Double = 0
+        var totalSets: Int = 0
+        
+        let domainWorkoutExercises: [WorkoutExerciseDomainModel] = coreDataExercise.map { cdExercise in
+            
+            var previousSetsSorted: [WorkoutSet] = []
+            if let exerciseDef = cdExercise.exercise,
+               let pastSession = exerciseRepo.fetchPreviousSession(for: exerciseDef, currentWorkout: freshWorkout) {
+                previousSetsSorted = (pastSession.workoutSets as? Set<WorkoutSet> ?? [])
+                    .sorted { $0.orderIndex < $1.orderIndex }
+            }
+            
+            let coreDataSets = (cdExercise.workoutSets as? Set<WorkoutSet> ?? [])
+                .sorted { $0.orderIndex < $1.orderIndex }
+            
+            let domainSets: [WorkoutSetDomainModel] = coreDataSets.enumerated().map { index, cdSet in
+                if cdSet.isCompleted {
+                    totalVolume += (cdSet.weight * Double(cdSet.reps))
+                    totalSets += 1
+                }
+                
+                var previousString = "-"
+                if index < previousSetsSorted.count {
+                    let pastSet = previousSetsSorted[index]
+                    let weightStr = floor(pastSet.weight) == pastSet.weight ? "\(Int(pastSet.weight))" : String(format: "%.1f", pastSet.weight)
+                    previousString = "\(weightStr)kg x \(pastSet.reps)"
+                }
+                
+                return WorkoutSetDomainModel(
+                    id: cdSet.id?.uuidString ?? UUID().uuidString,
+                    isCompleted: cdSet.isCompleted,
+                    orderIndex: cdSet.orderIndex,
+                    previous: previousString,
+                    reps: cdSet.reps,
+                    restTime: cdSet.restTime,
+                    weight: cdSet.weight
+                )
+                
+            }
+            
+            var baseExerciseDomain: ExerciseDomainModel?
+            if let cdDef = cdExercise.exercise{
+                let muscleGroupEnum = MuscleGroup(rawValue: cdDef.targetMuscle ?? "")
+                
+                baseExerciseDomain = ExerciseDomainModel(id: cdDef.id?.uuidString ?? UUID().uuidString,
+                                                         name: cdDef.name ?? "Unknown Name",
+                                                         targetMuscleGroups: muscleGroupEnum ,
+                                                         videoURL: cdDef.videoURL,
+                                                         exerciseImage: cdDef.exerciseImage
+                )
+            }
+            
+            return WorkoutExerciseDomainModel(
+                id: cdExercise.id?.uuidString ?? UUID().uuidString,
+                notes: cdExercise.note,
+                orderIndex: cdExercise.orderIndex,
+                exercise: baseExerciseDomain,
+                workoutSets: domainSets
+            )
+            
+        }
+        
+        self.exercisesSubject.send(domainWorkoutExercises)
+        self.sessionStatsSubject.send((volume: totalVolume, sets: totalSets))
     }
 }
