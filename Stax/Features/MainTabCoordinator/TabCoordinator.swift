@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import CoreData
 
 protocol TabCoordinatorProtocol: Coordinator{
     var tabBarController: UITabBarController  {get set}
@@ -24,21 +23,16 @@ class TabCoordinator: NSObject, Coordinator {
     
     var navigationController: UINavigationController
     var tabBarController: UITabBarController
-    let context: NSManagedObjectContext
-    
-    private let userManager: UserManager
-    private let sharedWorkoutRepo: WorkoutRepositoryProtocol
+
+    //Container
+    private let appDIContainer: AppDIContainer
     
     var type: CoordinatorType { .tab }
     
-    init(_ navigationController: UINavigationController, context: NSManagedObjectContext, userManager: UserManager) {
+    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
         self.navigationController = navigationController
         self.tabBarController = MainTabBarController()
-        self.context = context
-        self.userManager = userManager
-        
-        let dataRepository = DataRepository<Workout>(context: context)
-        self.sharedWorkoutRepo = WorkoutRepository(genericRepository: dataRepository)
+        self.appDIContainer = appDIContainer
     }
   
     func start() {
@@ -74,17 +68,17 @@ class TabCoordinator: NSObject, Coordinator {
         
         switch page {
         case .home:
-            let homeCoordinator = HomeCoordinator(navigationController: navController, context: context, workoutRepo: sharedWorkoutRepo)
+            let homeCoordinator = HomeCoordinator(navigationController: navController, appDIContainer: appDIContainer)
             homeCoordinator.finishDelegate = self
             childCoordinators.append(homeCoordinator)
             homeCoordinator.start()
         case .workout:
-            let exerciseCoordinator = WorkoutCoordinator(navController, context: context)
+            let exerciseCoordinator = WorkoutCoordinator(navController, appDIContainer: appDIContainer)
             exerciseCoordinator.finishDelegate = self
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()
         case .profile:
-            let profileCoordinator = ProfileCoordinator(navController, workoutRepo: sharedWorkoutRepo, context: context, userManager: userManager)
+            let profileCoordinator = ProfileCoordinator(navController, appDIContainer: appDIContainer)
             profileCoordinator.finishDelegate = self
             childCoordinators.append(profileCoordinator)
             profileCoordinator.start()

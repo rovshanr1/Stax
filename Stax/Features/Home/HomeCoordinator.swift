@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import CoreData
 import Combine
 
 enum HomeEvent{
@@ -24,25 +23,23 @@ final class HomeCoordinator: Coordinator{
     var navigationController: UINavigationController
     var type: CoordinatorType { .page }
     
+    //Container
+    let appDIContainer: AppDIContainer
     
-    private let context: NSManagedObjectContext
-    private let workoutRepo: WorkoutRepositoryProtocol
     var vm: HomeVM?
     
-    init(navigationController: UINavigationController, context: NSManagedObjectContext, workoutRepo: WorkoutRepositoryProtocol) {
+    init(navigationController: UINavigationController, appDIContainer: AppDIContainer) {
         self.navigationController = navigationController
-        self.context = context
-        self.workoutRepo = workoutRepo
+        self.appDIContainer = appDIContainer
+        
+        self.vm = HomeVM(workoutRepo: appDIContainer.sharedWorkoutRepo,
+                         shareService: appDIContainer.shareService
+        )
     }
     
     func start() {
         let homeVC = HomeVC()
-        
-        //Repo injection
-        let shareService = WorkoutTextShareService()
-        
-        //VM injection
-        self.vm = HomeVM(workoutRepo: workoutRepo, shareService: shareService)
+    
         homeVC.vm = self.vm
         homeVC.navigationItem.largeTitleDisplayMode = .always
         
@@ -106,7 +103,7 @@ final class HomeCoordinator: Coordinator{
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, context: context, workoutId: id)
+        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, appDIContainer: appDIContainer, workoutId: id)
         
         sessionCoordinator.finishDelegate = self
         
@@ -117,7 +114,7 @@ final class HomeCoordinator: Coordinator{
     }
     
     private func handleWorkoutDetailView(for id: String){
-        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, workoutID: id, workoutRepo: workoutRepo)
+        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, workoutID: id)
         
         workoutDetailCoordinator.finishDelegate = self
         childCoordinators.append(workoutDetailCoordinator)

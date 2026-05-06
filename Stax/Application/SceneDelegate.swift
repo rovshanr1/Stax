@@ -20,6 +20,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
         let context = appDelegate.persistentContainer.viewContext
+        
+        let userManager = UserManager()
+        let appDIContainer = AppDIContainer(context: context, userManager: userManager)
  
         appDelegate.persistentContainer.performBackgroundTask{ backgroundContext in
             let seeder = DataSeeder(context: backgroundContext)
@@ -36,7 +39,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = navigationViewController
         window?.makeKeyAndVisible()
         
-        coordinator = MainCoordinator.init(navigationViewController, context: context)
+        coordinator = MainCoordinator.init(navigationViewController, appDIContainer: appDIContainer)
         coordinator?.start()
 
     }

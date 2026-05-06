@@ -28,20 +28,19 @@ final class ProfileCoordinator: Coordinator{
     var type: CoordinatorType { .page }
     
     //Services
-    private var workoutRepo: WorkoutRepositoryProtocol
-    private var userManager: UserManager
+    let appDIContainer: AppDIContainer
     
-    private let context: NSManagedObjectContext
     private var vm: ProfileVM
     
    
     
-    init(_ navigationController: UINavigationController, workoutRepo: WorkoutRepositoryProtocol, context: NSManagedObjectContext, userManager: UserManager) {
+    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
         self.navigationController = navigationController
-        self.workoutRepo = workoutRepo
-        self.context = context
-        self.vm = ProfileVM(workoutRepo: workoutRepo, userManger: userManager)
-        self.userManager = userManager
+        self.appDIContainer = appDIContainer
+        
+        self.vm = ProfileVM(workoutRepo: appDIContainer.sharedWorkoutRepo,
+                            userManger: appDIContainer.userManager
+        )
     }
     
     func start() {
@@ -110,7 +109,7 @@ final class ProfileCoordinator: Coordinator{
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, context: context, workoutId: id)
+        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, appDIContainer: appDIContainer, workoutId: id)
         sessionCoordinator.finishDelegate = self
         
         self.childCoordinators.append(sessionCoordinator)
@@ -125,7 +124,7 @@ final class ProfileCoordinator: Coordinator{
     }
     
     private func handleWorkoutDetailView(for id: String){
-        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, workoutID: id, workoutRepo: workoutRepo)
+        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, workoutID: id)
         
         workoutDetailCoordinator.finishDelegate = self
         childCoordinators.append(workoutDetailCoordinator)
@@ -137,7 +136,7 @@ final class ProfileCoordinator: Coordinator{
             return
         }
         
-        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, userModel: currentUser, userManager: userManager)
+        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, userModel: currentUser)
         
         editProfileCoordinator.finishDelegate = self
         childCoordinators.append(editProfileCoordinator)
@@ -145,7 +144,7 @@ final class ProfileCoordinator: Coordinator{
     }
     
     private func handleSettings(){
-        let settingsCoordinator = SettingsCoordinator(navigationController, userManager: userManager)
+        let settingsCoordinator = SettingsCoordinator(navigationController, appDIContainer: appDIContainer)
         
         settingsCoordinator.finishDelegate = self
         settingsCoordinator.settingsDelegate = self

@@ -1,0 +1,57 @@
+//
+//  AppDIContainer.swift
+//  Stax
+//
+//  Created by Rovshan Rasulov on 06.05.26.
+//
+
+import Foundation
+import CoreData
+
+final class AppDIContainer{
+    let context: NSManagedObjectContext
+    let userManager: UserManager
+    
+    lazy var sharedWorkoutRepo: WorkoutRepositoryProtocol = {
+        let dataRepository = DataRepository<Workout>(context: context)
+        return WorkoutRepository(genericRepository: dataRepository)
+    }()
+    
+    lazy var sharedExerciseDefRepo: DataRepository<Exercise> = {
+        return DataRepository<Exercise>(context: context)
+    }()
+    
+    lazy var sharedSessionService: SessionServiceProtocol = {
+        let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
+        let workoutSets = DataRepository<WorkoutSet>(context: context)
+        let dataRepository = DataRepository<Workout>(context: context)
+        
+        return WorkoutSessionService(exerciseRepo: exerciseRepo, workoutSets: workoutSets, workoutRepo: dataRepository)
+    }()
+    
+    lazy var sharedFirebaseService: FirebaseSyncService = {
+        return FirebaseSyncService()
+    }()
+    
+    lazy var sharedSyncManager: SyncManager = {
+        let workoutRepo = DataRepository<Workout>(context: context)
+        let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
+        let setRepo = DataRepository<WorkoutSet>(context: context)
+        let exerciseDefRepo = DataRepository<Exercise>(context: context)
+        
+        return SyncManager(workoutRepo: workoutRepo,
+                           exerciseRepo: exerciseRepo,
+                           setRepo: setRepo,
+                           exercise: exerciseDefRepo
+        )
+    }()
+    
+    lazy var shareService: WorkoutShareServiceProtocol = {
+        return WorkoutTextShareService()
+    }()
+    
+    init(context: NSManagedObjectContext, userManager: UserManager) {
+        self.context = context
+        self.userManager = userManager
+    }
+}

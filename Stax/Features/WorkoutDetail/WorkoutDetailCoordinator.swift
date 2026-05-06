@@ -26,20 +26,22 @@ final class WorkoutDetailCoordinator: Coordinator{
     
     //States
     private let workoutID: String
-    private let workoutRepo: WorkoutRepositoryProtocol
+    
+    //Container
+    private let appDIContainer: AppDIContainer
     
     
-    init(navigationController: UINavigationController, workoutID: String, workoutRepo: WorkoutRepositoryProtocol) {
+    init(navigationController: UINavigationController, appDIContainer: AppDIContainer, workoutID: String) {
         self.navigationController = navigationController
+        self.appDIContainer = appDIContainer
         self.workoutID = workoutID
-        self.workoutRepo = workoutRepo
     }
     
     func start() {
         let workoutDetailVC = WorkoutDetailVC()
         
         //VM injection
-        self.vm = WorkoutDetailVM(workoutID: workoutID, workoutRepo: workoutRepo)
+        self.vm = WorkoutDetailVM(workoutID: workoutID, workoutRepo: appDIContainer.sharedWorkoutRepo)
         workoutDetailVC.vm = self.vm
         
         workoutDetailVC.didSendEventClosure = {[weak self] event in

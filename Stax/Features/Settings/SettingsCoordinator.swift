@@ -25,16 +25,18 @@ final class SettingsCoordinator: Coordinator{
     //Delegate
     weak var settingsDelegate: SettingsCoordinatorDelegate?
     
-    //Private properties
-    private let userManager: UserManager
+    //ViewModel
     private let settingsVM: SettingsVM
-   
     
-    init(_ navigationController: UINavigationController, userManager: UserManager) {
+    //Container
+    let appDIContainer: AppDIContainer
+
+    
+    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
         self.navigationController = navigationController
-        self.userManager = userManager
+        self.appDIContainer = appDIContainer
         
-        self.settingsVM = SettingsVM(userManager: userManager)
+        self.settingsVM = SettingsVM(userManager: appDIContainer.userManager)
     }
     
     func start() {

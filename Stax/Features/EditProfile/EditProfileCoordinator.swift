@@ -23,14 +23,15 @@ final class EditProfileCoordinator: Coordinator {
     
     private var vm: EditProfileVM
     private let userModel: UserModel
-    private let userManager: UserManager
     
-    init(navigationController: UINavigationController, userModel: UserModel, userManager: UserManager){
-        self.userModel = userModel
+    private let appDIContainer: AppDIContainer
+    
+    init(navigationController: UINavigationController, appDIContainer: AppDIContainer, userModel: UserModel){
         self.navigationController = navigationController
-        self.userManager = userManager
+        self.appDIContainer = appDIContainer
+        self.userModel = userModel
         
-        self.vm = EditProfileVM(userModel: userModel, userManager: userManager)
+        self.vm = EditProfileVM(userModel: userModel, userManager: appDIContainer.userManager)
     }
     
     func start() {

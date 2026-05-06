@@ -9,11 +9,11 @@ import Foundation
 import Combine
 
 protocol SessionServiceProtocol{
-    func setupSession(workoutID: String?) -> String
-    func cancelWorkoutSession(sessionID: String)
-    func finishWorkout(sessionID: String, duration: Double)
+    func setupSession(workoutID: String?) -> (id: String, initialDuration: Double)
+    func cancelWorkoutSession()
+    func finishWorkout(duration: Double)
     
-    func addExercise(exerciseID: String, to sessionID: String)
+    func addExercise(exerciseID: String)
     func deleteExercise(workoutExerciseID: String)
     func replaceExercise(workoutExerciseID: String, with newExerciseID: String)
     func updateExerciseNote(workoutExerciseID: String, note: String)
@@ -24,19 +24,54 @@ protocol SessionServiceProtocol{
 }
 
 final class WorkoutSessionService: SessionServiceProtocol{
-    func setupSession(workoutID: String?) -> String {
+    
+    //Repositorys
+    private let exerciseRepo: DataRepository<WorkoutExercise>
+    private let workoutSets: DataRepository<WorkoutSet>
+    private let workoutRepo: DataRepository<Workout>
+    
+    //State
+    private var currentWorkout: Workout?
+    
+    private var workoutId: String?
+    
+    //Combine
+    private var cancellables: Set<AnyCancellable> = []
+    
+    init(exerciseRepo: DataRepository<WorkoutExercise>,
+         workoutSets: DataRepository<WorkoutSet>,
+         workoutRepo: DataRepository<Workout>) {
+        self.exerciseRepo = exerciseRepo
+        self.workoutSets = workoutSets
+        self.workoutRepo = workoutRepo
+    }
+    
+    func setupSession(workoutID: String?) -> (id: String, initialDuration: Double) {
+        if let id = workoutID, let existingWorkout = workoutRepo.fetch(by: id) {
+            self.currentWorkout = existingWorkout
+            
+            let saveDuration = existingWorkout.duration
+            return (id, saveDuration)
+        }
+        
+        let newWorkout = workoutRepo.create()
+        newWorkout.id = UUID()
+        newWorkout.date = Date()
+        
+        self.currentWorkout = newWorkout
+        
+        return (newWorkout.id?.uuidString ?? "" , 0)
+    }
+    
+    func cancelWorkoutSession() {
         
     }
     
-    func cancelWorkoutSession(sessionID: String) {
+    func finishWorkout(duration: Double) {
         
     }
     
-    func finishWorkout(sessionID: String, duration: Double) {
-        
-    }
-    
-    func addExercise(exerciseID: String, to sessionID: String) {
+    func addExercise(exerciseID: String) {
         
     }
     

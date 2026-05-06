@@ -18,7 +18,7 @@ final class ExerciseListVM{
     }
     ///Output: "Data" to VC (Data Streams)
     struct Output {
-        let exerciseList: CurrentValueSubject<[Exercise], Never>
+        let exerciseList: CurrentValueSubject<[ExerciseDomainModel], Never>
         let navigationEvent: PassthroughSubject<ExerciseListEvent, Never>
     }
     
@@ -27,6 +27,7 @@ final class ExerciseListVM{
     let output: Output
     
     private var cancellables: Set<AnyCancellable> = []
+    //TODO: change dataRepo convert to ExerciseDataRepository
     private let dataRepo: DataRepository<Exercise>
     
     init(dataRepo: DataRepository<Exercise>){
@@ -81,12 +82,25 @@ final class ExerciseListVM{
     //MARK: - Helper Method
     private func fetchExercise(with predicate: NSPredicate?){
         let publisher = (predicate == nil) ? dataRepo.fetchAll() : dataRepo.search(by: predicate)
-        
-        publisher
-            .replaceError(with: [])
-            .sink { [weak self] exercise in
-                self?.output.exerciseList.send(exercise)
-            }
-            .store(in: &cancellables)
+//        
+//        publisher
+//            .replaceError(with: [])
+//            .map { (coreDataExercises: [Exercise]) -> [ExerciseDomainModel] in
+//                
+//                coreDataExercises.map { exercise in
+//            
+//                    return ExerciseDomainModel(
+//                        id: exercise.id ?? UUID().uuidString,
+//                        name: exercise.name ?? "Bilinmeyen Egzersiz",
+//                        bodyPart: exercise.bodyPart ?? "",
+//                        category: exercise.category ?? ""
+//                    )
+//                }
+//            }
+//            .sink { [weak self] domainExercises in
+//                
+//                self?.output.exerciseList.send(domainExercises)
+//            }
+//            .store(in: &cancellables)
     }
 }
