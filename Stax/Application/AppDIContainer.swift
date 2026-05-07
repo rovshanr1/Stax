@@ -17,8 +17,9 @@ final class AppDIContainer{
         return WorkoutRepository(genericRepository: dataRepository)
     }()
     
-    lazy var sharedExerciseDefRepo: DataRepository<Exercise> = {
-        return DataRepository<Exercise>(context: context)
+    lazy var sharedExerciseDefRepo: ExerciseRepositoryProtocol = {
+        let dataRepository = DataRepository<Exercise>(context: context)
+        return ExerciseRepository(genericRepository: dataRepository)
     }()
     
     lazy var sharedSessionService: SessionServiceProtocol = {
@@ -27,7 +28,7 @@ final class AppDIContainer{
         let workoutSets = DataRepository<WorkoutSet>(context: context)
         let dataRepository = DataRepository<Workout>(context: context)
         
-        return WorkoutSessionService(baseExerciseRepo: baseExerciseRepo, exerciseRepo: exerciseRepo, workoutSets: workoutSets, workoutRepo: dataRepository)
+        return WorkoutSessionRepository(baseExerciseRepo: baseExerciseRepo, exerciseRepo: exerciseRepo, workoutSets: workoutSets, workoutRepo: dataRepository)
     }()
     
     lazy var sharedFirebaseService: FirebaseSyncService = {

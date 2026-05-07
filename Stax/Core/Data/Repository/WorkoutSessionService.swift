@@ -26,7 +26,7 @@ protocol SessionServiceProtocol{
     func deleteSet(setID: String)
 }
 
-final class WorkoutSessionService: SessionServiceProtocol{
+final class WorkoutSessionRepository: SessionServiceProtocol{
     //Subjects
     private let exercisesSubject = CurrentValueSubject<[WorkoutExerciseDomainModel], Never>([])
     private let sessionStatsSubject = CurrentValueSubject<(volume: Double, sets: Int), Never>((0, 0))
@@ -106,6 +106,14 @@ final class WorkoutSessionService: SessionServiceProtocol{
         
         let currentCount = currentWorkout.workoutExercises?.count ?? 0
         newWorkoutExercise.orderIndex = Int16(currentCount)
+        
+        let initialSet = workoutSets.create()
+        initialSet.id = UUID()
+        initialSet.orderIndex = 0
+        initialSet.isCompleted = false
+        initialSet.weight = 0
+        initialSet.reps = 0
+        initialSet.workoutExercise = newWorkoutExercise
         
         exerciseRepo.save()
             .sink(receiveCompletion: { completion in

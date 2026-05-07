@@ -15,11 +15,11 @@ extension TimeInterval{
         let seconds = totalSeconds % 60
         
         if minutes == 0{
-            return String(format: "%02dsec",  seconds)
+            return String(format: "%02ds",  seconds)
         } else if hours == 0 {
-            return String(format: "%02dmin %02dsec", minutes, seconds)
+            return String(format: "%02dm %02ds", minutes, seconds)
         }else{
-            return String(format: "%02dh %02dmin %02dsec", hours, minutes, seconds)
+            return String(format: "%02dh %02dm %02ds", hours, minutes, seconds)
         }
     }
     

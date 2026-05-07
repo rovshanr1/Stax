@@ -27,11 +27,12 @@ final class ExerciseListVM{
     let output: Output
     
     private var cancellables: Set<AnyCancellable> = []
-    //TODO: change dataRepo convert to ExerciseDataRepository
-    private let dataRepo: DataRepository<Exercise>
     
-    init(dataRepo: DataRepository<Exercise>){
-        self.dataRepo = dataRepo
+    //Repositor
+    private let repository: ExerciseRepositoryProtocol
+    
+    init(repository: ExerciseRepositoryProtocol){
+        self.repository = repository
         
         self.input = .init(viewDidLoad: .init(),
                            searchTrigger: .init(),
@@ -57,12 +58,7 @@ final class ExerciseListVM{
             .sink { [weak self] query  in
                 guard let self else { return }
                 
-                if query.isEmpty {
-                    self.fetchExercise(with: nil)
-                }else{
-                    let predicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
-                    self.fetchExercise(with: predicate)
-                }
+                self.fetchExercise(with: query)
             }
             .store(in: &cancellables)
         
@@ -80,27 +76,21 @@ final class ExerciseListVM{
             .store(in: &cancellables)
     }
     //MARK: - Helper Method
-    private func fetchExercise(with predicate: NSPredicate?){
-        let publisher = (predicate == nil) ? dataRepo.fetchAll() : dataRepo.search(by: predicate)
-//        
-//        publisher
-//            .replaceError(with: [])
-//            .map { (coreDataExercises: [Exercise]) -> [ExerciseDomainModel] in
-//                
-//                coreDataExercises.map { exercise in
-//            
-//                    return ExerciseDomainModel(
-//                        id: exercise.id ?? UUID().uuidString,
-//                        name: exercise.name ?? "Bilinmeyen Egzersiz",
-//                        bodyPart: exercise.bodyPart ?? "",
-//                        category: exercise.category ?? ""
-//                    )
-//                }
-//            }
-//            .sink { [weak self] domainExercises in
-//                
-//                self?.output.exerciseList.send(domainExercises)
-//            }
-//            .store(in: &cancellables)
+    private func fetchExercise(with query: String?){
+        let publisher: AnyPublisher<[ExerciseDomainModel], Error>
+        
+        if let safeQuery = query, !safeQuery.isEmpty {
+            publisher = repository.search(byName: safeQuery)
+        }else{
+            publisher = repository.fetchAll()
+        }
+        
+        publisher
+            .receive(on: DispatchQueue.main)
+            .replaceError(with: [])
+            .sink { [weak self] domainExercises in
+                self?.output.exerciseList.send(domainExercises)
+            }
+            .store(in: &cancellables)
     }
 }

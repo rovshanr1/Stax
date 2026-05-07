@@ -39,7 +39,7 @@ final class ExerciseListCoordinator: Coordinator {
         }
         
 
-        let viewModel = ExerciseListVM(dataRepo: appDIContainer.sharedExerciseDefRepo)
+        let viewModel = ExerciseListVM(repository: appDIContainer.sharedExerciseDefRepo)
         exerciseListVC.viewModel = viewModel
         
         navigationController.pushViewController(exerciseListVC, animated: true)
