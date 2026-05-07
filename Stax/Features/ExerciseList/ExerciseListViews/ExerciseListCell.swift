@@ -73,6 +73,15 @@ class ExerciseListCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse(){
+        super.prepareForReuse()
+        exerciseImage.kf.cancelDownloadTask()
+        
+        exerciseImage.image = nil
+        exerciseName.text = nil
+        muscleGroup.text = nil
+    }
+    
     
     private func setupUI() {
         backgroundColor = .none
@@ -93,9 +102,11 @@ class ExerciseListCell: UITableViewCell {
         }
     }
     
-    func configure(with exercise: Exercise) {
+    func configure(with exercise: ExerciseDomainModel) {
+        let targetMuscleGroups = exercise.targetMuscleGroups ?? .other
+        
         exerciseName.text = exercise.name
-        muscleGroup.text = exercise.targetMuscle
+        muscleGroup.text = targetMuscleGroups.rawValue
         
         if let url = URL(string: exercise.exerciseImage ?? ""){
             self.exerciseImage.contentMode = .scaleAspectFill

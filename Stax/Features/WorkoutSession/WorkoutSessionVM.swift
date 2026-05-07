@@ -6,9 +6,9 @@
 //
 import Foundation
 import Combine
-import CoreData
 
-final class WorkoutSessionViewModel: NSObject{
+
+final class WorkoutSessionViewModel{
     //MARK: - I/O Structs
     ///Input: "Orders" fromd the VC (Orders)
     struct Input{
@@ -16,13 +16,13 @@ final class WorkoutSessionViewModel: NSObject{
         let viewDidAppear: PassthroughSubject<Void, Never>
         let didTapFinish: PassthroughSubject<Void, Never>
         let didTapCancel: PassthroughSubject<Void, Never>
-        let addExercise: PassthroughSubject<Exercise, Never>
-        let addSet: PassthroughSubject<WorkoutExercise, Never>
-        let updateExerciseNote: PassthroughSubject<(NSManagedObjectID, String), Never>
-        let replaceExercise: PassthroughSubject<(WorkoutExercise, Exercise), Never>
-        let deleteExercise: PassthroughSubject<WorkoutExercise, Never>
-        let updateSet: PassthroughSubject<(UUID, Double, Int, Bool), Never>
-        let deleteSet: PassthroughSubject<UUID, Never>
+        let addExercise: PassthroughSubject<ExerciseDomainModel, Never>
+        let addSet: PassthroughSubject<WorkoutExerciseDomainModel, Never>
+        let updateExerciseNote: PassthroughSubject<(String, String), Never>
+        let replaceExercise: PassthroughSubject<(WorkoutExerciseDomainModel, ExerciseDomainModel), Never>
+        let deleteExercise: PassthroughSubject<WorkoutExerciseDomainModel, Never>
+        let updateSet: PassthroughSubject<(String, Double, Int, Bool), Never>
+        let deleteSet: PassthroughSubject<String, Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -30,7 +30,7 @@ final class WorkoutSessionViewModel: NSObject{
         let timerSubject: CurrentValueSubject<String, Never>
         let finishWorkoutEvent: PassthroughSubject<Void, Never>
         let cancelWorkoutEvent: PassthroughSubject<Void, Never>
-        let exercises: CurrentValueSubject<[WorkoutExercise], Never>
+        let exercises: CurrentValueSubject<[WorkoutExerciseDomainModel], Never>
         let sessionStats: CurrentValueSubject<(volume: Double, sets: Int), Never>
     }
     
@@ -38,16 +38,14 @@ final class WorkoutSessionViewModel: NSObject{
     let input: Input
     let output: Output
     
-    //Repositorys
-    private let exerciseRepo: DataRepository<WorkoutExercise>
-    private let workoutSets: DataRepository<WorkoutSet>
-    private let workoutRepo: DataRepository<Workout>
     
     //Services
     public private(set) var timerService: WorkoutTimerServiceProtocol
+    private let sessionService: SessionServiceProtocol
+    private let workoutRepository: WorkoutRepositoryProtocol
     
     //State
-    public private(set) var currentWorkout: Workout?
+
     public private(set) var currentStats: (volume: Double, sets: Int) = (0, 0)
     
     private let workoutId: String?
@@ -55,19 +53,17 @@ final class WorkoutSessionViewModel: NSObject{
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
     private var secondsElapsed: Int = 0
-    private var frc: NSFetchedResultsController<WorkoutExercise>?
+    
     
     
     //MARK: - Initializer
-    init(workoutRepo: DataRepository<Workout>,
-         exerciseRepo: DataRepository<WorkoutExercise>,
-         workoutSets: DataRepository<WorkoutSet>,
+    init( sessionService: SessionServiceProtocol,
+          workoutRepository: WorkoutRepositoryProtocol,
          timerService: WorkoutTimerServiceProtocol = WorkoutTimerService(),
          workoutId: String? = nil
     ){
-        self.workoutRepo = workoutRepo
-        self.exerciseRepo = exerciseRepo
-        self.workoutSets = workoutSets
+        self.sessionService = sessionService
+        self.workoutRepository = workoutRepository
         self.timerService = timerService
         self.workoutId = workoutId
         
@@ -92,7 +88,7 @@ final class WorkoutSessionViewModel: NSObject{
                             
         )
         
-        super.init()
+        
         transform()
     }
     
@@ -105,11 +101,26 @@ final class WorkoutSessionViewModel: NSObject{
             }
             .store(in: &cancellables)
         
+        sessionService.exercisesPublisher
+            .sink { [weak self] exercises in
+                self?.output.exercises.send(exercises)
+            }
+            .store(in: &cancellables)
+        
+        sessionService.sessionStatsPublisher
+            .sink { [weak self] stats in
+                self?.output.sessionStats.send(stats)
+            }
+            .store(in: &cancellables)
+        
         input.viewDidLoad
             .sink { [weak self] in
                 guard let self else { return }
                 
-                self.setupSession()
+                let sessionData = self.sessionService.setupSession(workoutID: self.workoutId)
+                
+                self.timerService.setInitialTime(sessionData.initialDuration)
+                
             }
             .store(in: &cancellables)
         
@@ -123,17 +134,14 @@ final class WorkoutSessionViewModel: NSObject{
         
         input.didTapFinish
             .sink { [weak self] _ in
-                guard let self, let workout = self.currentWorkout else {return}
+                guard let self else {return}
                 
                 self.timerService.stop()
                 
                 let finalDuration = Double(self.timerService.seconsElapsed)
                 let estimatedCalories = (finalDuration / 60.0) * 6.0
                 
-                workout.duration = finalDuration
-                workout.volume = self.currentStats.volume
-                workout.sets = Int16(self.currentStats.sets)
-                workout.calories = Int16(estimatedCalories)
+            
                 self.output.finishWorkoutEvent.send()
             }
             .store(in: &cancellables)
@@ -141,7 +149,7 @@ final class WorkoutSessionViewModel: NSObject{
         input.didTapCancel
             .sink { [weak self] in
                 guard let self else {return}
-                self.cancelWorkoutSession()
+                
                 self.output.cancelWorkoutEvent.send()
             }
             .store(in: &cancellables)
@@ -153,342 +161,49 @@ final class WorkoutSessionViewModel: NSObject{
     private func setupExerciseBindings(){
         input.addExercise
             .sink { [weak self] exercise in
-                self?.addExercise(exercise)
+                guard let self else { return }
+                
+                self.sessionService.addExercise(exerciseID: exercise.id)
             }
             .store(in: &cancellables)
         
         input.updateExerciseNote
             .debounce(for: .seconds(0.5), scheduler: DispatchQueue.main)
             .sink { [weak self] (objectId, noteText) in
-                
-                self?.updateNote(for: objectId, text: noteText)
+                self?.sessionService.updateExerciseNote(workoutExerciseID: objectId, note: noteText)
             }
             .store(in: &cancellables)
         
         input.replaceExercise
             .sink(receiveValue: {[weak self] (existingExercise, newExerciseDefinition) in
-                self?.replaceExercise(existing: existingExercise, with: newExerciseDefinition)
+                
             })
             .store(in: &cancellables)
         
         input.deleteExercise
             .sink (receiveValue: { [weak self] exercise in
-                self?.deleteExercise(exercise)
+                self?.sessionService.deleteExercise(workoutExerciseID: exercise.id)
             })
             .store(in: &cancellables)
         
         input.addSet
             .sink(receiveValue: { [weak self] exercise in
-                self?.addNewSet(to: exercise)
+                self?.sessionService.addNewSet(to: exercise.id)
             })
             .store(in: &cancellables)
         
         input.updateSet
             .sink(receiveValue: { [weak self] setID, weight, reps, isDone in
-                self?.updateSetData(setID: setID,weight: weight, reps: reps, isDone: isDone)
+              
             })
             .store(in: &cancellables)
                 
         input.deleteSet
             .sink(receiveValue: { [weak self] setID in
-                self?.deleteSet(setID: setID)
+                self?.sessionService.deleteSet(setID: setID)
             })
             .store(in: &cancellables)
     }
-    
-    //MARK: - Logic Helpers
-
-    private func setupSession(){
-        if let id = workoutId, let existingWorkout = workoutRepo.fetch(by: id)
-        {
-            self.currentWorkout = existingWorkout
-            self.startFetchExercises()
-            self.calculateTotalStats()
-            
-            if let saveDuration = self.currentWorkout?.duration {
-                self.timerService.setInitialTime(Int(saveDuration))
-            }
-        }else{
-            self.currentWorkout = self.workoutRepo.create()
-            self.currentWorkout?.date = Date()
-            self.currentWorkout?.id = UUID()
-            
-            self.startFetchExercises()
-            self.calculateTotalStats()
-            
-        }
-        
-        self.startFetchExercises()
-    }
-    
-    private func cancelWorkoutSession(){
-        self.timerService.stop()
-        
-        if workoutId == nil {
-            if let workoutToDelete = self.currentWorkout {
-                self.workoutRepo.delete(workoutToDelete)
-                    .sink(receiveCompletion: {_ in}, receiveValue: {_ in})
-                    .store(in: &cancellables)
-            }
-        }else{
-            self.workoutRepo.rollback()
-        }
-    }
-    
-    private func addExercise(_ exerciseDefinition: Exercise) {
-        guard let workout = currentWorkout else { return }
-        
-        let newSet = exerciseRepo.create()
-        
-        newSet.exercise = exerciseDefinition
-        newSet.workout = workout
-    
-        let newIndex = output.exercises.value.count
-        newSet.orderIndex = Int16(newIndex)
-        
-        
-        exerciseRepo.save()
-            .sink(receiveCompletion: {_ in}) { _ in
-                print("Exercise added")
-            }
-            .store(in: &cancellables)
-    }
-    
-    private func updateNote(for id: NSManagedObjectID, text: String){
-        exerciseRepo.update(id: id) { exercise in
-            exercise.note = text
-        }
-        .sink { complation in
-            if case .failure(let error) = complation {
-                print("Note updates error: \(error)")
-            }
-        } receiveValue: {
-            print("Note updated successfully for id: \(id)")
-        }
-        .store(in: &cancellables)
-    }
-    
-    private func replaceExercise(existing: WorkoutExercise, with newDEfinition: Exercise){
-        existing.exercise = newDEfinition
-        
-        exerciseRepo.save()
-            .sink(receiveCompletion: {_ in }, receiveValue: {_ in})
-            .store(in: &cancellables)
-    }
-    
-    private func deleteExercise(_ exercise: WorkoutExercise) {
-        exerciseRepo.delete(exercise)
-            .flatMap({ [weak self]  _ -> AnyPublisher<Void, Error> in
-                guard let self else { return Fail(error: NSError(domain: "SelfDeallocated", code: -1)).eraseToAnyPublisher()
-                }
-                
-                self.reindexExercise()
-                
-                return self.exerciseRepo.save()
-            })
-            .sink(receiveCompletion: { complation in
-                if case .failure(let failure) = complation {
-                    print("delete reindex error: \(failure)")
-                }
-            }, receiveValue: { _ in })
-            .store(in: &cancellables)
-    }
-    
-    private func addNewSet(to parentExercise: WorkoutExercise){
-        guard let exerciseDef = parentExercise.exercise else { return }
-        
-        let newSet = workoutSets.create()
-        
-        newSet.workoutExercise = parentExercise
-        
-        let currentSets = (parentExercise.workoutSets as? Set<WorkoutSet>)?
-            .filter { !$0.isDeleted }
-            .count ?? 0
-        
-        
-        newSet.orderIndex = Int16(currentSets)
-        
-        newSet.id = UUID()
-        newSet.previous = self.getPreviousHistory(for: exerciseDef, setIndex: Int(currentSets))
-        newSet.reps = 0
-        newSet.weight = 0.0
-        newSet.isCompleted = false
-        
-        workoutSets.save()
-            .sink(receiveCompletion: { complation in
-                if case .failure(let failure) = complation {
-                    print("add new set error: \(failure)")
-                }
-            }, receiveValue: {[weak self] _ in
-                print("new set added successfully: \(newSet.orderIndex)")
-                               
-                self?.refreshExercisesFromFRC()
-                self?.calculateTotalStats()
-            })
-            .store(in: &cancellables)
-        
-    }
-    
-    private func updateSetData(setID: UUID, weight: Double, reps: Int, isDone: Bool) {
-       let predicate = NSPredicate(format: "id == %@", setID as CVarArg)
-        guard let targetSet = workoutSets.fetch(predicate: predicate, fetchLimit: 1).first else {return}
-        
-        workoutSets.update(id: targetSet.objectID) { set in
-            set.weight = weight
-            set.reps = Int16(reps)
-            set.isCompleted = isDone
-            
-        }
-        .sink { completion in
-            if case .failure(let error) = completion {
-                print("Set update error: \(error)")
-            }
-        } receiveValue: { [weak self] _ in
-            self?.refreshExercisesFromFRC()
-            self?.calculateTotalStats()
-        }
-        .store(in: &cancellables)
-    }
-    
-    
-    
-    private func deleteSet(setID: UUID){
-        
-        let predicate = NSPredicate(format: "id == %@", setID as CVarArg)
-        
-        guard let targetSet = workoutSets.fetch(predicate: predicate, fetchLimit: 1).first else { return }
-        
-        let parentExercise = targetSet.workoutExercise
-        
-        workoutSets.delete(targetSet)
-            .flatMap { [weak self] _ -> AnyPublisher<Void, Error> in
-                print("Before delete, sets:", (parentExercise?.workoutSets as? Set<WorkoutSet>)?.map{$0.id} ?? [])
-
-                guard let self else {
-                    return Fail(error: NSError(domain: "SelfDEallocated", code: -1 )).eraseToAnyPublisher()
-                }
-                
-                if let parentExercise = parentExercise {
-                    self.reindexSets(for: parentExercise)
-                }
-                
-                return self.workoutSets.save()
-            }
-            .sink(receiveCompletion: { completion in
-                if case .failure(let failure) = completion {
-                    print("Error: \(failure)")
-                }
-            }, receiveValue: { [weak self] _ in
-                self?.refreshExercisesFromFRC()
-                self?.calculateTotalStats()
-            })
-            .store(in: &cancellables)
-        
-    }
-    
-    //MARK: - Stats & Fetching
-    private func calculateTotalStats(){
-        let allExercise = output.exercises.value
-        
-        var totalVolume: Double = 0.0
-        var totalCompletedSets: Int = 0
-        
-        for exercise in allExercise {
-            if let sets = exercise.workoutSets as? Set<WorkoutSet> {
-                for set in sets where set.isCompleted {
-                    let volume = set.weight * Double(set.reps)
-                    
-                    totalVolume += volume
-                    totalCompletedSets += 1
-                }
-            }
-        }
-        
-        self.currentStats = (volume: totalVolume, sets: totalCompletedSets)
-        
-        output.sessionStats.send((volume: totalVolume, sets: totalCompletedSets))
-    }
-    
-    private func startFetchExercises() {
-        guard let workout = currentWorkout else { return }
-        
-        let predicate = NSPredicate(format: "workout == %@", workout)
-        
-        let sort = NSSortDescriptor(key: "orderIndex", ascending: true)
-        
-        frc = exerciseRepo.makeFetchResultsController(sortDescriptors: [sort], predicate: predicate)
-        frc?.delegate = self
-        
-        do {
-            try frc?.performFetch()
-            
-            output.exercises.send(frc?.fetchedObjects ?? [])
-        }catch {
-            print("FRC Error: \(error)")
-        }
-    }
-    
-
-   
 }
 
-//MARK: - Helper Methods
-extension WorkoutSessionViewModel {
-    private func reindexExercise(){
-        guard let exercises = frc?.fetchedObjects else {return}
-        
-        for(index, exercise) in exercises.enumerated() {
-            exercise.orderIndex = Int16(index)
-        }
-    }
-    
-    private func reindexSets(for exercise: WorkoutExercise){
-        guard let sets = exercise.workoutSets as? Set<WorkoutSet> else {return}
-        
-        let sortedSets = sets.filter { !$0.isDeleted }.sorted {$0.orderIndex < $1.orderIndex }
-        
-        for (index, set) in sortedSets.enumerated(){
-            set.orderIndex = Int16(index)
-        }
-    }
-    
-    private func refreshExercisesFromFRC(){
-        if let exercises = self.frc?.fetchedObjects {
-            self.output.exercises.send(exercises)
-        }
-    }
-}
 
-//MARK: - FRC Delegate Extension
-extension WorkoutSessionViewModel: NSFetchedResultsControllerDelegate {
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        guard let exercise = controller.fetchedObjects as? [WorkoutExercise] else { return }
-        
-        output.exercises.send(exercise)
-        
-        calculateTotalStats()
-    }
-}
-
-//MARK: - History Logic
-extension WorkoutSessionViewModel {
-    private func getPreviousHistory(for exerciseDef: Exercise, setIndex: Int) -> String{
-        guard let currentWorkout = currentWorkout else { return "-" }
-        
-        guard let lastSessionExercise = exerciseRepo.fetchPreviousSession(for: exerciseDef, currentWorkout: currentWorkout),
-              let lastSets = lastSessionExercise.workoutSets as? Set<WorkoutSet> else{
-            return "-"
-        }
-        
-        let sortedLastSets = lastSets.sorted { $0.orderIndex < $1.orderIndex }
-        
-        if setIndex < sortedLastSets.count {
-            let pastSet = sortedLastSets[setIndex]
-            
-            let weightString = floor(pastSet.weight) == pastSet.weight ? "\(Int(pastSet.weight))" : String(format: "%.1f", pastSet.weight)
-            return "\(weightString)kg x \(pastSet.reps)"
-        }
-        
-        return "-"
-    }
-}

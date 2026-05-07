@@ -6,15 +6,15 @@
 //
 
 import UIKit
-import CoreData
+
 
 enum ExerciseListEvent{
     case cancel
-    case exerciseSelected(Exercise)
+    case exerciseSelected(ExerciseDomainModel)
 }
 
 final class ExerciseListCoordinator: Coordinator {
-    var didFinishWithSelection: ((Exercise) -> Void)?
+    var didFinishWithSelection: ((ExerciseDomainModel) -> Void)?
     
     var finishDelegate: CoordinatorFinishDelegate?
     
@@ -24,11 +24,11 @@ final class ExerciseListCoordinator: Coordinator {
     
     var type: CoordinatorType { .exerciseList }
     
-    let context: NSManagedObjectContext
+    let appDIContainer: AppDIContainer
     
-    init(_ navigationController: UINavigationController, context: NSManagedObjectContext){
+    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer){
         self.navigationController = navigationController
-        self.context = context
+        self.appDIContainer = appDIContainer
     }
     
     func start() {
@@ -38,9 +38,8 @@ final class ExerciseListCoordinator: Coordinator {
             self?.handle(event)
         }
         
-        //TODO: - DI ViewModel
-        let dataRepo = DataRepository<Exercise>(context: context)
-        let viewModel = ExerciseListVM(dataRepo: dataRepo)
+
+        let viewModel = ExerciseListVM(repository: appDIContainer.sharedExerciseDefRepo)
         exerciseListVC.viewModel = viewModel
         
         navigationController.pushViewController(exerciseListVC, animated: true)

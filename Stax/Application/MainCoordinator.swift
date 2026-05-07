@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import CoreData
 import Combine
 import FirebaseAuth
 
@@ -22,15 +21,16 @@ class MainCoordinator: MainCoordinatorProtocol{
     weak var finishDelegate: CoordinatorFinishDelegate? = nil
     var childCoordinators = [Coordinator]()
     var navigationController: UINavigationController
-    var type: CoordinatorType { return .app }
-    let context: NSManagedObjectContext
+    var type: CoordinatorType { .app }
+   
+    //Container
+    let appDIContainer: AppDIContainer
+   
     var cancellables: Set<AnyCancellable> = []
     
-    let userManager = UserManager()
-    
-    init(_ navigationController: UINavigationController, context: NSManagedObjectContext) {
+    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
         self.navigationController = navigationController
-        self.context = context
+        self.appDIContainer = appDIContainer
     }
     
     func start() {
@@ -45,19 +45,8 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func showSplashView(){
-        let workoutRepo = DataRepository<Workout>(context: context)
-        let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
-        let setRepo = DataRepository<WorkoutSet>(context: context)
-        let exerciseDefRepo = DataRepository<Exercise>(context: context)
-        
-        let firebaseService = FirebaseSyncService()
-        let syncManager = SyncManager(workoutRepo: workoutRepo,
-                                      exerciseRepo: exerciseRepo,
-                                      setRepo: setRepo,
-                                      exercise: exerciseDefRepo)
-        
-        let splashVM = SplashVM(firebaseSyncService: firebaseService, syncManager: syncManager)
-        let splashVC = SplashVC(vm: splashVM)
+        let (splashVC, splashVM) = SplashModuleBuilder.build(container: appDIContainer)
+    
         
         navigationController.setNavigationBarHidden(true, animated: false)
         navigationController.setViewControllers([splashVC], animated: false)
@@ -80,7 +69,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func showMainFlow() {
-        let tabCoordinator = TabCoordinator(navigationController, context: context, userManager: userManager)
+        let tabCoordinator = TabCoordinator(navigationController, appDIContainer: appDIContainer)
         tabCoordinator.finishDelegate = self
         navigationController.setNavigationBarHidden(true, animated: false)
         tabCoordinator.start()

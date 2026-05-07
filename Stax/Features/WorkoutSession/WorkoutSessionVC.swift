@@ -7,8 +7,6 @@
 
 import UIKit
 import Combine
-import CoreData
-
 
 class WorkoutSessionVC: UIViewController {
     //MARK: - Diffable DataSource Types
@@ -19,7 +17,7 @@ class WorkoutSessionVC: UIViewController {
     
     nonisolated enum RowItem: Hashable, Sendable{
         case duration
-        case exercise(NSManagedObjectID)
+        case exercise(String)
         case empty
     }
     
@@ -35,7 +33,7 @@ class WorkoutSessionVC: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private let contentView = WorkoutSessionView()
     private var dataSource: DataSource!
-    private var sessionExercise: [WorkoutExercise] = []
+    private var sessionExercise: [WorkoutExerciseDomainModel] = []
     private var isViewApeared: Bool = false
     private var keyboardManager: KeyboardManager?
     
@@ -108,11 +106,11 @@ class WorkoutSessionVC: UIViewController {
                     return UITableViewCell()
                 }
                 
-                if let exerciseItem = self.sessionExercise.first(where: { $0.objectID == id}){
+                if let exerciseItem = self.sessionExercise.first(where: { $0.id == id}){
                     cell.configureExerciseCell(with: exerciseItem)
                     
                     
-                    cell.configureTextView(with: exerciseItem.note)
+                    cell.configureTextView(with: exerciseItem.notes)
                     
                     cell.onNoteChange = { [weak self] newNote in
                         self?.viewModel.input.updateExerciseNote.send((id, newNote))
@@ -227,7 +225,7 @@ class WorkoutSessionVC: UIViewController {
     }
     
     //MARK: - Update Snapshot
-    private func updateSnapshot(with exercises: [WorkoutExercise]){
+    private func updateSnapshot(with exercises: [WorkoutExerciseDomainModel]){
         var snapshot = Snapshot()
         
         snapshot.appendSections(Section.allCases)
@@ -238,7 +236,7 @@ class WorkoutSessionVC: UIViewController {
         if exercises.isEmpty{
             snapshot.appendItems([.empty], toSection: .exercises)
         }else{
-            let items = exercises.map {RowItem.exercise($0.objectID)}
+            let items = exercises.map {RowItem.exercise($0.id)}
             snapshot.appendItems(items, toSection: .exercises)
         }
         
@@ -253,7 +251,7 @@ class WorkoutSessionVC: UIViewController {
             if let exerciseCell = cell as? WorkoutSessionExerciseListCell,
                let indexPath = contentView.tableView.indexPath(for: exerciseCell),
                case .exercise(let id) = dataSource.itemIdentifier(for: indexPath),
-               let updateExercise = exercises.first(where: { $0.objectID == id }) {
+               let updateExercise = exercises.first(where: { $0.id == id }) {
                 exerciseCell.configureExerciseCell(with: updateExercise)
             }
         }
@@ -314,36 +312,3 @@ extension WorkoutSessionVC{
     }
 }
 
-//MARK: - Keyboard Handling
-//extension WorkoutSessionVC {
-//    private func setupKeyboardObserver() {
-//        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
-//        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
-//    }
-//    
-//    @objc private func keyboardWillShow(_ notification: Notification) {
-//        guard let userInfo = notification.userInfo,
-//              let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-//        
-//        let extraBuffer: CGFloat = 50
-//        let bottomPadding = keyboardFrame.height + extraBuffer
-//        
-//        var contentInset = contentView.tableView.contentInset
-//        contentInset.bottom = bottomPadding
-//        
-//        var scrollIndicatorInsets = contentView.tableView.verticalScrollIndicatorInsets
-//        scrollIndicatorInsets.bottom = bottomPadding
-//        
-//        UIView.animate(withDuration: 0.3) {
-//            self.contentView.tableView.contentInset = contentInset
-//            self.contentView.tableView.verticalScrollIndicatorInsets = scrollIndicatorInsets
-//        }
-//    }
-//    
-//    @objc private func keyboardWillHide(_ notification: Notification) {
-//        let contentInset = UIEdgeInsets.zero
-//        contentView.tableView.contentInset = contentInset
-//        contentView.tableView.verticalScrollIndicatorInsets = contentInset
-//    }
-//    
-//}

@@ -7,13 +7,12 @@
 
 import UIKit
 import Combine
-import CoreData
 
 enum WorkoutSessionEvent{
     case addExercise
     case finishWorkout
     case cancelWorkout
-    case exerciseMenuButtonTapped(WorkoutExercise)
+    case exerciseMenuButtonTapped(WorkoutExerciseDomainModel)
 }
 
 final class WorkoutSessionCoordinator: Coordinator{
@@ -26,17 +25,21 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     var type: CoordinatorType { .workoutSession}
     
-    let context: NSManagedObjectContext
-
+    //Container
+    let appDIContainer: AppDIContainer
+    
     var cancellables: Set<AnyCancellable> = []
     
     var vm: WorkoutSessionViewModel?
     var workoutId: String?
     
-    init(_ navigationController: UINavigationController, context: NSManagedObjectContext, workoutId: String? = nil) {
+    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer, workoutId: String? = nil) {
         self.navigationController = navigationController
-        self.context = context
+        self.appDIContainer = appDIContainer
         self.workoutId = workoutId
+        
+        self.vm = WorkoutSessionViewModel(sessionService: appDIContainer.sharedSessionService,
+                                          workoutRepository: appDIContainer.sharedWorkoutRepo)
     }
     
     
@@ -47,14 +50,6 @@ final class WorkoutSessionCoordinator: Coordinator{
             self?.handle(event)
         }
         
-        //Ropsiotory Injection
-        let workoutRepo = DataRepository<Workout>(context: context)
-        let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
-        let exerciseSetsRepo = DataRepository<WorkoutSet>(context: context)
-        
-        //VM Injection
-        self.vm = WorkoutSessionViewModel(workoutRepo: workoutRepo, exerciseRepo: exerciseRepo, workoutSets: exerciseSetsRepo, workoutId: self.workoutId)
-
         sessionVC.viewModel = self.vm
         
         navigationController.setViewControllers([sessionVC], animated: false)
@@ -86,11 +81,11 @@ final class WorkoutSessionCoordinator: Coordinator{
     }
     
     
-    private func showExerciseList(onExerciseSelected: ((Exercise) -> Void)? = nil) {
+    private func showExerciseList(onExerciseSelected: ((ExerciseDomainModel) -> Void)? = nil) {
         let listNav = UINavigationController()
         listNav.modalPresentationStyle = .fullScreen
         
-        let exerciseCoordinator = ExerciseListCoordinator(listNav, context: context)
+        let exerciseCoordinator = ExerciseListCoordinator(listNav, appDIContainer: appDIContainer)
         exerciseCoordinator.finishDelegate = self
         
         exerciseCoordinator.didFinishWithSelection = {[weak self] selectedExercise in
@@ -113,34 +108,34 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     private func showWorkoutSummary(){
         
-        guard let currentWorkout = vm?.currentWorkout,
-              let stats = vm?.currentStats,
-              let duration = vm?.timerService.seconsElapsed
-        else {return}
+//        guard let currentWorkout = vm?.currentWorkout,
+//              let stats = vm?.currentStats,
+//              let duration = vm?.timerService.seconsElapsed
+//        else {return}
+//        
+//        let summaryStats = WorkoutStats(
+//            duration: TimeInterval(duration),
+//            volume: stats.volume,
+//            totalSets: stats.sets,
+//            caloriesBurned: nil
+//        )
         
-        let summaryStats = WorkoutStats(
-            duration: TimeInterval(duration),
-            volume: stats.volume,
-            totalSets: stats.sets,
-            caloriesBurned: nil
-        )
-        
-        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout, stats: summaryStats)
-        summaryCoordinator.finishDelegate = self
-        
-        summaryCoordinator.onWorkoutSaved = {[weak self] in
-            self?.finish()
-        }
-        
-        summaryCoordinator.onWorkoutDiscarded = {[weak self] in
-            self?.finish()
-        }
-        
-        childCoordinators.append(summaryCoordinator)
-        summaryCoordinator.start()
+//        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout, stats: summaryStats)
+//        summaryCoordinator.finishDelegate = self
+//        
+//        summaryCoordinator.onWorkoutSaved = {[weak self] in
+//            self?.finish()
+//        }
+//        
+//        summaryCoordinator.onWorkoutDiscarded = {[weak self] in
+//            self?.finish()
+//        }
+//        
+//        childCoordinators.append(summaryCoordinator)
+//        summaryCoordinator.start()
     }
     
-    private func showExerciseMenu(for exercise: WorkoutExercise){
+    private func showExerciseMenu(for exercise: WorkoutExerciseDomainModel){
         let sheetNav = ExerciseMenuSheet()
         sheetNav.modalPresentationStyle = .pageSheet
         
@@ -161,22 +156,22 @@ final class WorkoutSessionCoordinator: Coordinator{
     }
     
     
-    private func handleExerciseMenuAction(_ action: ExerciseMenuSheet.Action, for exercise: WorkoutExercise){
+    private func handleExerciseMenuAction(_ action: ExerciseMenuSheet.Action, for exercise: WorkoutExerciseDomainModel){
         
         navigationController.dismiss(animated: true) { [weak self]  in
             guard let self else { return }
-         
-            switch action{
-            case .replaceExercise:
-                self.showExerciseList {[weak self] newExerciseDef in
-                    self?.vm?.input.replaceExercise.send((exercise, newExerciseDef))
-                }
-                
-            case .deleteExercise:
-                self.vm?.input.deleteExercise.send(exercise)
-            }
+//            
+//            switch action{
+//            case .replaceExercise:
+//                self.showExerciseList {[weak self] newExerciseDef in
+//                    self?.vm?.input.replaceExercise.send((exercise, newExerciseDef))
+//                }
+//                
+//            case .deleteExercise:
+//                self.vm?.input.deleteExercise.send(exercise)
+//            }
         }
-       
+        
     }
 }
 

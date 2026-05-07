@@ -7,7 +7,6 @@
 
 import UIKit
 import Combine
-import CoreData
 
 class ExerciseListVC: UIViewController {
     //MARK: - Diffable DataSource Types
@@ -16,8 +15,8 @@ class ExerciseListVC: UIViewController {
     }
     
     // Typealiases
-    typealias DataSource = UITableViewDiffableDataSource<Section, NSManagedObjectID>
-    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, NSManagedObjectID>
+    typealias DataSource = UITableViewDiffableDataSource<Section, String>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, String>
     
     //Internal Properties
     var didSendEventClosure: ((ExerciseListEvent) -> Void)?
@@ -26,7 +25,7 @@ class ExerciseListVC: UIViewController {
     //Private Properties
     private var cancellables: Set<AnyCancellable> = []
     private var dataSource: DataSource!
-    private var allExercises: [Exercise] = []
+    private var allExercises: [ExerciseDomainModel] = []
     
     
     //ContentView
@@ -61,11 +60,11 @@ class ExerciseListVC: UIViewController {
         dataSource = DataSource(tableView: contentView.tableView, cellProvider: { [weak self] (tableView, indexPath, id) -> UITableViewCell? in
             guard let self else {return nil}
             
-            guard let exercise = self.allExercises.first(where: { $0.objectID == id }) else {
+            guard let exercise = self.allExercises.first(where: { $0.id == id }) else {
                 return ExerciseListCell()
             }
             
-            
+        
             let cell = tableView.dequeueReusableCell(withIdentifier: ExerciseListCell.reuseIdentifier, for: indexPath) as? ExerciseListCell
             cell?.configure(with: exercise)
             return cell
@@ -88,7 +87,7 @@ class ExerciseListVC: UIViewController {
                 var snapshot = Snapshot()
                 snapshot.appendSections([.main])
                 
-                let ids = exercise.map {$0.objectID}
+                let ids = exercise.map {$0.id}
                 snapshot.appendItems(ids, toSection: .main)
                 
                 self.dataSource.apply(snapshot, animatingDifferences: true)
