@@ -12,7 +12,7 @@ enum WorkoutSessionEvent{
     case addExercise
     case finishWorkout
     case cancelWorkout
-    case exerciseMenuButtonTapped(WorkoutExercise)
+    case exerciseMenuButtonTapped(WorkoutExerciseDomainModel)
 }
 
 final class WorkoutSessionCoordinator: Coordinator{
@@ -135,7 +135,7 @@ final class WorkoutSessionCoordinator: Coordinator{
 //        summaryCoordinator.start()
     }
     
-    private func showExerciseMenu(for exercise: WorkoutExercise){
+    private func showExerciseMenu(for exercise: WorkoutExerciseDomainModel){
         let sheetNav = ExerciseMenuSheet()
         sheetNav.modalPresentationStyle = .pageSheet
         
@@ -156,7 +156,7 @@ final class WorkoutSessionCoordinator: Coordinator{
     }
     
     
-    private func handleExerciseMenuAction(_ action: ExerciseMenuSheet.Action, for exercise: WorkoutExercise){
+    private func handleExerciseMenuAction(_ action: ExerciseMenuSheet.Action, for exercise: WorkoutExerciseDomainModel){
         
         navigationController.dismiss(animated: true) { [weak self]  in
             guard let self else { return }

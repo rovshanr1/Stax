@@ -41,6 +41,7 @@ final class WorkoutSessionService: SessionServiceProtocol{
     }
     
     //Repositorys
+    private let baseExerciseRepo: DataRepository<Exercise>
     private let exerciseRepo: DataRepository<WorkoutExercise>
     private let workoutSets: DataRepository<WorkoutSet>
     private let workoutRepo: DataRepository<Workout>
@@ -53,9 +54,11 @@ final class WorkoutSessionService: SessionServiceProtocol{
     //Combine
     private var cancellables: Set<AnyCancellable> = []
     
-    init(exerciseRepo: DataRepository<WorkoutExercise>,
+    init(baseExerciseRepo: DataRepository<Exercise>,
+         exerciseRepo: DataRepository<WorkoutExercise>,
          workoutSets: DataRepository<WorkoutSet>,
          workoutRepo: DataRepository<Workout>) {
+        self.baseExerciseRepo = baseExerciseRepo
         self.exerciseRepo = exerciseRepo
         self.workoutSets = workoutSets
         self.workoutRepo = workoutRepo
@@ -89,11 +92,43 @@ final class WorkoutSessionService: SessionServiceProtocol{
     }
     
     func addExercise(exerciseID: String) {
+        guard let currentWorkout = self.currentWorkout else { return }
         
+        guard let baseExercise = baseExerciseRepo.fetch(by: exerciseID) else {
+            print("Error: ID not found")
+            return
+        }
+        
+        let newWorkoutExercise = exerciseRepo.create()
+        newWorkoutExercise.id = UUID()
+        newWorkoutExercise.exercise = baseExercise
+        newWorkoutExercise.workout = currentWorkout
+        
+        let currentCount = currentWorkout.workoutExercises?.count ?? 0
+        newWorkoutExercise.orderIndex = Int16(currentCount)
+        
+        exerciseRepo.save()
+            .sink(receiveCompletion: { completion in
+                if case .failure(let failure) = completion {
+                    print("Error: \(failure.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] _ in
+                self?.notifyUI()
+            })
+            .store(in: &cancellables)
     }
     
     func deleteExercise(workoutExerciseID: String) {
-        
+        exerciseRepo.delete(by: workoutExerciseID)
+            .sink { completion in
+                if case .failure(let failure) = completion {
+                    print("Exercise delete error: \(failure.localizedDescription)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.reindexExercise()
+            }
+            .store(in: &cancellables)
+
     }
     
     func replaceExercise(workoutExerciseID: String, with newExerciseID: String) {
@@ -101,8 +136,23 @@ final class WorkoutSessionService: SessionServiceProtocol{
     }
     
     func updateExerciseNote(workoutExerciseID: String, note: String) {
+        guard let exercise = exerciseRepo.fetch(by: workoutExerciseID) else { return }
         
+        exercise.note = note
+        
+        exerciseRepo.save()
+            .sink { completion in
+                if case .failure(let failure) = completion {
+                    print("Note update error: \(failure.localizedDescription)")
+                }
+                
+            } receiveValue: { [weak self] _ in
+                self?.notifyUI()
+            }
+            .store(in: &cancellables)
+
     }
+    
     
     func addNewSet(to workoutExerciseID: String) {
         
@@ -187,5 +237,26 @@ final class WorkoutSessionService: SessionServiceProtocol{
         
         self.exercisesSubject.send(domainWorkoutExercises)
         self.sessionStatsSubject.send((volume: totalVolume, sets: totalSets))
+    }
+    
+    private func reindexExercise(){
+        guard let currentWorkout = self.currentWorkout else { return }
+        
+        let remainingExercises = (currentWorkout.workoutExercises as? Set<WorkoutExercise> ?? [])
+            .sorted { $0.orderIndex < $1.orderIndex }
+        
+        for (index, exercise) in remainingExercises.enumerated() {
+            exercise.orderIndex = Int16(index)
+        }
+        
+        exerciseRepo.save()
+            .sink { comletion in
+                if case .failure(let error) = comletion {
+                    print("Reindexing failed: \(error)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.notifyUI()
+            }
+            .store(in: &cancellables)
     }
 }

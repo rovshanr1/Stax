@@ -101,6 +101,18 @@ final class WorkoutSessionViewModel{
             }
             .store(in: &cancellables)
         
+        sessionService.exercisesPublisher
+            .sink { [weak self] exercises in
+                self?.output.exercises.send(exercises)
+            }
+            .store(in: &cancellables)
+        
+        sessionService.sessionStatsPublisher
+            .sink { [weak self] stats in
+                self?.output.sessionStats.send(stats)
+            }
+            .store(in: &cancellables)
+        
         input.viewDidLoad
             .sink { [weak self] in
                 guard let self else { return }
@@ -149,33 +161,34 @@ final class WorkoutSessionViewModel{
     private func setupExerciseBindings(){
         input.addExercise
             .sink { [weak self] exercise in
+                guard let self else { return }
                 
+                self.sessionService.addExercise(exerciseID: exercise.id)
             }
             .store(in: &cancellables)
         
         input.updateExerciseNote
             .debounce(for: .seconds(0.5), scheduler: DispatchQueue.main)
             .sink { [weak self] (objectId, noteText) in
-                
-                
+                self?.sessionService.updateExerciseNote(workoutExerciseID: objectId, note: noteText)
             }
             .store(in: &cancellables)
         
         input.replaceExercise
             .sink(receiveValue: {[weak self] (existingExercise, newExerciseDefinition) in
-            
+                
             })
             .store(in: &cancellables)
         
         input.deleteExercise
             .sink (receiveValue: { [weak self] exercise in
-                
+                self?.sessionService.deleteExercise(workoutExerciseID: exercise.id)
             })
             .store(in: &cancellables)
         
         input.addSet
             .sink(receiveValue: { [weak self] exercise in
-                
+                self?.sessionService.addNewSet(to: exercise.id)
             })
             .store(in: &cancellables)
         
@@ -187,62 +200,10 @@ final class WorkoutSessionViewModel{
                 
         input.deleteSet
             .sink(receiveValue: { [weak self] setID in
-                
+                self?.sessionService.deleteSet(setID: setID)
             })
             .store(in: &cancellables)
     }
-    
-    //MARK: - Logic Helpers
-
-}
-
-//MARK: - Helper Methods
-extension WorkoutSessionViewModel {
-//    private func reindexExercise(){
-//        guard let exercises = frc?.fetchedObjects else {return}
-//        
-//        for(index, exercise) in exercises.enumerated() {
-//            exercise.orderIndex = Int16(index)
-//        }
-//    }
-//    
-//    private func reindexSets(for exercise: WorkoutExercise){
-//        guard let sets = exercise.workoutSets as? Set<WorkoutSet> else {return}
-//        
-//        let sortedSets = sets.filter { !$0.isDeleted }.sorted {$0.orderIndex < $1.orderIndex }
-//        
-//        for (index, set) in sortedSets.enumerated(){
-//            set.orderIndex = Int16(index)
-//        }
-//    }
-//    
-//    private func refreshExercisesFromFRC(){
-//        if let exercises = self.frc?.fetchedObjects {
-//            self.output.exercises.send(exercises)
-//        }
-//    }
 }
 
 
-//MARK: - History Logic
-//extension WorkoutSessionViewModel {
-//    private func getPreviousHistory(for exerciseDef: Exercise, setIndex: Int) -> String{
-//        guard let currentWorkout = currentWorkout else { return "-" }
-//        
-//        guard let lastSessionExercise = exerciseRepo.fetchPreviousSession(for: exerciseDef, currentWorkout: currentWorkout),
-//              let lastSets = lastSessionExercise.workoutSets as? Set<WorkoutSet> else{
-//            return "-"
-//        }
-//        
-//        let sortedLastSets = lastSets.sorted { $0.orderIndex < $1.orderIndex }
-//        
-//        if setIndex < sortedLastSets.count {
-//            let pastSet = sortedLastSets[setIndex]
-//            
-//            let weightString = floor(pastSet.weight) == pastSet.weight ? "\(Int(pastSet.weight))" : String(format: "%.1f", pastSet.weight)
-//            return "\(weightString)kg x \(pastSet.reps)"
-//        }
-//        
-//        return "-"
-//    }
-//}

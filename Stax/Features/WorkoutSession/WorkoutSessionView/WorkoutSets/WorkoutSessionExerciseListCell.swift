@@ -17,13 +17,13 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     var onNoteChange: ((String) -> Void)?
     var onNotesHeightChange: (() -> Void)?
     
-    var addSetTapped: ((WorkoutExercise) -> Void)?
-    var onToggleSetDone: ((UUID, Double, Int, Bool) -> Void)?
-    var deleteSetTapped: ((UUID) -> Void)?
+    var addSetTapped: ((WorkoutExerciseDomainModel) -> Void)?
+    var onToggleSetDone: ((String, Double, Int, Bool) -> Void)?
+    var deleteSetTapped: ((String) -> Void)?
     
     var onInputFieldFocusChange: ((UIView) -> Void)?
     
-    private var currentExerciseID: UUID?
+    private var currentExerciseID: String?
     
     //MARK: - UI Elements
     private var addNotesTextView = TextView()
@@ -39,7 +39,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     }()
     
     private var exerciseName: UILabel = {
-       let label = UILabel()
+        let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .semibold)
         label.textColor = .tertiaryLabel
         return label
@@ -143,7 +143,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        currentExerciseID = nil
+        //        currentExerciseID = nil
         setsView.onUpdateSet = nil
         setsView.addSetButtonTapped = nil
     }
@@ -159,7 +159,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         exerciseMenuButton.setContentHuggingPriority(.required, for: .horizontal)
         exerciseMenuButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         exerciseMenuButton.addTarget(self, action: #selector(menuButtonTapped), for: .touchUpInside)
-      
+        
         
         addNotesTextView.isEditable = true
         addNotesTextView.isSelectable = true
@@ -192,15 +192,13 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     }
     
     //MARK: - Public method for configure cell
-    func configureExerciseCell(with exercise: WorkoutExercise){
+    func configureExerciseCell(with exercise: WorkoutExerciseDomainModel){
         exerciseName.text = exercise.exercise?.name
         currentExerciseID = exercise.id
         
-        if let setsSet = exercise.workoutSets as? Set<WorkoutSet>{
-            let sortedSets = setsSet.sorted { $0.orderIndex < $1.orderIndex }
-            
-            setsView.configuartionSets(with: sortedSets)
-        }
+        
+        setsView.configuartionSets(with: exercise.workoutSets)
+        
         
         setsView.addSetButtonTapped = { [weak self] in
             self?.addSetTapped?(exercise)

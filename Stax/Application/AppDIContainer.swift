@@ -22,11 +22,12 @@ final class AppDIContainer{
     }()
     
     lazy var sharedSessionService: SessionServiceProtocol = {
+        let baseExerciseRepo = DataRepository<Exercise>(context: context)
         let exerciseRepo = DataRepository<WorkoutExercise>(context: context)
         let workoutSets = DataRepository<WorkoutSet>(context: context)
         let dataRepository = DataRepository<Workout>(context: context)
         
-        return WorkoutSessionService(exerciseRepo: exerciseRepo, workoutSets: workoutSets, workoutRepo: dataRepository)
+        return WorkoutSessionService(baseExerciseRepo: baseExerciseRepo, exerciseRepo: exerciseRepo, workoutSets: workoutSets, workoutRepo: dataRepository)
     }()
     
     lazy var sharedFirebaseService: FirebaseSyncService = {

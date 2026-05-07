@@ -13,9 +13,9 @@ class WorkoutSetsView: UIView {
     
     var addSetButtonTapped: (() -> Void)?
     
-    var onUpdateSet: ((UUID, Double, Int, Bool) -> Void)?
+    var onUpdateSet: ((String, Double, Int, Bool) -> Void)?
     var onInputFieldFocus: ((UIView) -> Void)?
-    var onDeleteSet: ((UUID) -> Void)?
+    var onDeleteSet: ((String) -> Void)?
     
     private var headerView = SetsHeaderView()
     private var footerView = SetsFooterView()
@@ -60,7 +60,7 @@ class WorkoutSetsView: UIView {
     
     //MARK: - Configuration
     
-    func configuartionSets(with sets: [WorkoutSet]) {
+    func configuartionSets(with sets: [WorkoutSetDomainModel]) {
         
         let existingRows = setsContainerStackView.arrangedSubviews.compactMap { $0 as? SetRowView}
         
@@ -79,7 +79,7 @@ class WorkoutSetsView: UIView {
                 
                 rowView.configureSetRow(
                     setNumber: index + 1,
-                    previous: set.previous ?? "-",
+                    previous: set.previous,
                     weight: set.weight,
                     reps: Int(set.reps),
                     isDone: set.isCompleted
@@ -97,10 +97,11 @@ class WorkoutSetsView: UIView {
         }
     }
     
-    private func bindRowClosures(_ rowView: SetRowView, set: WorkoutSet){
+    private func bindRowClosures(_ rowView: SetRowView, set: WorkoutSetDomainModel){
         rowView.onUpdateState = { [weak self] (weight, reps, isDone) in
-            guard let self, let setID = set.id else { return }
+            guard let self else { return }
             
+            let setID = set.id
             self.onUpdateSet?(setID, weight, reps, isDone)
         }
         
@@ -109,9 +110,9 @@ class WorkoutSetsView: UIView {
         }
         
         rowView.onDelete = { [weak self] in
-            guard let self,
-                  let setID = set.id
-            else { return }
+            guard let self else { return }
+            
+            let setID = set.id
             self.onDeleteSet?(setID)
         }
     }
