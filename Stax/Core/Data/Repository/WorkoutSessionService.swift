@@ -31,6 +31,9 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     private let exercisesSubject = CurrentValueSubject<[WorkoutExerciseDomainModel], Never>([])
     private let sessionStatsSubject = CurrentValueSubject<(volume: Double, sets: Int), Never>((0, 0))
     
+    //Dictionary
+    private var cachedPreviousSets: [String: [WorkoutSetDomainModel]] = [:]
+    
     //Publishers
     var exercisesPublisher: AnyPublisher<[WorkoutExerciseDomainModel], Never> {
         exercisesSubject.eraseToAnyPublisher()
@@ -115,6 +118,30 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         initialSet.reps = 0
         initialSet.workoutExercise = newWorkoutExercise
         
+        if let exerciseID = baseExercise.id?.uuidString,
+           cachedPreviousSets[exerciseID] == nil {
+            if let pastSession = exerciseRepo.fetchPreviousSession(for: baseExercise, currentWorkout: currentWorkout){
+                let sortedPastSets = (pastSession.workoutSets as? Set<WorkoutSet> ?? [])
+                    .sorted { $0.orderIndex < $1.orderIndex }
+                
+                let mappedPastSets: [WorkoutSetDomainModel] = sortedPastSets.map { cdSet in
+                    return WorkoutSetDomainModel(
+                        id: cdSet.id?.uuidString ?? UUID().uuidString,
+                        isCompleted: cdSet.isCompleted,
+                        orderIndex: cdSet.orderIndex,
+                        previous: "-",
+                        reps: cdSet.reps,
+                        restTime: cdSet.restTime,
+                        weight: cdSet.weight,
+                        previousWeight: nil,
+                        previousReps: nil
+                    )
+                }
+                
+                cachedPreviousSets[exerciseID] = mappedPastSets
+            }
+        }
+        
         exerciseRepo.save()
             .sink(receiveCompletion: { completion in
                 if case .failure(let failure) = completion {
@@ -136,7 +163,7 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 self?.reindexExercise()
             }
             .store(in: &cancellables)
-
+        
     }
     
     func replaceExercise(workoutExerciseID: String, with newExerciseID: String) {
@@ -158,7 +185,7 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 self?.notifyUI()
             }
             .store(in: &cancellables)
-
+        
     }
     
     
@@ -186,11 +213,9 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         
         let domainWorkoutExercises: [WorkoutExerciseDomainModel] = coreDataExercise.map { cdExercise in
             
-            var previousSetsSorted: [WorkoutSet] = []
-            if let exerciseDef = cdExercise.exercise,
-               let pastSession = exerciseRepo.fetchPreviousSession(for: exerciseDef, currentWorkout: freshWorkout) {
-                previousSetsSorted = (pastSession.workoutSets as? Set<WorkoutSet> ?? [])
-                    .sorted { $0.orderIndex < $1.orderIndex }
+            var previousSetsSorted: [WorkoutSetDomainModel] = []
+            if let baseDefID = cdExercise.exercise?.id?.uuidString {
+                previousSetsSorted = cachedPreviousSets[baseDefID] ?? []
             }
             
             let coreDataSets = (cdExercise.workoutSets as? Set<WorkoutSet> ?? [])
@@ -203,8 +228,16 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 }
                 
                 var previousString = "-"
+                
+                var fetchedPrevWeight: Double? = nil
+                var fetchedPrevReps: Int16? = nil
+                
                 if index < previousSetsSorted.count {
                     let pastSet = previousSetsSorted[index]
+                    
+                    fetchedPrevWeight = pastSet.weight
+                    fetchedPrevReps = pastSet.reps
+                    
                     let weightStr = floor(pastSet.weight) == pastSet.weight ? "\(Int(pastSet.weight))" : String(format: "%.1f", pastSet.weight)
                     previousString = "\(weightStr)kg x \(pastSet.reps)"
                 }
@@ -216,7 +249,10 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                     previous: previousString,
                     reps: cdSet.reps,
                     restTime: cdSet.restTime,
-                    weight: cdSet.weight
+                    weight: cdSet.weight,
+                    previousWeight: fetchedPrevWeight,
+                    previousReps: fetchedPrevReps
+                    
                 )
                 
             }

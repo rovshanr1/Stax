@@ -188,7 +188,7 @@ extension DataRepository where T == WorkoutExercise {
         
         let cutoffDate: Date = currentWorkout.date ?? Date()
         request.predicate = NSPredicate(
-            format: "exercise == %@ AND workout != %@ AND workout.date < %@ AND workout.duration > 0",
+            format: "exercise == %@ AND workout != %@ AND workout.date < %@ AND workout.duration > 0 AND SUBQUERY(workoutSets, $s, $s.isCompleted == YES).@count > 0",
             argumentArray: [exerciseDef, currentWorkout, cutoffDate as NSDate]
         )
         

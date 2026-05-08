@@ -19,6 +19,8 @@ final class SetRowView: UIView {
     var onInputDidBegin: ((UIView) -> Void)?
     var onDelete: (() -> Void)?
     
+    var currentSetID: String?
+    
     private var setNumberLabel: UILabel = {
         let label = UILabel()
         label.textColor = .label
@@ -212,7 +214,7 @@ final class SetRowView: UIView {
             self.contentContainerView.transform = .identity
             self.layoutIfNeeded()
         }
-       
+        
     }
     
     private func setupGestures() {
@@ -234,7 +236,7 @@ final class SetRowView: UIView {
     private func updateAppearance(isDone: Bool){
         UIView.animate(withDuration: 0.2) { [weak self] in
             guard let self else {return}
-            self.contentContainerView.backgroundColor = .secondarySystemBackground 
+            self.contentContainerView.backgroundColor = .secondarySystemBackground
             self.doneOverlayView.alpha = isDone ? 1 : 0
             self.checkmarkBox.tintColor = isDone ? .systemGreen : .systemGray        }
     }
@@ -248,7 +250,7 @@ final class SetRowView: UIView {
         
         if weight == 0{
             currentWeight.text = ""
-           
+            
         } else {
             let isInteger = floor(weight) == weight
             currentWeight.text = isInteger ? "\(Int(weight))" : "\(weight)"
@@ -303,6 +305,32 @@ final class SetRowView: UIView {
         }
     }
     
+    
+    //MARK: - Error Animation
+    func showErrorAnimation(){
+        self.checkmarkBox.isSelected = false
+        self.updateAppearance(isDone: false)
+        
+        let errorFeedback = UINotificationFeedbackGenerator()
+        errorFeedback.notificationOccurred(.error)
+        
+        let animation = CAKeyframeAnimation(keyPath: "transform.translation.x")
+        animation.timingFunction = CAMediaTimingFunction(name: .linear)
+        animation.duration = 0.4
+        animation.values = [-5.0, 5.0, -4.0, 4.0, -2.0, 2.0, 0.0]
+        
+        let originalColor = contentContainerView.backgroundColor
+        UIView.animate(withDuration: 0.2, animations: {
+            self.contentContainerView.backgroundColor = UIColor.systemRed.withAlphaComponent(0.2)
+        }) { _ in
+            UIView.animate(withDuration: 0.2) {
+                self.contentContainerView.backgroundColor = originalColor
+            }
+        }
+        
+        self.layer.add(animation, forKey: "shake")
+    }
+    
     @objc private func checkmarkTapped(){
         checkmarkBox.isSelected.toggle()
         let isDone = checkmarkBox.isSelected
@@ -322,6 +350,8 @@ final class SetRowView: UIView {
     @objc private func handleInputFocus(_ textField: UITextField){
         onInputDidBegin?(textField)
     }
+    
+    
     
 }
 

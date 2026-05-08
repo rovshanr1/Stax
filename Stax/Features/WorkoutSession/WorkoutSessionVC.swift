@@ -211,6 +211,22 @@ class WorkoutSessionVC: UIViewController {
                 self?.didSendEventClosure?(.finishWorkout)
             }
             .store(in: &cancellables)
+        
+        viewModel.output.setValidationError
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] setId in
+                guard let self else { return }
+                
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.error)
+                
+                for cell in self.contentView.tableView.visibleCells{
+                    if let exerciseCell = cell as? WorkoutSessionExerciseListCell{
+                        exerciseCell.shakeSetRow(with: setId)
+                    }
+                }
+            }
+            .store(in: &cancellables)
     }
     
     private func updateDurationCell(stats: (volume: Double, sets: Int)? = nil){

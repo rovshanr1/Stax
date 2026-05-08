@@ -32,6 +32,7 @@ final class WorkoutSessionViewModel{
         let cancelWorkoutEvent: PassthroughSubject<Void, Never>
         let exercises: CurrentValueSubject<[WorkoutExerciseDomainModel], Never>
         let sessionStats: CurrentValueSubject<(volume: Double, sets: Int), Never>
+        let setValidationError: PassthroughSubject<String, Never>
     }
     
     //MARK: - Properties
@@ -45,7 +46,7 @@ final class WorkoutSessionViewModel{
     private let workoutRepository: WorkoutRepositoryProtocol
     
     //State
-
+    
     public private(set) var currentStats: (volume: Double, sets: Int) = (0, 0)
     
     private let workoutId: String?
@@ -59,8 +60,8 @@ final class WorkoutSessionViewModel{
     //MARK: - Initializer
     init( sessionService: SessionServiceProtocol,
           workoutRepository: WorkoutRepositoryProtocol,
-         timerService: WorkoutTimerServiceProtocol = WorkoutTimerService(),
-         workoutId: String? = nil
+          timerService: WorkoutTimerServiceProtocol = WorkoutTimerService(),
+          workoutId: String? = nil
     ){
         self.sessionService = sessionService
         self.workoutRepository = workoutRepository
@@ -84,7 +85,8 @@ final class WorkoutSessionViewModel{
                             finishWorkoutEvent: .init(),
                             cancelWorkoutEvent: .init(),
                             exercises: .init([]),
-                            sessionStats: .init((volume: 0.0, sets: 0))
+                            sessionStats: .init((volume: 0.0, sets: 0)),
+                            setValidationError: .init()
                             
         )
         
@@ -141,7 +143,7 @@ final class WorkoutSessionViewModel{
                 let finalDuration = Double(self.timerService.seconsElapsed)
                 let estimatedCalories = (finalDuration / 60.0) * 6.0
                 
-            
+                
                 self.output.finishWorkoutEvent.send()
             }
             .store(in: &cancellables)
@@ -157,7 +159,7 @@ final class WorkoutSessionViewModel{
         
         setupExerciseBindings()
     }
-  
+    
     private func setupExerciseBindings(){
         input.addExercise
             .sink { [weak self] exercise in
@@ -194,15 +196,53 @@ final class WorkoutSessionViewModel{
         
         input.updateSet
             .sink(receiveValue: { [weak self] setID, weight, reps, isDone in
-              
+                guard let self else { return }
+                
+                self.updateSets(with: setID, weight: weight, reps: reps, isDone: isDone)
             })
             .store(in: &cancellables)
-                
+        
         input.deleteSet
             .sink(receiveValue: { [weak self] setID in
                 self?.sessionService.deleteSet(setID: setID)
             })
             .store(in: &cancellables)
+    }
+    
+    //MARK: - Helpers
+    private func findSetDomainModel(by setID: String) -> WorkoutSetDomainModel? {
+        let allExercises = self.output.exercises.value
+        
+        for exercise in allExercises {
+            if let targetSet = exercise.workoutSets.first(where: {$0.id == setID}) {
+                return targetSet
+            }
+        }
+        return nil
+    }
+    
+    private func updateSets(with setID: String, weight: Double, reps: Int, isDone: Bool){
+        var finalWeight = weight
+        var finalReps = reps
+        
+        if let targetSet = self.findSetDomainModel(by: setID){
+            if isDone{
+                if finalWeight == 0, let pW = targetSet.previousWeight {
+                    finalWeight = pW
+                }
+                
+                if finalReps == 0, let pR = targetSet.previousReps {
+                    finalReps = Int(pR)
+                }
+                
+                if finalWeight == 0 || finalReps == 0 {
+                    self.output.setValidationError.send(setID)
+                    return
+                }
+            }
+        }
+        
+        self.sessionService.updateSet(setID: setID, weight: finalWeight, reps: finalReps, isDone: isDone)
     }
 }
 
