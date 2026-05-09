@@ -18,6 +18,7 @@ final class WorkoutSummaryViewModel{
         let updateDescription: PassthroughSubject<String, Never>
         let saveWorkout: PassthroughSubject<Void, Never>
         let toggleHealthKitSync: PassthroughSubject<Bool, Never>
+        let discardWorkout: PassthroughSubject<Void, Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -32,51 +33,60 @@ final class WorkoutSummaryViewModel{
     let input: Input
     let output: Output
     
+    
     //Repositorys
-    public private(set) var workout: Workout
+    public private(set) var workout: Workout?
     private let workoutRepository: DataRepository<Workout>
     
     //Stats
     private let stats: WorkoutStats
+    private let workoutID: String
     
     //Preferance Service
     private var preferencesService: AppPreferencesServiceInterface
     private let healthKitService: HealthKitServiceInterface?
     private let syncService: FirebaseSyncServiceInterface
+    private let appDIContainer: AppDIContainer
     
     private var cancellables: Set<AnyCancellable> = []
     
     let emojis = ["🔥", "💪", "🏋️‍♂️", "🏃‍♂️", "🦍", "⚡️"]
     
-    init(workout: Workout,
+    init(workoutID: String,
          workoutRepository: DataRepository<Workout>,
          stats: WorkoutStats,
          preferancesService: AppPreferencesServiceInterface = AppPreferencesService(),
          healthKitService: HealthKitServiceInterface = HealthKitService(),
-         syncService: FirebaseSyncServiceInterface = FirebaseSyncService()
-         
+         syncService: FirebaseSyncServiceInterface = FirebaseSyncService(),
+         appDIContainer: AppDIContainer
     ){
-        self.workout = workout
+        self.workoutID = workoutID
         self.workoutRepository = workoutRepository
+        self.appDIContainer = appDIContainer
         self.stats = stats
         self.preferencesService = preferancesService
         self.healthKitService = healthKitService
         self.syncService = syncService
+        
+        self.workout = workoutRepository.fetch(by: workoutID)
         
         self.input = Input(
             viewDidLoad: .init(),
             updateTitle: .init(),
             updateDescription: .init(),
             saveWorkout: .init(),
-            toggleHealthKitSync: .init())
+            toggleHealthKitSync: .init(),
+            discardWorkout: .init()
+        )
         
         self.output = Output(
             defaultTitle: .init(""),
             finished: .init(),
             workoutStats: .init(),
-            isHealthKitSyncEnabled: .init(preferencesService.isHealthKitSyncEnabled))
+            isHealthKitSyncEnabled: .init(preferencesService.isHealthKitSyncEnabled)
+        )
         
-        self.transform()
+        transform()
     }
     
     private func transform(){
@@ -88,9 +98,9 @@ final class WorkoutSummaryViewModel{
         
         input.saveWorkout
             .flatMap{ [weak self] _ -> AnyPublisher<Void, Error> in
-                guard let self else {return Empty().eraseToAnyPublisher()}
-                if (self.workout.name == nil || self.workout.name?.isEmpty == true) {
-                    self.workout.name = self.output.defaultTitle.value
+                guard let self, let workout = self.workout else {return Empty().eraseToAnyPublisher()}
+                if (workout.name == nil || workout.name?.isEmpty == true) {
+                    workout.name = self.output.defaultTitle.value
                 }
                 return self.workoutRepository.save()
             }
@@ -144,13 +154,26 @@ final class WorkoutSummaryViewModel{
                 
             }
             .store(in: &cancellables)
+        
+        input.discardWorkout
+            .sink { [weak self] _ in
+                guard let self, let workoutToDelete = self.workout, let id = workoutToDelete.id?.uuidString else { return }
+                
+                self.workoutRepository.delete(by: id)
+                    .sink { _ in } receiveValue: { _ in }
+                    .store(in: &cancellables)
+                
+            }
+            .store(in: &cancellables)
     }
     
     
     //Helper Methods
     private func setupInitialData(){
+        guard let workout = self.workout else { return }
+        
         let randomEmoji = emojis.randomElement() ?? "💪"
-
+        
         let dateToUse = workout.date ?? Date()
         let defaultName = "\(dateToUse.dayName()) Workout\(randomEmoji)"
         let currentTitle = (workout.name?.isEmpty == false) ? workout.name! : defaultName
@@ -172,6 +195,8 @@ final class WorkoutSummaryViewModel{
     }
     
     private func updateWorkoutName(_ newTitle: String){
+        guard let workout = self.workout else { return }
+        
         let cleanTitle = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         
         if cleanTitle.isEmpty {
@@ -182,6 +207,8 @@ final class WorkoutSummaryViewModel{
     }
     
     private func updateWorkoutDescription(_ newDescription: String){
+        guard let workout = self.workout else { return }
+        
         let cleanDescription = newDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         
         if cleanDescription.isEmpty{
@@ -192,13 +219,15 @@ final class WorkoutSummaryViewModel{
     }
     
     private func updateHelathKit(){
+        guard let workout = self.workout else { return }
+        
         if self.preferencesService.isHealthKitSyncEnabled {
             self.healthKitService?.saveWorkout(
                 duration: self.stats.duration,
                 volume: self.stats.volume,
                 sets: self.stats.totalSets,
-                calories: Double(self.workout.calories),
-                date: self.workout.date ?? Date()) { success, error in
+                calories: Double(workout.calories),
+                date: workout.date ?? Date()) { success, error in
                     DispatchQueue.main.async {
                         self.output.finished.send()
                     }
@@ -208,7 +237,9 @@ final class WorkoutSummaryViewModel{
     }
     
     private func syncToFirebase(){
-        let domainModel = self.workout.toDomain()
+        guard let workout = self.workout else { return }
+        
+        let domainModel = workout.toDomain()
         
         self.syncService.syncWorkoutToCloud(workout: domainModel) { result in
             switch result{

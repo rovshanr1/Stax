@@ -9,6 +9,7 @@ import Foundation
 import Combine
 
 protocol SessionServiceProtocol{
+    var currentWorkoutID: String? { get }
     var exercisesPublisher: AnyPublisher<[WorkoutExerciseDomainModel], Never> { get }
     var sessionStatsPublisher: AnyPublisher<(volume: Double, sets: Int), Never> { get }
     
@@ -52,6 +53,10 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     //State
     private var currentWorkout: Workout?
     
+    var currentWorkoutID: String? {
+        return currentWorkout?.id?.uuidString
+    }
+    
     private var workoutId: String?
     
     //Combine
@@ -91,7 +96,18 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     }
     
     func finishWorkout(duration: Double) {
+        guard let workout = self.currentWorkout else { return }
         
+        workout.duration = duration
+        
+        workoutRepo.save()
+            .sink { completion  in
+                if case .failure(let error) = completion{
+                    print("Error finishing workout: \(error)")
+                }
+            } receiveValue: { _ in }
+            .store(in: &cancellables)
+
     }
     
     func addExercise(exerciseID: String) {
@@ -180,17 +196,17 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                     .sorted { $0.orderIndex < $1.orderIndex }
                 
                 let mappedPastSets: [WorkoutSetDomainModel] = sortedPastSets.map { cdSet in
-                 return WorkoutSetDomainModel(
-                    id: cdSet.id?.uuidString ?? UUID().uuidString,
-                    isCompleted: cdSet.isCompleted,
-                    orderIndex: cdSet.orderIndex,
-                    previous: "-",
-                    reps: cdSet.reps,
-                    restTime: cdSet.restTime,
-                    weight: cdSet.weight,
-                    previousWeight: nil,
-                    previousReps: nil
-                 )
+                    return WorkoutSetDomainModel(
+                        id: cdSet.id?.uuidString ?? UUID().uuidString,
+                        isCompleted: cdSet.isCompleted,
+                        orderIndex: cdSet.orderIndex,
+                        previous: "-",
+                        reps: cdSet.reps,
+                        restTime: cdSet.restTime,
+                        weight: cdSet.weight,
+                        previousWeight: nil,
+                        previousReps: nil
+                    )
                     
                 }
                 cachedPreviousSets[newExerciseID] = mappedPastSets
@@ -249,7 +265,7 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 self?.notifyUI()
             }
             .store(in: &cancellables)
-
+        
     }
     
     func updateSet(setID: String, weight: Double, reps: Int, isDone: Bool) {
@@ -284,7 +300,7 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 self?.reindexSets(for: parentExercise)
             }
             .store(in: &cancellables)
-
+        
     }
     
     //MARK: - NotifyUI
@@ -411,6 +427,6 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 self?.notifyUI()
             }
             .store(in: &cancellables)
-            
+        
     }
 }

@@ -12,6 +12,10 @@ final class AppDIContainer{
     let context: NSManagedObjectContext
     let userManager: UserManager
     
+    lazy var genericWorkoutRepo: DataRepository<Workout> = {
+        return DataRepository<Workout>(context: context)
+    }()
+    
     lazy var sharedWorkoutRepo: WorkoutRepositoryProtocol = {
         let dataRepository = DataRepository<Workout>(context: context)
         return WorkoutRepository(genericRepository: dataRepository)

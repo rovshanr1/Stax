@@ -7,7 +7,8 @@
 
 import UIKit
 import Combine
-import CoreData
+
+
 enum WorkoutSummaryEvent{
     case saveWorkout
     case syncButtpPressed
@@ -22,35 +23,30 @@ final class WorkoutSummaryCoordinator: Coordinator {
     var onWorkoutDiscarded: (() -> Void)?
     
     var childCoordinators: [Coordinator] = []
-    
     var navigationController: UINavigationController
-    
     var type: CoordinatorType { .workoutSummary}
-    
-    let context: NSManagedObjectContext
+
     
     var cancellables: Set<AnyCancellable> = []
     
     var vm: WorkoutSummaryViewModel?
     
-    private let workout: Workout
+    let appDIContainer: AppDIContainer
+    private let workoutID: String
     private let stats: WorkoutStats
     
-    init(navigationController: UINavigationController, context: NSManagedObjectContext, workout: Workout, stats: WorkoutStats) {
+    init(navigationController: UINavigationController, appDIContaioner: AppDIContainer, workoutID: String, stats: WorkoutStats) {
         self.navigationController = navigationController
-        self.context = context
-        self.workout = workout
+        self.appDIContainer = appDIContaioner
+        self.workoutID = workoutID
         self.stats = stats
     }
     
     func start() {
         let summaryVC = WorkoutSummaryVC()
-        
-        //Repo injection
-        let repo = DataRepository<Workout>(context: context)
-        
+    
         //VM Injection 
-        self.vm = WorkoutSummaryViewModel(workout: workout, workoutRepository: repo, stats: stats)
+        self.vm = WorkoutSummaryViewModel(workoutID: workoutID, workoutRepository: appDIContainer.genericWorkoutRepo, stats: stats, appDIContainer: appDIContainer)
         
         summaryVC.viewModel = self.vm
         
@@ -127,12 +123,9 @@ final class WorkoutSummaryCoordinator: Coordinator {
                                            confirmTitle: "Discard Workout",
                                            cancelTitle: "Cancel") { [weak self ] in
             guard let self else {return}
-            if let woroutToDelete = self.vm?.workout{
-                self.context.delete(woroutToDelete)
-                try? self.context.save()
-                
-                onWorkoutDiscarded?()
-            }
+            
+            self.vm?.input.discardWorkout.send(())
+            onWorkoutDiscarded?()
         }
         
     }

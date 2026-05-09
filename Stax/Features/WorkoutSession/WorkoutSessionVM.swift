@@ -141,8 +141,8 @@ final class WorkoutSessionViewModel{
                 self.timerService.stop()
                 
                 let finalDuration = Double(self.timerService.seconsElapsed)
-                let estimatedCalories = (finalDuration / 60.0) * 6.0
                 
+                self.sessionService.finishWorkout(duration: finalDuration)
                 
                 self.output.finishWorkoutEvent.send()
             }
