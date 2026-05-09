@@ -178,7 +178,7 @@ final class WorkoutSessionViewModel{
         
         input.replaceExercise
             .sink(receiveValue: {[weak self] (existingExercise, newExerciseDefinition) in
-                
+                self?.sessionService.replaceExercise(workoutExerciseID: existingExercise.id, with: newExerciseDefinition.id)
             })
             .store(in: &cancellables)
         

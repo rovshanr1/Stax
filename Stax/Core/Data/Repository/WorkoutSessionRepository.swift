@@ -1,5 +1,5 @@
 //
-//  WorkoutSessionService.swift
+//  WorkoutSessionRepository.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 05.05.26.
@@ -167,7 +167,45 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     }
     
     func replaceExercise(workoutExerciseID: String, with newExerciseID: String) {
+        guard let workoutExercise = exerciseRepo.fetch(by: workoutExerciseID) else { return }
         
+        guard let newBaseExercise = baseExerciseRepo.fetch(by: newExerciseID) else { return }
+        
+        workoutExercise.exercise = newBaseExercise
+        
+        //Replecing set stats
+        if cachedPreviousSets[newExerciseID] == nil, let currentWorkout = self.currentWorkout {
+            if let pastSession = exerciseRepo.fetchPreviousSession(for: newBaseExercise, currentWorkout: currentWorkout){
+                let sortedPastSets = (pastSession.workoutSets as? Set<WorkoutSet> ?? [])
+                    .sorted { $0.orderIndex < $1.orderIndex }
+                
+                let mappedPastSets: [WorkoutSetDomainModel] = sortedPastSets.map { cdSet in
+                 return WorkoutSetDomainModel(
+                    id: cdSet.id?.uuidString ?? UUID().uuidString,
+                    isCompleted: cdSet.isCompleted,
+                    orderIndex: cdSet.orderIndex,
+                    previous: "-",
+                    reps: cdSet.reps,
+                    restTime: cdSet.restTime,
+                    weight: cdSet.weight,
+                    previousWeight: nil,
+                    previousReps: nil
+                 )
+                    
+                }
+                cachedPreviousSets[newExerciseID] = mappedPastSets
+            }
+        }
+        
+        exerciseRepo.save()
+            .sink { completion in
+                if case .failure(let failure) = completion {
+                    print("Error replacing exercise: \(failure.localizedDescription)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.notifyUI()
+            }
+            .store(in: &cancellables)
     }
     
     func updateExerciseNote(workoutExerciseID: String, note: String) {
@@ -190,17 +228,66 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     
     
     func addNewSet(to workoutExerciseID: String) {
+        guard let currentExercise = exerciseRepo.fetch(by: workoutExerciseID) else { return }
         
+        let newSet = workoutSets.create()
+        newSet.id = UUID()
+        newSet.isCompleted = false
+        newSet.weight = 0
+        newSet.reps = 0
+        newSet.workoutExercise = currentExercise
+        
+        let currentSetsCount = currentExercise.workoutSets?.count ?? 0
+        newSet.orderIndex = Int16(currentSetsCount)
+        
+        workoutSets.save()
+            .sink { completion in
+                if case .failure(let failure) = completion {
+                    print("Error saving new set: \(failure.localizedDescription)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.notifyUI()
+            }
+            .store(in: &cancellables)
+
     }
     
     func updateSet(setID: String, weight: Double, reps: Int, isDone: Bool) {
+        guard let setToUpdate = workoutSets.fetch(by: setID) else { return }
         
+        setToUpdate.weight = weight
+        setToUpdate.reps = Int16(reps)
+        setToUpdate.isCompleted = isDone
+        
+        workoutSets.save()
+            .sink { completion in
+                if case .failure(let failure) = completion {
+                    print("Error saving new set: \(failure.localizedDescription)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.notifyUI()
+            }
+            .store(in: &cancellables)
     }
     
     func deleteSet(setID: String) {
+        guard let setToDelete = workoutSets.fetch(by: setID),
+              let parentExercise = setToDelete.workoutExercise
+        else { return }
         
+        workoutSets.delete(by: setID)
+            .sink { completion in
+                if case .failure(let failure) = completion {
+                    print("Error deleting set: \(failure.localizedDescription)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.reindexSets(for: parentExercise)
+            }
+            .store(in: &cancellables)
+
     }
     
+    //MARK: - NotifyUI
     private func notifyUI(){
         guard let id = currentWorkout?.id?.uuidString,
               let freshWorkout = workoutRepo.fetch(by: id) else { return }
@@ -283,6 +370,9 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         self.sessionStatsSubject.send((volume: totalVolume, sets: totalSets))
     }
     
+    
+    
+    //MARK: - Reindexing
     private func reindexExercise(){
         guard let currentWorkout = self.currentWorkout else { return }
         
@@ -302,5 +392,25 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 self?.notifyUI()
             }
             .store(in: &cancellables)
+    }
+    
+    private func reindexSets(for workoutExercise: WorkoutExercise){
+        let remainingSets = (workoutExercise.workoutSets as? Set<WorkoutSet> ?? [])
+            .sorted { $0.orderIndex < $1.orderIndex }
+        
+        for (index, set) in remainingSets.enumerated() {
+            set.orderIndex = Int16(index)
+        }
+        
+        workoutSets.save()
+            .sink { comletion in
+                if case .failure(let error) = comletion {
+                    print("Reindexing failed: \(error)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.notifyUI()
+            }
+            .store(in: &cancellables)
+            
     }
 }

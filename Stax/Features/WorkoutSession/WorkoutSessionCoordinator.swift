@@ -160,16 +160,16 @@ final class WorkoutSessionCoordinator: Coordinator{
         
         navigationController.dismiss(animated: true) { [weak self]  in
             guard let self else { return }
-//            
-//            switch action{
-//            case .replaceExercise:
-//                self.showExerciseList {[weak self] newExerciseDef in
-//                    self?.vm?.input.replaceExercise.send((exercise, newExerciseDef))
-//                }
-//                
-//            case .deleteExercise:
-//                self.vm?.input.deleteExercise.send(exercise)
-//            }
+            
+            switch action{
+            case .replaceExercise:
+                self.showExerciseList {[weak self] newExerciseDef in
+                    self?.vm?.input.replaceExercise.send((exercise, newExerciseDef))
+                }
+        
+            case .deleteExercise:
+                self.vm?.input.deleteExercise.send(exercise)
+            }
         }
         
     }
