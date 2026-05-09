@@ -78,11 +78,11 @@ class WorkoutSummaryVC: UIViewController {
         viewModel?.output.workoutStats
             .receive(on: DispatchQueue.main)
             .sink { [weak self] presentation in
-                guard let self else { return }
+                guard let self, let workout = viewModel.workout else { return }
                 
                 print("\(presentation)")
                 
-                self.contentView.informationView.configureInformations(duration: presentation.duration, volume: presentation.volume, sets: presentation.sets, date: self.viewModel.workout.date ?? Date())
+                self.contentView.informationView.configureInformations(duration: presentation.duration, volume: presentation.volume, sets: presentation.sets, date: workout.date ?? Date())
             }
             .store(in: &cancellables)
         

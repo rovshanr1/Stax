@@ -108,31 +108,34 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     private func showWorkoutSummary(){
         
-//        guard let currentWorkout = vm?.currentWorkout,
-//              let stats = vm?.currentStats,
-//              let duration = vm?.timerService.seconsElapsed
-//        else {return}
-//        
-//        let summaryStats = WorkoutStats(
-//            duration: TimeInterval(duration),
-//            volume: stats.volume,
-//            totalSets: stats.sets,
-//            caloriesBurned: nil
-//        )
+        guard let sessionService = vm?.timerService,
+              let workoutID = appDIContainer.sharedSessionService.currentWorkoutID,
+                let duration = vm?.timerService.seconsElapsed
+        else {return}
         
-//        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, context: context, workout: currentWorkout, stats: summaryStats)
-//        summaryCoordinator.finishDelegate = self
-//        
-//        summaryCoordinator.onWorkoutSaved = {[weak self] in
-//            self?.finish()
-//        }
-//        
-//        summaryCoordinator.onWorkoutDiscarded = {[weak self] in
-//            self?.finish()
-//        }
-//        
-//        childCoordinators.append(summaryCoordinator)
-//        summaryCoordinator.start()
+        let stats = vm?.output.sessionStats.value ?? (0.0, 0)
+        let estimatedCalories = (Double(duration) / 60.0) * 6.0
+
+        let summaryStats = WorkoutStats(
+            duration: TimeInterval(duration),
+            volume: stats.0,
+            totalSets: stats.1,
+            caloriesBurned: estimatedCalories
+        )
+        
+        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, appDIContaioner: appDIContainer, workoutID: workoutID, stats: summaryStats)
+        summaryCoordinator.finishDelegate = self
+        
+        summaryCoordinator.onWorkoutSaved = {[weak self] in
+            self?.finish()
+        }
+        
+        summaryCoordinator.onWorkoutDiscarded = {[weak self] in
+            self?.finish()
+        }
+        
+        childCoordinators.append(summaryCoordinator)
+        summaryCoordinator.start()
     }
     
     private func showExerciseMenu(for exercise: WorkoutExerciseDomainModel){
@@ -160,16 +163,16 @@ final class WorkoutSessionCoordinator: Coordinator{
         
         navigationController.dismiss(animated: true) { [weak self]  in
             guard let self else { return }
-//            
-//            switch action{
-//            case .replaceExercise:
-//                self.showExerciseList {[weak self] newExerciseDef in
-//                    self?.vm?.input.replaceExercise.send((exercise, newExerciseDef))
-//                }
-//                
-//            case .deleteExercise:
-//                self.vm?.input.deleteExercise.send(exercise)
-//            }
+            
+            switch action{
+            case .replaceExercise:
+                self.showExerciseList {[weak self] newExerciseDef in
+                    self?.vm?.input.replaceExercise.send((exercise, newExerciseDef))
+                }
+        
+            case .deleteExercise:
+                self.vm?.input.deleteExercise.send(exercise)
+            }
         }
         
     }

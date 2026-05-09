@@ -24,6 +24,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     var onInputFieldFocusChange: ((UIView) -> Void)?
     
     private var currentExerciseID: String?
+    private var currentExercise: WorkoutExerciseDomainModel?
     
     //MARK: - UI Elements
     private var addNotesTextView = TextView()
@@ -239,6 +240,11 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         addNotesTextView.onHeightChange = { [weak self] in
             self?.onNotesHeightChange?()
         }
+    }
+    
+    //MARK: - Animation
+    func shakeSetRow(with setID: String){        
+        setsView.shakeSetRow(with: setID)
     }
     
     //MARK: - Actions

@@ -77,6 +77,8 @@ class WorkoutSetsView: UIView {
                     }
                 }
                 
+                rowView.currentSetID = set.id
+                
                 rowView.configureSetRow(
                     setNumber: index + 1,
                     previous: set.previous,
@@ -114,6 +116,18 @@ class WorkoutSetsView: UIView {
             
             let setID = set.id
             self.onDeleteSet?(setID)
+        }
+    }
+    
+    func shakeSetRow(with setID: String){
+      
+        for view in setsContainerStackView.arrangedSubviews{
+            if let setRow = view as? SetRowView,
+               setRow.currentSetID == setID{
+                
+                setRow.showErrorAnimation()
+                break
+            }
         }
     }
 }

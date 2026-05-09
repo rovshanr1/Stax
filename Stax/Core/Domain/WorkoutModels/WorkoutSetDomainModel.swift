@@ -15,4 +15,7 @@ nonisolated struct WorkoutSetDomainModel: Hashable, Codable, Sendable{
     let reps: Int16
     let restTime: Double?
     let weight: Double
+    
+    var previousWeight: Double?
+    var previousReps: Int16?
 }
