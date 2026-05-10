@@ -18,17 +18,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        let context = appDelegate.persistentContainer.viewContext
         
         let userManager = UserManager()
-        let appDIContainer = AppDIContainer(context: context, userManager: userManager)
- 
-        appDelegate.persistentContainer.performBackgroundTask{ backgroundContext in
-            let seeder = DataSeeder(context: backgroundContext)
-            seeder.seedExercise()
+        let appDIContainer = AppDIContainer(userManager: userManager) {
+            let appDelegate = UIApplication.shared.delegate as! AppDelegate
+            return appDelegate.persistentContainer.viewContext
         }
-        
+ 
+//        appDelegate.persistentContainer.performBackgroundTask{ backgroundContext in
+//            let seeder = DataSeeder(context: backgroundContext)
+//            seeder.seedExercise()
+//        }
+//        
        
 
         window = UIWindow(windowScene: windowScene)
