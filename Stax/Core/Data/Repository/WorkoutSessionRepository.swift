@@ -58,6 +58,7 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     }
     
     private var workoutId: String?
+    private var isEditMode: Bool = false
     
     //Combine
     private var cancellables: Set<AnyCancellable> = []
@@ -75,10 +76,15 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     func setupSession(workoutID: String?) -> (id: String, initialDuration: Double) {
         if let id = workoutID, let existingWorkout = workoutRepo.fetch(by: id) {
             self.currentWorkout = existingWorkout
+            self.isEditMode = true
             
             let saveDuration = existingWorkout.duration
+            self.notifyUI()
+            
             return (id, saveDuration)
         }
+        
+        self.isEditMode = false
         
         let newWorkout = workoutRepo.create()
         newWorkout.id = UUID()
@@ -97,6 +103,15 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
             return
         }
         
+        if isEditMode {
+            self.currentWorkout = nil
+            self.cachedPreviousSets.removeAll()
+            self.exercisesSubject.send([])
+            self.sessionStatsSubject.send((volume: 0, sets: 0))
+            self.isEditMode = false
+            return
+        }
+        
         workoutRepo.delete(by: workoutID)
             .sink { completion  in
                 if case .failure(let error) = completion{
@@ -107,8 +122,7 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 self?.cachedPreviousSets.removeAll()
                 self?.exercisesSubject.send([])
                 self?.sessionStatsSubject.send((volume: 0, sets: 0))
-                
-                
+            
                 print("workout session cacnelled and draft deleted from Core Data")
             }
             .store(in: &cancellables)
@@ -126,7 +140,7 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
                 }
             } receiveValue: { _ in }
             .store(in: &cancellables)
-
+        
     }
     
     func addExercise(exerciseID: String) {
