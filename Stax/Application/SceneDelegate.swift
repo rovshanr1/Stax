@@ -18,20 +18,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
         
         let userManager = UserManager()
         let appDIContainer = AppDIContainer(userManager: userManager) {
-            let appDelegate = UIApplication.shared.delegate as! AppDelegate
             return appDelegate.persistentContainer.viewContext
         }
  
-//        appDelegate.persistentContainer.performBackgroundTask{ backgroundContext in
-//            let seeder = DataSeeder(context: backgroundContext)
-//            seeder.seedExercise()
-//        }
-//        
-       
-
+        appDelegate.persistentContainer.performBackgroundTask{ backgroundContext in
+            let seeder = DataSeeder(context: backgroundContext)
+            seeder.seedExercise()
+        }
+        
         window = UIWindow(windowScene: windowScene)
         
         let navigationViewController = UINavigationController()
@@ -40,7 +38,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = navigationViewController
         window?.makeKeyAndVisible()
         
-        coordinator = MainCoordinator.init(navigationViewController, appDIContainer: appDIContainer)
+        coordinator = MainCoordinator(navigationViewController, appDIContainer: appDIContainer)
         coordinator?.start()
 
     }
