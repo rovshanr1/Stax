@@ -12,7 +12,7 @@ final class SplashModuleBuilder{
         let firebaseService = container.sharedFirebaseService
         let syncManager = container.sharedSyncManager
         
-        let splashVM = SplashVM(firebaseSyncService: firebaseService, syncManager: syncManager)
+        let splashVM = SplashVM(firebaseSyncService: firebaseService, syncManager: syncManager, workoutRepo: container.genericWorkoutRepo)
         let splashVC = SplashVC(vm: splashVM)
         
         return (splashVC, splashVM)

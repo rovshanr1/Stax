@@ -113,9 +113,9 @@ class InformationView: UIView {
         }
     }
     
-    func configureInformations(duration: String, volume: Double, sets: Int, date: Date){
+    func configureInformations(duration: String, volume: String, sets: Int, date: Date){
         timerValue.text = duration
-        volumeValue.text = String(format: "%.1f kg", volume)
+        volumeValue.text = volume
         setsValue.text = "\(sets)"
         
         let formatter = DateFormatter()

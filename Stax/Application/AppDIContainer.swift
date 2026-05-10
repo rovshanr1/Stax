@@ -9,8 +9,18 @@ import Foundation
 import CoreData
 
 final class AppDIContainer{
-    let context: NSManagedObjectContext
     let userManager: UserManager
+    
+    private let contextProvider: () -> NSManagedObjectContext
+    
+    init(userManager: UserManager, contextProvider: @escaping () -> NSManagedObjectContext) {
+        self.userManager = userManager
+        self.contextProvider = contextProvider
+    }
+    
+    lazy var context: NSManagedObjectContext = {
+        return contextProvider()
+    }()
     
     lazy var genericWorkoutRepo: DataRepository<Workout> = {
         return DataRepository<Workout>(context: context)
@@ -56,8 +66,5 @@ final class AppDIContainer{
         return WorkoutTextShareService()
     }()
     
-    init(context: NSManagedObjectContext, userManager: UserManager) {
-        self.context = context
-        self.userManager = userManager
-    }
+    
 }

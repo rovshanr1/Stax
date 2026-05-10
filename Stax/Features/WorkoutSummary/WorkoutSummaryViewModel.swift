@@ -7,7 +7,7 @@
 
 import Foundation
 import Combine
-import CoreData
+
 
 final class WorkoutSummaryViewModel{
     //MARK: - I/O Structs
@@ -99,9 +99,20 @@ final class WorkoutSummaryViewModel{
         input.saveWorkout
             .flatMap{ [weak self] _ -> AnyPublisher<Void, Error> in
                 guard let self, let workout = self.workout else {return Empty().eraseToAnyPublisher()}
+                
                 if (workout.name == nil || workout.name?.isEmpty == true) {
                     workout.name = self.output.defaultTitle.value
                 }
+                
+                if let calculatedCalories = self.stats.caloriesBurned {
+                    workout.calories = Int16(calculatedCalories)
+                }
+                
+                workout.sets = Int16(self.stats.totalSets)
+                workout.volume = self.stats.volume
+                workout.duration = self.stats.duration
+                
+                
                 return self.workoutRepository.save()
             }
             .sink(receiveCompletion: { completion in
@@ -180,13 +191,8 @@ final class WorkoutSummaryViewModel{
         
         self.output.defaultTitle.send(currentTitle)
         
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute, .second]
-        formatter.unitsStyle = .abbreviated
-        let durationString = formatter.string(from: stats.duration) ?? "0s"
-        
-        let presentation = WorkoutSummaryPresentation(duration: durationString,
-                                                      volume: stats.volume,
+        let presentation = WorkoutSummaryPresentation(duration: stats.duration.formatDuration(),
+                                                      volume: stats.volume.formatWeight(),
                                                       sets: stats.totalSets,
                                                       date: dateToUse
         )

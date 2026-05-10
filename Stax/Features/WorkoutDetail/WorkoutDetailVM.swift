@@ -83,7 +83,7 @@ final class WorkoutDetailVM {
         return  DetailSummaryItems(
             workoutName: workout.name,
             durationString: workout.duration.formatDuration(),
-            volumeString: "\(workout.volume) kg",
+            volumeString: workout.volume.formatWeight(),
             setsLabel: "\(workout.sets)",
             caloriesBurnedString: "\(workout.caloriesBurned)kcal")
     }
@@ -109,7 +109,7 @@ final class WorkoutDetailVM {
                 let weightStr = floor(set.weight) == set.weight ? "\(Int(set.weight))" : String(format: "%.1f", set.weight)
                 let setItem = DetailSetRowItem(
                     setIndex: index + 1,
-                    weightString: "\(weightStr) kg",
+                    weightString: weightStr,
                     repsString: "\(set.reps)",
                     isCompleted: set.isCompleted)
                 setRowItems.append(setItem)

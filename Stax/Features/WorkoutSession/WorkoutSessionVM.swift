@@ -152,6 +152,7 @@ final class WorkoutSessionViewModel{
             .sink { [weak self] in
                 guard let self else {return}
                 
+                self.sessionService.cancelWorkoutSession()
                 self.output.cancelWorkoutEvent.send()
             }
             .store(in: &cancellables)

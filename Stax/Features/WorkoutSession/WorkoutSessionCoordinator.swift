@@ -108,9 +108,8 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     private func showWorkoutSummary(){
         
-        guard let sessionService = vm?.timerService,
-              let workoutID = appDIContainer.sharedSessionService.currentWorkoutID,
-                let duration = vm?.timerService.seconsElapsed
+        guard let workoutID = appDIContainer.sharedSessionService.currentWorkoutID,
+              let duration = vm?.timerService.seconsElapsed
         else {return}
         
         let stats = vm?.output.sessionStats.value ?? (0.0, 0)
