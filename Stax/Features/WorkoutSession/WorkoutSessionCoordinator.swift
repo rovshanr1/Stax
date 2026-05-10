@@ -39,7 +39,7 @@ final class WorkoutSessionCoordinator: Coordinator{
         self.workoutId = workoutId
         
         self.vm = WorkoutSessionViewModel(sessionService: appDIContainer.sharedSessionService,
-                                          workoutRepository: appDIContainer.sharedWorkoutRepo)
+                                          workoutRepository: appDIContainer.sharedWorkoutRepo, workoutId: workoutId)
     }
     
     
