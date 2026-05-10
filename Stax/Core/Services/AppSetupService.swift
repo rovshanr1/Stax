@@ -34,7 +34,7 @@ final class AppSetupService{
     private func configureImageKitIO(){
        _ =  ImageKit.init(
             publicKey: Secrets.imageKitPublicKey,
-            urlEndpoint: "https://ik.imagekit.io/wgp06waey"
+            urlEndpoint: Secrets.imageKitPublicURL
         )
     }
 }
