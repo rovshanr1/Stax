@@ -7,7 +7,7 @@
 
 import Foundation
 import Combine
-import CoreData
+
 
 final class WorkoutSummaryViewModel{
     //MARK: - I/O Structs

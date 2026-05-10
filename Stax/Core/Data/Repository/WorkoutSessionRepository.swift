@@ -92,7 +92,26 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     }
     
     func cancelWorkoutSession() {
+        guard let workout = self.currentWorkout,
+              let workoutID = workout.id?.uuidString else{
+            return
+        }
         
+        workoutRepo.delete(by: workoutID)
+            .sink { completion  in
+                if case .failure(let error) = completion{
+                    print("Error canceling workout: \(error)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.currentWorkout = nil
+                self?.cachedPreviousSets.removeAll()
+                self?.exercisesSubject.send([])
+                self?.sessionStatsSubject.send((volume: 0, sets: 0))
+                
+                
+                print("workout session cacnelled and draft deleted from Core Data")
+            }
+            .store(in: &cancellables)
     }
     
     func finishWorkout(duration: Double) {
