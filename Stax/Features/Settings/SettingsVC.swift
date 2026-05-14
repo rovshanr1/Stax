@@ -8,7 +8,37 @@
 import UIKit
 import Combine
 
+//MARK: - Diffable Data Soruce Section
+nonisolated enum SettingsSection: Int, Hashable, Sendable, CaseIterable{
+    case account
+    case preferences
+    case about
+    case logout
+    
+    
+    var title: String {
+        switch self {
+        case .account: return "Account"
+        case .preferences: return "Preferences"
+        case .about: return "About"
+        default:
+            return ""
+        }
+    }
+}
+
+//MARK: - Items
+nonisolated enum SettingsItem: Hashable, Sendable{
+    case navigation(id: String, icon: String, title: String, color: String)
+    case toggle(id: String, icon: String, title: String, isOn: Bool, color: String)
+    case action(id: String, icon: String, title: String)
+}
+
+
 class SettingsVC: UIViewController {
+    //MARK: - Diffable Datasource
+    typealias DataSource = UICollectionViewDiffableDataSource<SettingsSection, SettingsItem>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<SettingsSection, SettingsItem>
     
     //closures
     var didSentEventClosure: ((SettingsEvent) -> Void)?
@@ -29,6 +59,8 @@ class SettingsVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = "Settings"
+        
         bindViewModel()
         bindingActions()
     }

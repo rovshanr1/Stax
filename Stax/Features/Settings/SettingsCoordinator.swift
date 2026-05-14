@@ -6,12 +6,14 @@
 //
 
 import UIKit
+import Combine
 
 protocol SettingsCoordinatorDelegate: CoordinatorFinishDelegate {
     func settingsCoordinatorDidLogout()
 }
 
 enum SettingsEvent {
+    case profileEdit
     case logout
     case dismiss
 }
@@ -54,14 +56,31 @@ final class SettingsCoordinator: Coordinator{
     
     private func handle(_ event: SettingsEvent) {
         switch event{
+        case .profileEdit:
+            self.profileScreen()
         case .dismiss:
             navigationController.popViewController(animated: true)
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
         case .logout:
             settingsDelegate?.settingsCoordinatorDidLogout()
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+      
         }
     }
+    
+    
+    //MARK: - Profile Screen
+    
+    private func profileScreen() {
+        guard let currentUser = settingsVM.output.userInfo.value else { return }
+        
+        let coordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, userModel: currentUser)
+       
+        coordinator.finishDelegate = self
+        childCoordinators.append(coordinator)
+        coordinator.start()
+    }
+    
 }
 
 
