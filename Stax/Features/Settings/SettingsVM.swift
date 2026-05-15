@@ -13,6 +13,7 @@ final class SettingsVM {
     struct Input {
         let logoutTapped: PassthroughSubject<Void, Never>
         let viewDidLoad: PassthroughSubject<Void, Never>
+        let itemTapped: PassthroughSubject<SettingsItem, Never>
     }
     
     struct Output {
@@ -40,6 +41,7 @@ final class SettingsVM {
         
         self.input = .init(logoutTapped: .init(),
                            viewDidLoad: .init(),
+                           itemTapped: . init()
                            
         )
         
@@ -64,6 +66,12 @@ final class SettingsVM {
         input.viewDidLoad
             .sink { [weak self] in
                 self?.buildSettingsData()
+            }
+            .store(in: &cancellables)
+        
+        input.itemTapped
+            .sink { [weak self] item in
+                self?.handleItemTap(item)
             }
             .store(in: &cancellables)
         
@@ -100,14 +108,39 @@ final class SettingsVM {
         var data: [(SettingsSection, [SettingsItem])] = []
         
         let accountItems: [SettingsItem] = [
-            .navigation(id: "profile", icon: "person.fill", title: "Profile", color: "#dedede")
+            .navigation(id: "profile", icon: "person.fill", title: "Profile", color: "#dedede"),
+            .navigation(id: "account", icon: "lock.fill", title: "Account", color: "#dedede")
         ]
         data.append((.account, accountItems))
         
         let preferenceItems: [SettingsItem] = [
-            .toggle(id: "healthKit", icon: "heart", title: "Apple Health", isOn: false, color: "#dedede")
+            .toggle(id: "healthKit", icon: "heart.fill", title: "Apple Health", isOn: false, color: "#FF3953")
         ]
-        data.append((.account, preferenceItems))
+        data.append((.preferences, preferenceItems))
         
+       
+        
+        let aboutItems: [SettingsItem] = [
+            .action(id: "logout", icon: "rectangle.portrait.and.arrow.right", title: "Logout")
+        ]
+        data.append((.about,aboutItems ))
+        
+        
+        output.settingData.send(data)
+    }
+    
+    private func handleItemTap(_ item: SettingsItem){
+        switch item{
+        case .navigation(let id, _, _, _):
+            print("\(id)")
+            
+        case .toggle:
+            break
+            
+        case .action(let id, _, _):
+            if id == "logout" {
+                performLogout()
+            }
+        }
     }
 }
