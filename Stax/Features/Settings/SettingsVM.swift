@@ -8,6 +8,13 @@
 import Foundation
 import Combine
 
+nonisolated enum SettingsItemIdentity: Sendable{
+    case editProfile
+    case editAccount
+    case healthKit
+    case logout
+}
+
 final class SettingsVM {
     
     struct Input {
@@ -22,7 +29,7 @@ final class SettingsVM {
         let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
         let settingData: CurrentValueSubject<[(SettingsSection, [SettingsItem])], Never>
-        let preferencesOnTapped: PassthroughSubject<PreferencesEvent, Never>
+        let preferencesOnTapped: PassthroughSubject<AccountEvent, Never>
     }
     
     let input: Input
@@ -110,20 +117,20 @@ final class SettingsVM {
         var data: [(SettingsSection, [SettingsItem])] = []
         
         let accountItems: [SettingsItem] = [
-            .navigation(id: "profile", icon: "person.fill", title: "Profile", color: "#707173"),
-            .navigation(id: "account", icon: "lock.fill", title: "Account", color: "#707173")
+            .navigation(id: .editProfile, icon: "person.fill", title: "Profile", color: "#707173"),
+            .navigation(id: .editAccount, icon: "lock.fill", title: "Account", color: "#707173")
         ]
         data.append((.account, accountItems))
         
         let preferenceItems: [SettingsItem] = [
-            .toggle(id: "healthKit", icon: "heart.fill", title: "Apple Health", isOn: false, color: "#FF3953")
+            .toggle(id: .healthKit, icon: "heart.fill", title: "Apple Health", isOn: false, color: "#FF3953")
         ]
         data.append((.preferences, preferenceItems))
         
        
         
         let logoutItem: [SettingsItem] = [
-            .logout(id: "logout", title: "Logout")
+            .logout(id: .logout, title: "Logout")
         ]
         data.append((.logout, logoutItem ))
         
@@ -134,8 +141,14 @@ final class SettingsVM {
     private func handleItemTap(_ item: SettingsItem){
         switch item{
         case .navigation(let id, _, _, _):
-            if id == "profile" {
+            switch id{
+            case .editProfile:
                 output.preferencesOnTapped.send(.editProfile)
+            case .editAccount:
+                output.preferencesOnTapped.send(.editAccount)
+                
+            default:
+                break
             }
             
         
@@ -146,8 +159,12 @@ final class SettingsVM {
            break
             
         case .logout(let id, _):
-            if id == "logout" {
+            switch id {
+            case .logout:
                 performLogout()
+                
+            default:
+                break
             }
         }
     }

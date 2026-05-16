@@ -15,17 +15,26 @@ final class EditAccountVM {
     }
     
     struct Output {
-        // Output properties...
+        
     }
     
     let input: Input
     let output: Output
     
+    //Services&Managers
+    private let userManager: UserManager
+    
     private var cancellables: Set<AnyCancellable> = []
     
-    init() {
+    init(userManager: UserManager) {
+        self.userManager = userManager
+        
         self.input = .init(viewDidLoad: .init())
-        self.output = .init()
+        
+        
+        self.output = .init(
+            
+        )
         
         transform()
     }

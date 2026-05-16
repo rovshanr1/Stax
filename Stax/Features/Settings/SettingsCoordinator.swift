@@ -12,14 +12,18 @@ protocol SettingsCoordinatorDelegate: CoordinatorFinishDelegate {
     func settingsCoordinatorDidLogout()
 }
 
+//MARK: - Event Enums
 enum SettingsEvent {
     case logout
     case dismiss
 }
 
-enum PreferencesEvent{
+enum AccountEvent{
     case editProfile
+    case editAccount
 }
+
+
 
 final class SettingsCoordinator: Coordinator{
     var finishDelegate: CoordinatorFinishDelegate?
@@ -84,10 +88,12 @@ final class SettingsCoordinator: Coordinator{
             .store(in: &cancellables)
     }
     
-    private func handlePreferencies(_ event: PreferencesEvent) {
+    private func handlePreferencies(_ event: AccountEvent) {
         switch event{
         case .editProfile:
             profileScreen()
+        case .editAccount:
+            editAccountScreen()
         }
     }
     
@@ -99,6 +105,15 @@ final class SettingsCoordinator: Coordinator{
         
         let coordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, userModel: currentUser)
        
+        coordinator.finishDelegate = self
+        childCoordinators.append(coordinator)
+        coordinator.start()
+    }
+    
+    //MARK: - EdditAccount Scrren
+    private func editAccountScreen() {
+        let coordinator = EditAccountCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
+        
         coordinator.finishDelegate = self
         childCoordinators.append(coordinator)
         coordinator.start()

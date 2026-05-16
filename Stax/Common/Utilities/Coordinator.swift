@@ -6,10 +6,6 @@
 //
 
 import UIKit
-//MARK: - CoordinatorType
-//enum CoordinatorType{
-//    case app, auth, tab, page, workoutSession, exerciseList, workoutSummary, workoutDetail, welcome, editProfile, settings, editAccount
-//}
 
 //MARK: - Coordinator
 protocol Coordinator: AnyObject{
@@ -21,8 +17,6 @@ protocol Coordinator: AnyObject{
     //Each coordinator has one navigation controller assigned to it
     var navigationController: UINavigationController { get set }
     
-    //Defined flow type
-//    var type: CoordinatorType { get }
 
     //A place to put logic to start the flow
     func start()

@@ -28,10 +28,10 @@ nonisolated enum SettingsSection: Int, Hashable, Sendable, CaseIterable{
 
 //MARK: - Items
 nonisolated enum SettingsItem: Hashable, Sendable{
-    case navigation(id: String, icon: String, title: String, color: String)
-    case toggle(id: String, icon: String, title: String, isOn: Bool, color: String)
-    case action(id: String, icon: String, title: String)
-    case logout(id: String, title: String)
+    case navigation(id: SettingsItemIdentity, icon: String, title: String, color: String)
+    case toggle(id: SettingsItemIdentity, icon: String, title: String, isOn: Bool, color: String)
+    case action(id: SettingsItemIdentity, icon: String, title: String)
+    case logout(id: SettingsItemIdentity, title: String)
 }
 
 
