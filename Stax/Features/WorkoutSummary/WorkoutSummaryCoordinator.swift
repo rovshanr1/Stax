@@ -24,7 +24,6 @@ final class WorkoutSummaryCoordinator: Coordinator {
     
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
-    var type: CoordinatorType { .workoutSummary}
 
     
     var cancellables: Set<AnyCancellable> = []

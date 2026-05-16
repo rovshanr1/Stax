@@ -32,7 +32,7 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
     
-    var type: CoordinatorType { .auth }
+    
     
     
     private lazy var authService: AuthServiceProtocol = {

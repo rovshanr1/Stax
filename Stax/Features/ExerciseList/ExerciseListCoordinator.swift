@@ -22,7 +22,7 @@ final class ExerciseListCoordinator: Coordinator {
     
     var navigationController: UINavigationController
     
-    var type: CoordinatorType { .exerciseList }
+    
     
     let appDIContainer: AppDIContainer
     

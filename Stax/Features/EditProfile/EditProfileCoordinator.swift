@@ -14,12 +14,9 @@ enum EditProfileEvent{
 
 final class EditProfileCoordinator: Coordinator {
     var finishDelegate: CoordinatorFinishDelegate?
-    
     var childCoordinators: [Coordinator] = []
-    
     var navigationController: UINavigationController
     
-    var type: CoordinatorType  { .editProfile }
     
     private var vm: EditProfileVM
     private let userModel: UserModel

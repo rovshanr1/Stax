@@ -21,7 +21,7 @@ final class HomeCoordinator: Coordinator{
     var finishDelegate: CoordinatorFinishDelegate?
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
-    var type: CoordinatorType { .page }
+
     
     //Container
     let appDIContainer: AppDIContainer

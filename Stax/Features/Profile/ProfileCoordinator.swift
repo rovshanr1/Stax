@@ -20,12 +20,9 @@ enum ProfileEvent{
 
 final class ProfileCoordinator: Coordinator{
     var finishDelegate: CoordinatorFinishDelegate?
-    
     var childCoordinators: [Coordinator] = []
-    
     var navigationController: UINavigationController
     
-    var type: CoordinatorType { .page }
     
     //Services
     let appDIContainer: AppDIContainer

@@ -25,7 +25,7 @@ final class SettingsCoordinator: Coordinator{
     var finishDelegate: CoordinatorFinishDelegate?
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
-    var type: CoordinatorType { .settings }
+    
     
     //Delegate
     weak var settingsDelegate: SettingsCoordinatorDelegate?

@@ -20,7 +20,7 @@ final class WorkoutCoordinator: Coordinator{
     
     var navigationController: UINavigationController
     
-    var type: CoordinatorType {.page}
+    
     
     //Container
     let appDIContainer: AppDIContainer
@@ -67,13 +67,7 @@ final class WorkoutCoordinator: Coordinator{
 extension WorkoutCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter { $0 !== childCoordinator }
-        
-        switch childCoordinator.type {
-        case .workoutSession:
-            navigationController.dismiss(animated: true)
-        default:
-            break
-        }
+       
     }
     
     
