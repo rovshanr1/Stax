@@ -44,6 +44,8 @@ final class WorkoutDetailCoordinator: Coordinator{
         self.vm = WorkoutDetailVM(workoutID: workoutID, workoutRepo: appDIContainer.sharedWorkoutRepo)
         workoutDetailVC.vm = self.vm
         
+        workoutDetailVC.hidesBottomBarWhenPushed = true
+        
         workoutDetailVC.didSendEventClosure = {[weak self] event in
             self?.handle(event)
         }

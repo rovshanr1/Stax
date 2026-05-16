@@ -9,21 +9,26 @@ import UIKit
 import SnapKit
 
 class SettingsView: UIView {
-    //closures
-    var logoutTapped: (() -> Void)?
+    private static func createLayout() -> UICollectionViewCompositionalLayout{
+        return UICollectionViewCompositionalLayout {sectionIndex, layoutEnvoriment in
+            var config = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
+        
+            config.headerMode = .supplementary
+            
+            return NSCollectionLayoutSection.list(using: config, layoutEnvironment: layoutEnvoriment)
+            
+        }
+    }
     
-    
-    private lazy var logoutButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Log Out", for: .normal)
-        button.setTitleColor(.systemRed, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
-        button.addTarget(self, action: #selector(handleLogout), for: .touchUpInside)
-        return button
+    let collectionView: UICollectionView = {
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
+        collectionView.backgroundColor = .systemGroupedBackground
+        return collectionView
     }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
         setupUI()
     }
     
@@ -32,13 +37,9 @@ class SettingsView: UIView {
     }
     
     private func setupUI() {
-        addSubview(logoutButton)
-        logoutButton.snp.makeConstraints { make in
-            make.center.equalToSuperview()
+        addSubview(collectionView)
+        collectionView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
         }
-    }
-    
-    @objc private func handleLogout() {
-        logoutTapped?()
     }
 }

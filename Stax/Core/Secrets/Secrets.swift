@@ -11,4 +11,8 @@ enum Secrets{
     static var imageKitPublicKey: String{
         Bundle.main.infoDictionary?["IMAGEKIT_PUBLIC_KEY"] as? String ?? ""
     }
+    
+    static var imageKitPublicURL: String{
+        Bundle.main.infoDictionary?["IMAGEKIT_PUBLIC_URL"] as? String ?? ""
+    }
 }

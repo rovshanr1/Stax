@@ -192,6 +192,7 @@
 				DEVELOPMENT_TEAM = 2Z3JZRB82A;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Stax/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Stax reads your age, height, and weight to calculate calories burned and provide accurate workout insights.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Stax writes your workouts and burned calories to Apple Health to keep your Activity Rings and fitness data up to date.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -231,6 +232,7 @@
 				DEVELOPMENT_TEAM = 2Z3JZRB82A;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Stax/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Stax reads your age, height, and weight to calculate calories burned and provide accurate workout insights.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Stax writes your workouts and burned calories to Apple Health to keep your Activity Rings and fitness data up to date.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

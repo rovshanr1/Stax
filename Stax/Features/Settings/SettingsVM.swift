@@ -12,12 +12,17 @@ final class SettingsVM {
     
     struct Input {
         let logoutTapped: PassthroughSubject<Void, Never>
+        let viewDidLoad: PassthroughSubject<Void, Never>
+        let itemTapped: PassthroughSubject<SettingsItem, Never>
     }
     
     struct Output {
         let logoutCompleted: PassthroughSubject<Void, Never>
+        let userInfo: CurrentValueSubject<UserModel?, Never>
         let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
+        let settingData: CurrentValueSubject<[(SettingsSection, [SettingsItem])], Never>
+        let preferencesOnTapped: PassthroughSubject<PreferencesService, Never>
     }
     
     let input: Input
@@ -29,24 +34,59 @@ final class SettingsVM {
     private let userService: UserServiceProtocol
     private let userManager: UserManager
     
-    init(userService: UserServiceProtocol = UserService(), userManager: UserManager) {
+    init(userService: UserServiceProtocol = UserService(),
+         userManager: UserManager
+    ) {
         self.userService = userService
         self.userManager = userManager
         
-        self.input = .init(logoutTapped: .init())
-        self.output = .init(logoutCompleted: .init(), errorMessage: .init(), isLoading: .init(false))
+        self.input = .init(logoutTapped: .init(),
+                           viewDidLoad: .init(),
+                           itemTapped: . init()
+                           
+        )
+        
+        self.output = .init(logoutCompleted: .init(),
+                            userInfo: .init(nil),
+                            errorMessage: .init(),
+                            isLoading: .init(false),
+                            settingData: .init([]),
+                            preferencesOnTapped: .init()
+        )
         
         transform()
     }
     
     private func transform() {
+        userManager.currentUserPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] user in
+                self?.output.userInfo.send(user)
+            }
+            .store(in: &cancellables)
+        
+        input.viewDidLoad
+            .sink { [weak self] in
+                self?.buildSettingsData()
+            }
+            .store(in: &cancellables)
+        
+        input.itemTapped
+            .sink { [weak self] item in
+                self?.handleItemTap(item)
+            }
+            .store(in: &cancellables)
+        
         input.logoutTapped
             .sink { [weak self] in
                 self?.performLogout()
             }
             .store(in: &cancellables)
+        
     }
     
+    
+    //MARK: - Helpers
     private func performLogout() {
         output.isLoading.send(true)
         
@@ -62,6 +102,49 @@ final class SettingsVM {
                 self.output.logoutCompleted.send(())
             case .failure(let error):
                 self.output.errorMessage.send(error.localizedDescription)
+            }
+        }
+    }
+    
+    private func buildSettingsData() {
+        var data: [(SettingsSection, [SettingsItem])] = []
+        
+        let accountItems: [SettingsItem] = [
+            .navigation(id: "profile", icon: "person.fill", title: "Profile", color: "#dedede"),
+            .navigation(id: "account", icon: "lock.fill", title: "Account", color: "#dedede")
+        ]
+        data.append((.account, accountItems))
+        
+        let preferenceItems: [SettingsItem] = [
+            .toggle(id: "healthKit", icon: "heart.fill", title: "Apple Health", isOn: false, color: "#FF3953")
+        ]
+        data.append((.preferences, preferenceItems))
+        
+       
+        
+        let aboutItems: [SettingsItem] = [
+            .action(id: "logout", icon: "rectangle.portrait.and.arrow.right", title: "Logout")
+        ]
+        data.append((.about,aboutItems ))
+        
+        
+        output.settingData.send(data)
+    }
+    
+    private func handleItemTap(_ item: SettingsItem){
+        switch item{
+        case .navigation(let id, _, _, _):
+            if id == "profile" {
+                output.preferencesOnTapped.send(.editProfile)
+            }
+            
+        
+        case .toggle:
+            break
+            
+        case .action(let id, _, _):
+            if id == "logout" {
+                performLogout()
             }
         }
     }

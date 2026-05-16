@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 protocol SettingsCoordinatorDelegate: CoordinatorFinishDelegate {
     func settingsCoordinatorDidLogout()
@@ -14,6 +15,10 @@ protocol SettingsCoordinatorDelegate: CoordinatorFinishDelegate {
 enum SettingsEvent {
     case logout
     case dismiss
+}
+
+enum PreferencesService{
+    case editProfile
 }
 
 final class SettingsCoordinator: Coordinator{
@@ -30,6 +35,8 @@ final class SettingsCoordinator: Coordinator{
     
     //Container
     let appDIContainer: AppDIContainer
+    
+    private var cancellables: Set<AnyCancellable> = []
 
     
     init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
@@ -48,20 +55,55 @@ final class SettingsCoordinator: Coordinator{
             self.handle(event)
         }
         
+        settingsVC.hidesBottomBarWhenPushed = true
+        
+        handleNavigation()
 
         navigationController.pushViewController(settingsVC, animated: true)
     }
     
     private func handle(_ event: SettingsEvent) {
         switch event{
+ 
         case .dismiss:
             navigationController.popViewController(animated: true)
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
         case .logout:
             settingsDelegate?.settingsCoordinatorDidLogout()
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+      
         }
     }
+    
+    private func handleNavigation(){
+        settingsVM.output.preferencesOnTapped
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] serviceEvent in
+                self?.handlePreferencies(serviceEvent)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handlePreferencies(_ event: PreferencesService) {
+        switch event{
+        case .editProfile:
+            profileScreen()
+        }
+    }
+    
+    
+    //MARK: - Profile Screen
+    
+    private func profileScreen() {
+        guard let currentUser = settingsVM.output.userInfo.value else { return }
+        
+        let coordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, userModel: currentUser)
+       
+        coordinator.finishDelegate = self
+        childCoordinators.append(coordinator)
+        coordinator.start()
+    }
+    
 }
 
 
