@@ -23,7 +23,6 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     var navigationController: UINavigationController
     
-    var type: CoordinatorType { .workoutSession}
     
     //Container
     let appDIContainer: AppDIContainer
@@ -181,11 +180,5 @@ extension WorkoutSessionCoordinator: CoordinatorFinishDelegate {
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter { $0 !== childCoordinator }
         
-        switch childCoordinator.type {
-        case .exerciseList:
-            navigationController.presentedViewController?.dismiss(animated: true)
-        default:
-            break
-        }
     }
 }

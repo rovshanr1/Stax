@@ -19,7 +19,7 @@ final class WorkoutDetailCoordinator: Coordinator{
     var finishDelegate: CoordinatorFinishDelegate?
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
-    var type: CoordinatorType { .workoutDetail }
+    
     
     //Injection
     var vm: WorkoutDetailVM?

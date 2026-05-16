@@ -21,7 +21,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     weak var finishDelegate: CoordinatorFinishDelegate? = nil
     var childCoordinators = [Coordinator]()
     var navigationController: UINavigationController
-    var type: CoordinatorType { .app }
+    
    
     //Container
     let appDIContainer: AppDIContainer
@@ -93,15 +93,13 @@ class MainCoordinator: MainCoordinatorProtocol{
 extension MainCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({ $0 !== childCoordinator})
-        switch childCoordinator.type {
-        case .tab:
+        
+        if childCoordinator is TabCoordinator {
             navigationController.viewControllers.removeAll()
             authFlow()
-        case .auth:
+        }else if childCoordinator is AuthCoordinator{
             navigationController.viewControllers.removeAll()
             showSplashView()
-        default:
-            break
         }
     }
 }

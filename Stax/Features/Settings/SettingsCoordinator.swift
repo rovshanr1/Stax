@@ -17,7 +17,7 @@ enum SettingsEvent {
     case dismiss
 }
 
-enum PreferencesService{
+enum PreferencesEvent{
     case editProfile
 }
 
@@ -25,7 +25,7 @@ final class SettingsCoordinator: Coordinator{
     var finishDelegate: CoordinatorFinishDelegate?
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
-    var type: CoordinatorType { .settings }
+    
     
     //Delegate
     weak var settingsDelegate: SettingsCoordinatorDelegate?
@@ -84,7 +84,7 @@ final class SettingsCoordinator: Coordinator{
             .store(in: &cancellables)
     }
     
-    private func handlePreferencies(_ event: PreferencesService) {
+    private func handlePreferencies(_ event: PreferencesEvent) {
         switch event{
         case .editProfile:
             profileScreen()

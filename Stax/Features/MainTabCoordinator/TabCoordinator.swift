@@ -27,7 +27,7 @@ class TabCoordinator: NSObject, Coordinator {
     //Container
     private let appDIContainer: AppDIContainer
     
-    var type: CoordinatorType { .tab }
+    
     
     init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
         self.navigationController = navigationController
