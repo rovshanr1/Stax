@@ -13,9 +13,12 @@ protocol SettingsCoordinatorDelegate: CoordinatorFinishDelegate {
 }
 
 enum SettingsEvent {
-    case profileEdit
     case logout
     case dismiss
+}
+
+enum PreferencesService{
+    case editProfile
 }
 
 final class SettingsCoordinator: Coordinator{
@@ -32,6 +35,8 @@ final class SettingsCoordinator: Coordinator{
     
     //Container
     let appDIContainer: AppDIContainer
+    
+    private var cancellables: Set<AnyCancellable> = []
 
     
     init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
@@ -50,14 +55,16 @@ final class SettingsCoordinator: Coordinator{
             self.handle(event)
         }
         
+        settingsVC.hidesBottomBarWhenPushed = true
+        
+        handleNavigation()
 
         navigationController.pushViewController(settingsVC, animated: true)
     }
     
     private func handle(_ event: SettingsEvent) {
         switch event{
-        case .profileEdit:
-            self.profileScreen()
+ 
         case .dismiss:
             navigationController.popViewController(animated: true)
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
@@ -65,6 +72,22 @@ final class SettingsCoordinator: Coordinator{
             settingsDelegate?.settingsCoordinatorDidLogout()
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
       
+        }
+    }
+    
+    private func handleNavigation(){
+        settingsVM.output.preferencesOnTapped
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] serviceEvent in
+                self?.handlePreferencies(serviceEvent)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handlePreferencies(_ event: PreferencesService) {
+        switch event{
+        case .editProfile:
+            profileScreen()
         }
     }
     

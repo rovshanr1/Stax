@@ -41,6 +41,7 @@ class SettingsVC: UIViewController {
     
     //closures
     var didSentEventClosure: ((SettingsEvent) -> Void)?
+    var didSentPreferencesClosure: ((PreferencesService) -> Void)?
     
     //private properties
     private var contentView = SettingsView()
@@ -78,6 +79,7 @@ class SettingsVC: UIViewController {
             didSentEventClosure?(.dismiss)
         }
     }
+
     
     deinit{
         print("Setting Deinited")
@@ -91,6 +93,8 @@ class SettingsVC: UIViewController {
                 self?.didSentEventClosure?(.logout)
             }
             .store(in: &cancellables)
+        
+        
         
         vm.output.settingData
             .receive(on: DispatchQueue.main)

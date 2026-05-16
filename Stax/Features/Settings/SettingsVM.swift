@@ -22,6 +22,7 @@ final class SettingsVM {
         let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
         let settingData: CurrentValueSubject<[(SettingsSection, [SettingsItem])], Never>
+        let preferencesOnTapped: PassthroughSubject<PreferencesService, Never>
     }
     
     let input: Input
@@ -49,7 +50,8 @@ final class SettingsVM {
                             userInfo: .init(nil),
                             errorMessage: .init(),
                             isLoading: .init(false),
-                            settingData: .init([])
+                            settingData: .init([]),
+                            preferencesOnTapped: .init()
         )
         
         transform()
@@ -132,8 +134,11 @@ final class SettingsVM {
     private func handleItemTap(_ item: SettingsItem){
         switch item{
         case .navigation(let id, _, _, _):
-            print("\(id)")
+            if id == "profile" {
+                output.preferencesOnTapped.send(.editProfile)
+            }
             
+        
         case .toggle:
             break
             
