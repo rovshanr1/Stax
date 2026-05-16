@@ -22,7 +22,7 @@ final class SettingsVM {
         let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
         let settingData: CurrentValueSubject<[(SettingsSection, [SettingsItem])], Never>
-        let preferencesOnTapped: PassthroughSubject<PreferencesService, Never>
+        let preferencesOnTapped: PassthroughSubject<PreferencesEvent, Never>
     }
     
     let input: Input
@@ -110,8 +110,8 @@ final class SettingsVM {
         var data: [(SettingsSection, [SettingsItem])] = []
         
         let accountItems: [SettingsItem] = [
-            .navigation(id: "profile", icon: "person.fill", title: "Profile", color: "#dedede"),
-            .navigation(id: "account", icon: "lock.fill", title: "Account", color: "#dedede")
+            .navigation(id: "profile", icon: "person.fill", title: "Profile", color: "#707173"),
+            .navigation(id: "account", icon: "lock.fill", title: "Account", color: "#707173")
         ]
         data.append((.account, accountItems))
         
@@ -122,10 +122,10 @@ final class SettingsVM {
         
        
         
-        let aboutItems: [SettingsItem] = [
-            .action(id: "logout", icon: "rectangle.portrait.and.arrow.right", title: "Logout")
+        let logoutItem: [SettingsItem] = [
+            .logout(id: "logout", title: "Logout")
         ]
-        data.append((.about,aboutItems ))
+        data.append((.logout, logoutItem ))
         
         
         output.settingData.send(data)
@@ -142,7 +142,10 @@ final class SettingsVM {
         case .toggle:
             break
             
-        case .action(let id, _, _):
+        case .action:
+           break
+            
+        case .logout(let id, _):
             if id == "logout" {
                 performLogout()
             }

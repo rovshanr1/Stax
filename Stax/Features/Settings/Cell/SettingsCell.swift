@@ -31,6 +31,7 @@ class SettingsCell: UICollectionViewListCell {
         return label
     }()
     
+    
     private let accessorySwitch: UISwitch = {
         let accessorySwitch = UISwitch()
         accessorySwitch.isHidden = true
@@ -47,7 +48,7 @@ class SettingsCell: UICollectionViewListCell {
     }()
     
     private let mainStackView: UIStackView = {
-       let stack = UIStackView()
+        let stack = UIStackView()
         stack.axis = .horizontal
         stack.alignment = .center
         stack.spacing = 16
@@ -64,7 +65,7 @@ class SettingsCell: UICollectionViewListCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     
     private func setupUI() {
         //Cell Background
@@ -101,6 +102,10 @@ class SettingsCell: UICollectionViewListCell {
                                                              right: 16)
             )
         }
+        
+        separatorLayoutGuide.snp.makeConstraints { make in
+            make.leading.equalTo(titleLabel.snp.leading)
+        }
     }
     
     func configurationSettingsCell(with item: SettingsItem){
@@ -129,7 +134,10 @@ class SettingsCell: UICollectionViewListCell {
             iconImageView.tintColor = .white
             iconContainer.backgroundColor = .systemRed
             titleLabel.textColor = .systemRed
+            
+        default:
+            break
         }
+        
     }
-    
 }

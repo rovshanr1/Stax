@@ -31,6 +31,7 @@ nonisolated enum SettingsItem: Hashable, Sendable{
     case navigation(id: String, icon: String, title: String, color: String)
     case toggle(id: String, icon: String, title: String, isOn: Bool, color: String)
     case action(id: String, icon: String, title: String)
+    case logout(id: String, title: String)
 }
 
 
@@ -41,7 +42,6 @@ class SettingsVC: UIViewController {
     
     //closures
     var didSentEventClosure: ((SettingsEvent) -> Void)?
-    var didSentPreferencesClosure: ((PreferencesService) -> Void)?
     
     //private properties
     private var contentView = SettingsView()
@@ -94,8 +94,6 @@ class SettingsVC: UIViewController {
             }
             .store(in: &cancellables)
         
-        
-        
         vm.output.settingData
             .receive(on: DispatchQueue.main)
             .sink { [weak self] data in
@@ -128,9 +126,21 @@ class SettingsVC: UIViewController {
             supplementaryView.contentConfiguration = content
         }
         
+        let logoutCellRegistration = UICollectionView.CellRegistration<LogoutCell, SettingsItem>{ cell, _, itemIdentifier in
+            if case .logout(_, let title) = itemIdentifier{
+                cell.configureLabel(title: title)
+            }
+        }
+        
         
         dataSource = DataSource(collectionView: contentView.collectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
-            return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: itemIdentifier)
+            
+            switch itemIdentifier{
+            case .logout:
+                return collectionView.dequeueConfiguredReusableCell(using: logoutCellRegistration, for: indexPath, item: itemIdentifier)
+            default:
+                return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: itemIdentifier)
+            }
         })
         
         dataSource.supplementaryViewProvider = {(collectionView, kind, indexPath) in
