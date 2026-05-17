@@ -18,18 +18,20 @@ nonisolated enum SettingsItemIdentity: Sendable{
 final class SettingsVM {
     
     struct Input {
-        let logoutTapped: PassthroughSubject<Void, Never>
         let viewDidLoad: PassthroughSubject<Void, Never>
         let itemTapped: PassthroughSubject<SettingsItem, Never>
+        let logoutTapped: PassthroughSubject<Void, Never>
+        let toggleHealthKit: PassthroughSubject<Bool, Never>
     }
     
     struct Output {
-        let logoutCompleted: PassthroughSubject<Void, Never>
         let userInfo: CurrentValueSubject<UserModel?, Never>
         let errorMessage: PassthroughSubject<String, Never>
         let isLoading: CurrentValueSubject<Bool, Never>
         let settingData: CurrentValueSubject<[(SettingsSection, [SettingsItem])], Never>
         let preferencesOnTapped: PassthroughSubject<AccountEvent, Never>
+        let isHealthKitSyncEnabled: CurrentValueSubject<Bool, Never>
+        let logoutCompleted: PassthroughSubject<Void, Never>
     }
     
     let input: Input
@@ -40,25 +42,33 @@ final class SettingsVM {
     //Services
     private let userService: UserServiceProtocol
     private let userManager: UserManager
+    private let healthKitManager: HealthKitServiceInterface
+    private var preferencesService: AppPreferencesServiceInterface
     
     init(userService: UserServiceProtocol = UserService(),
-         userManager: UserManager
+         userManager: UserManager,
+         healthKitManager: HealthKitServiceInterface = HealthKitService(),
+         preferancesService: AppPreferencesServiceInterface = AppPreferencesService()
     ) {
         self.userService = userService
         self.userManager = userManager
+        self.healthKitManager = healthKitManager
+        self.preferencesService = preferancesService
         
-        self.input = .init(logoutTapped: .init(),
-                           viewDidLoad: .init(),
-                           itemTapped: . init()
+        self.input = .init(viewDidLoad: .init(),
+                           itemTapped: .init(),
+                           logoutTapped: . init(),
+                           toggleHealthKit: .init()
                            
         )
         
-        self.output = .init(logoutCompleted: .init(),
-                            userInfo: .init(nil),
+        self.output = .init(userInfo: .init(nil),
                             errorMessage: .init(),
                             isLoading: .init(false),
                             settingData: .init([]),
-                            preferencesOnTapped: .init()
+                            preferencesOnTapped: .init(),
+                            isHealthKitSyncEnabled: .init(false),
+                            logoutCompleted: .init()
         )
         
         transform()
@@ -90,29 +100,15 @@ final class SettingsVM {
             }
             .store(in: &cancellables)
         
-    }
-    
-    
-    //MARK: - Helpers
-    private func performLogout() {
-        output.isLoading.send(true)
-        
-        userService.signOut { [weak self] result in
-            guard let self else { return }
-            self.output.isLoading.send(false)
-            
-            switch result {
-            case .success():
-
-                self.userManager.updateUser(nil)
-                
-                self.output.logoutCompleted.send(())
-            case .failure(let error):
-                self.output.errorMessage.send(error.localizedDescription)
+        input.toggleHealthKit
+            .sink { [weak self] isEnabled in
+                self?.healthKitSyncStatus(isEnabled)
             }
-        }
+            .store(in: &cancellables)
+        
     }
     
+    //MARK: - Diffable Data
     private func buildSettingsData() {
         var data: [(SettingsSection, [SettingsItem])] = []
         
@@ -138,6 +134,7 @@ final class SettingsVM {
         output.settingData.send(data)
     }
     
+    //MARK: - Handle events
     private func handleItemTap(_ item: SettingsItem){
         switch item{
         case .navigation(let id, _, _, _):
@@ -150,10 +147,11 @@ final class SettingsVM {
             default:
                 break
             }
-            
         
-        case .toggle:
-            break
+        case .toggle(let id, _, _, let isOn, _):
+            if id == .healthKit {
+                input.toggleHealthKit.send(!isOn)
+            }
             
         case .logout(let id, _):
             switch id {
@@ -163,6 +161,47 @@ final class SettingsVM {
             default:
                 break
             }
+        }
+    }
+    
+    
+    //MARK: - Helpers
+    private func performLogout() {
+        output.isLoading.send(true)
+        
+        userService.signOut { [weak self] result in
+            guard let self else { return }
+            self.output.isLoading.send(false)
+            
+            switch result {
+            case .success():
+
+                self.userManager.updateUser(nil)
+                
+                self.output.logoutCompleted.send(())
+            case .failure(let error):
+                self.output.errorMessage.send(error.localizedDescription)
+            }
+        }
+    }
+    
+    private func healthKitSyncStatus(_ isEnabled: Bool) {
+        if isEnabled{
+            self.healthKitManager.requestAuthorization { [weak self] success, error in
+                guard let self else {return}
+                
+                if success {
+                    self.preferencesService.isHealthKitSyncEnabled = true
+                    self.output.isHealthKitSyncEnabled.send(true)
+                }else{
+                    print("HealhKit Authorization Failed: \(error?.localizedDescription ?? "Unknown Error")")
+                    self.preferencesService.isHealthKitSyncEnabled = false
+                    self.output.isHealthKitSyncEnabled.send(false)
+                }
+            }
+        }else{
+            self.preferencesService.isHealthKitSyncEnabled = false
+            self.output.isHealthKitSyncEnabled.send(false)
         }
     }
 }

@@ -28,6 +28,8 @@ class EditAccountView: UIView {
         super.init(frame: frame)
         backgroundColor = .systemBackground
         
+        setupUI()
+        
     }
     
     required init?(coder: NSCoder) {
