@@ -155,9 +155,6 @@ final class SettingsVM {
         case .toggle:
             break
             
-        case .action:
-           break
-            
         case .logout(let id, _):
             switch id {
             case .logout:

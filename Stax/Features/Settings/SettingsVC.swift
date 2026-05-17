@@ -30,7 +30,6 @@ nonisolated enum SettingsSection: Int, Hashable, Sendable, CaseIterable{
 nonisolated enum SettingsItem: Hashable, Sendable{
     case navigation(id: SettingsItemIdentity, icon: String, title: String, color: String)
     case toggle(id: SettingsItemIdentity, icon: String, title: String, isOn: Bool, color: String)
-    case action(id: SettingsItemIdentity, icon: String, title: String)
     case logout(id: SettingsItemIdentity, title: String)
 }
 
@@ -110,9 +109,24 @@ class SettingsVC: UIViewController {
     private func configureDataSource() {
         contentView.collectionView.delegate = self
         
-        let cellRegistration = UICollectionView.CellRegistration<SettingsCell, SettingsItem>{ cell, _, itemIdentifier in
+        let cellRegistration = UICollectionView.CellRegistration<GlobalListCell, SettingsItem>{ cell, _, itemIdentifier in
             
-            cell.configurationSettingsCell(with: itemIdentifier)
+            switch itemIdentifier{
+            case .navigation(id: _, icon: let icon, title: let title, color: let color):
+                let iconColor = UIColor(hex: color) ?? .systemBlue
+                
+                cell.configureiconListCell(title: title, icon: icon, iconColor: iconColor, showChevron: true, showSwitch: false)
+                
+            case .toggle(id: _, icon: let icon, title: let title, isOn: let isOn, color: let color):
+                let iconColor = UIColor(hex: color) ?? .systemBlue
+
+                cell.configureiconListCell(title: title, icon: icon, iconColor: iconColor, showChevron: false, showSwitch: true, isSwitchOn: isOn)
+
+            default:
+                break
+            }
+            
+            
         }
         
         let headerRegistration = UICollectionView.SupplementaryRegistration<UICollectionViewListCell>(elementKind: UICollectionView.elementKindSectionHeader) { [weak self] supplementaryView, elementKind, indexPath in
@@ -126,7 +140,7 @@ class SettingsVC: UIViewController {
             supplementaryView.contentConfiguration = content
         }
         
-        let logoutCellRegistration = UICollectionView.CellRegistration<LogoutCell, SettingsItem>{ cell, _, itemIdentifier in
+        let logoutCellRegistration = UICollectionView.CellRegistration<DestructiveCell, SettingsItem>{ cell, _, itemIdentifier in
             if case .logout(_, let title) = itemIdentifier{
                 cell.configureLabel(title: title)
             }

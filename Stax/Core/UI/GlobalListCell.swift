@@ -1,5 +1,5 @@
 //
-//  SettingsCell.swift
+//  GlobalListCell.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 15.05.26.
@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class SettingsCell: UICollectionViewListCell {
+class GlobalListCell: UICollectionViewListCell {
     
     private let iconContainer: UIView = {
         let view = UIView()
@@ -108,36 +108,21 @@ class SettingsCell: UICollectionViewListCell {
         }
     }
     
-    func configurationSettingsCell(with item: SettingsItem){
-        accessorySwitch.isHidden = true
-        chevronImageView.isHidden = true
-        titleLabel.textColor = .label
+    func configureiconListCell(title: String,
+                               icon: String,
+                               iconColor: UIColor,
+                               showChevron: Bool,
+                               showSwitch: Bool,
+                               isSwitchOn: Bool = false,
+                               isActionCell: Bool = false
+    ){
         
-        switch item{
-            
-        case .navigation(id: _, icon: let icon, title: let title, color: let color):
-            titleLabel.text = title
-            iconImageView.image = UIImage(systemName: icon)
-            iconImageView.tintColor = UIColor(hex: color)
-            chevronImageView.isHidden = false
-            
-        case .toggle(id: _, icon: let icon, title: let title, isOn: let isOn, color: let color):
-            titleLabel.text = title
-            iconImageView.image = UIImage(systemName: icon)
-            iconImageView.tintColor = UIColor(hex: color)
-            accessorySwitch.isHidden = false
-            accessorySwitch.isOn = isOn
-            
-        case .action(id: _, icon: let icon, title: let title):
-            titleLabel.text = title
-            iconImageView.image = UIImage(systemName: icon)
-            iconImageView.tintColor = .white
-            iconContainer.backgroundColor = .systemRed
-            titleLabel.textColor = .systemRed
-            
-        default:
-            break
-        }
+        titleLabel.text = title
+        iconImageView.image = UIImage(systemName: icon)
+        iconImageView.tintColor = iconColor
         
+        chevronImageView.isHidden = !showChevron
+        accessorySwitch.isHidden = !showSwitch
+        accessorySwitch.isOn = isSwitchOn
     }
 }

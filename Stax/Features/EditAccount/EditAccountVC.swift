@@ -13,6 +13,8 @@ class EditAccountVC: UIViewController {
     private var viewModel: EditAccountVM
     var didSentEventClosure: ((EditAccountEvent) -> Void)?
     
+    private let contentView = EditAccountView()
+    
     init(viewModel: EditAccountVM) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -25,8 +27,11 @@ class EditAccountVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .blue
-        
+        title = "Eddit Account"
+    }
+    
+    override func loadView() {
+        self.view = contentView
     }
     
     
@@ -34,5 +39,7 @@ class EditAccountVC: UIViewController {
      print("EditAccount deinited")
     }
   
+    
+    //MARK: - Bind ViewModel
 
 }
