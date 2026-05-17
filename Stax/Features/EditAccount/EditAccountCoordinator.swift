@@ -13,6 +13,7 @@ enum EditAccountEvent{
     case changePassword
     case changeEmail
     case deleteAccount
+    case dismiss
 }
 
 final class EditAccountCoordinator: Coordinator{
@@ -51,8 +52,16 @@ final class EditAccountCoordinator: Coordinator{
             print("Soon")
         case .deleteAccount:
             print("Soon")
+        case .dismiss:
+            navigationController.popViewController(animated: true)
+            finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+            print("this page dismissid")
         }
     }
-    
-    
+}
+
+extension EditAccountCoordinator: CoordinatorFinishDelegate{
+    func coordinatorDidFinish(childCoordinator: any Coordinator) {
+        childCoordinators = childCoordinators.filter({$0 !== childCoordinator})
+    }
 }

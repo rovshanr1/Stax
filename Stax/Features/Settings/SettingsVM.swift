@@ -30,7 +30,6 @@ final class SettingsVM {
         let isLoading: CurrentValueSubject<Bool, Never>
         let settingData: CurrentValueSubject<[(SettingsSection, [SettingsItem])], Never>
         let preferencesOnTapped: PassthroughSubject<AccountEvent, Never>
-        let isHealthKitSyncEnabled: CurrentValueSubject<Bool, Never>
         let logoutCompleted: PassthroughSubject<Void, Never>
     }
     
@@ -67,7 +66,6 @@ final class SettingsVM {
                             isLoading: .init(false),
                             settingData: .init([]),
                             preferencesOnTapped: .init(),
-                            isHealthKitSyncEnabled: .init(false),
                             logoutCompleted: .init()
         )
         
@@ -112,6 +110,8 @@ final class SettingsVM {
     private func buildSettingsData() {
         var data: [(SettingsSection, [SettingsItem])] = []
         
+        let currentHealthStatus = preferencesService.isHealthKitSyncEnabled
+        
         let accountItems: [SettingsItem] = [
             .navigation(id: .editProfile, icon: "person.fill", title: "Profile", color: "#707173"),
             .navigation(id: .editAccount, icon: "lock.fill", title: "Account", color: "#707173")
@@ -119,7 +119,7 @@ final class SettingsVM {
         data.append((.account, accountItems))
         
         let preferenceItems: [SettingsItem] = [
-            .toggle(id: .healthKit, icon: "heart.fill", title: "Apple Health", isOn: false, color: "#FF3953")
+            .toggle(id: .healthKit, icon: "heart.fill", title: "Apple Health", isOn: currentHealthStatus, color: "#FF3953")
         ]
         data.append((.preferences, preferenceItems))
         
@@ -148,10 +148,8 @@ final class SettingsVM {
                 break
             }
         
-        case .toggle(let id, _, _, let isOn, _):
-            if id == .healthKit {
-                input.toggleHealthKit.send(!isOn)
-            }
+        case .toggle:
+          break
             
         case .logout(let id, _):
             switch id {
@@ -192,16 +190,16 @@ final class SettingsVM {
                 
                 if success {
                     self.preferencesService.isHealthKitSyncEnabled = true
-                    self.output.isHealthKitSyncEnabled.send(true)
+                    self.buildSettingsData()
                 }else{
                     print("HealhKit Authorization Failed: \(error?.localizedDescription ?? "Unknown Error")")
                     self.preferencesService.isHealthKitSyncEnabled = false
-                    self.output.isHealthKitSyncEnabled.send(false)
+                    
                 }
             }
         }else{
             self.preferencesService.isHealthKitSyncEnabled = false
-            self.output.isHealthKitSyncEnabled.send(false)
+            
         }
     }
 }

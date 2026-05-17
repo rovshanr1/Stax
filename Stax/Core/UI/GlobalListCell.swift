@@ -9,6 +9,8 @@ import UIKit
 import SnapKit
 
 class GlobalListCell: UICollectionViewListCell {
+    //Closure
+    var toggleValueChanged: ((Bool) -> Void)?
     
     private let iconContainer: UIView = {
         let view = UIView()
@@ -60,10 +62,16 @@ class GlobalListCell: UICollectionViewListCell {
         super.init(frame: frame)
         
         setupUI()
+        eventAction() 
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        toggleValueChanged = nil
     }
     
     
@@ -124,5 +132,13 @@ class GlobalListCell: UICollectionViewListCell {
         chevronImageView.isHidden = !showChevron
         accessorySwitch.isHidden = !showSwitch
         accessorySwitch.isOn = isSwitchOn
+    }
+    
+    private func eventAction() {
+        accessorySwitch.addTarget(self, action: #selector(switchAction(_:)), for: .valueChanged)
+    }
+    
+    @objc private func switchAction(_ sender: UISwitch) {
+        toggleValueChanged?(sender.isOn)
     }
 }

@@ -101,6 +101,7 @@ class SettingsVC: UIViewController {
             }
             .store(in: &cancellables)
         
+        
         vm.input.viewDidLoad.send()
         
     }
@@ -117,16 +118,21 @@ class SettingsVC: UIViewController {
                 
                 cell.configureiconListCell(title: title, icon: icon, iconColor: iconColor, showChevron: true, showSwitch: false)
                 
-            case .toggle(id: _, icon: let icon, title: let title, isOn: let isOn, color: let color):
+            case .toggle(id: let id, icon: let icon, title: let title, isOn: let isOn, color: let color):
                 let iconColor = UIColor(hex: color) ?? .systemBlue
 
                 cell.configureiconListCell(title: title, icon: icon, iconColor: iconColor, showChevron: false, showSwitch: true, isSwitchOn: isOn)
+                
+                cell.toggleValueChanged = { [weak self] newValue in
+                    if id == .healthKit{
+                        self?.vm.input.toggleHealthKit.send(newValue)
+                        print("healthkitIsEnable: \(newValue)")
+                    }
+                }
 
             default:
                 break
             }
-            
-            
         }
         
         let headerRegistration = UICollectionView.SupplementaryRegistration<UICollectionViewListCell>(elementKind: UICollectionView.elementKindSectionHeader) { [weak self] supplementaryView, elementKind, indexPath in

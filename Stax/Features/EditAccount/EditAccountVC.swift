@@ -58,6 +58,13 @@ class EditAccountVC: UIViewController {
         self.view = contentView
     }
     
+    override func didMove(toParent parent: UIViewController?) {
+        super.didMove(toParent: parent)
+        
+        if parent == nil{
+            didSentEventClosure?(.dismiss)
+        }
+    }
     
     deinit{
      print("EditAccount deinited")
