@@ -180,5 +180,9 @@ extension WorkoutSessionCoordinator: CoordinatorFinishDelegate {
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter { $0 !== childCoordinator }
         
+        if childCoordinator is ExerciseListCoordinator{
+            navigationController.presentedViewController?.dismiss(animated: true)
+        }
+        
     }
 }

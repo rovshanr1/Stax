@@ -15,6 +15,10 @@ final class UserManager{
         _currentUser.eraseToAnyPublisher()
     }
     
+    var currentUser: UserModel? {
+        return _currentUser.value
+    }
+    
     init(){}
     
     func updateUser(_ user: UserModel?){

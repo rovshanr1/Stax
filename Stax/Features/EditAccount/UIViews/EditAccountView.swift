@@ -1,22 +1,20 @@
 //
-//  SettingsView.swift
+//  EditAccountView.swift
 //  Stax
 //
-//  Created by Rovshan Rasulov on 26.04.26.
+//  Created by Rovshan Rasulov on 17.05.26.
 //
 
 import UIKit
 import SnapKit
 
-class SettingsView: UIView {
+class EditAccountView: UIView {
+    
     private static func createLayout() -> UICollectionViewCompositionalLayout{
-        return UICollectionViewCompositionalLayout {_, layoutEnvoriment in
-            var config = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
-        
-            config.headerMode = .supplementary
+        return UICollectionViewCompositionalLayout { _, layoutEnvoriment in
+            let confictLayout = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
             
-            return NSCollectionLayoutSection.list(using: config, layoutEnvironment: layoutEnvoriment)
-            
+            return NSCollectionLayoutSection.list(using: confictLayout, layoutEnvironment: layoutEnvoriment)
         }
     }
     
@@ -25,20 +23,22 @@ class SettingsView: UIView {
         collectionView.backgroundColor = .systemGroupedBackground
         return collectionView
     }()
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
+        backgroundColor = .systemBackground
         
         setupUI()
+        
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func setupUI() {
+    private func setupUI(){
         addSubview(collectionView)
-        collectionView.snp.makeConstraints { make in
+        collectionView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
         }
     }

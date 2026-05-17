@@ -1,5 +1,5 @@
 //
-//  LogoutCell.swift
+//  DestructiveCell.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 16.05.26.
@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class LogoutCell: UICollectionViewListCell {
+class DestructiveCell: UICollectionViewListCell {
     private let logoutLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 17, weight: .regular)
