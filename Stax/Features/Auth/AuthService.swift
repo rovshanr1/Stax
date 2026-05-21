@@ -11,10 +11,16 @@ import FirebaseAuth
 protocol AuthServiceProtocol{
     func register(name: String, email: String, password: String, profileImage: String?, completion: @escaping (Result<UserModel, Error>) -> Void)
     func login(email: String, password: String, profileImage: String?, completion: @escaping (Result<UserModel, Error>) -> Void)
+    func signOut(completion: @escaping (Result<Void, Error>) -> Void)
+    
+    //async throws method definitions I made for concurrency testing
+    func changePassword(newPassword: String) async throws
+    func changeEmail(email: String) async throws
+    func changeUserName(newName: String) async throws
+    func deleteAccount() async throws
 }
 
 final class AuthService: AuthServiceProtocol {
-    
     private let auth = Auth.auth()
     
     func register(name: String, email: String, password: String, profileImage: String?, completion: @escaping (Result<UserModel, Error>) -> Void) {
@@ -57,4 +63,46 @@ final class AuthService: AuthServiceProtocol {
             completion(.success(model))
         }
     }
+    
+    func signOut(completion: @escaping (Result<Void, Error>) -> Void){
+        do{
+            try Auth.auth().signOut()
+            completion(.success(()))
+        }catch let error {
+            completion(.failure(error))
+        }
+    }
+    
+    
+    func changePassword(newPassword: String) async throws {
+        guard let userPassword = auth.currentUser else{
+            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User Not Found"])
+        }
+        
+        try await userPassword.updatePassword(to: newPassword)
+    }
+    
+    func changeEmail(email: String) async throws {
+        guard let userEmail = auth.currentUser else{
+            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User Not Found"])
+        }
+        
+        
+        try await userEmail.updateEmail(to: email)
+    }
+    
+    func changeUserName(newName: String) async throws {
+        guard let user = auth.currentUser else{
+            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User Not Found"])
+        }
+        
+        let changeRequset = user.createProfileChangeRequest()
+        changeRequset.displayName = newName
+        try await changeRequset.commitChanges()
+    }
+    
+    func deleteAccount() async throws {
+        //TODO: - Deleting logic should be here
+    }
+    
 }

@@ -13,12 +13,17 @@ protocol UserServiceProtocol {
     func saveUser(user: UserModel, completion: @escaping (Result<Void, Error>) -> Void)
     func getUser(completion: @escaping (Result<UserModel, Error>) -> Void)
     func updateUserProfile(name: String, bio: String, imageUrl: String?, completion: @escaping (Result<Void, Error>) -> Void)
-    func signOut(completion: @escaping (Result<Void, Error>) -> Void)
+    
+    //async throws method definitions I made for concurrency testing
+    func updateEmail(email: String) async throws
 }
 
 final class UserService: UserServiceProtocol{
     
+    
+    
     private let firestore = Firestore.firestore()
+    private let auth = Auth.auth()
     
     
     func saveUser(user: UserModel, completion: @escaping (Result<Void, any Error>) -> Void) {
@@ -102,12 +107,16 @@ final class UserService: UserServiceProtocol{
         }
     }
     
-    func signOut(completion: @escaping (Result<Void, Error>) -> Void){
-        do{
-            try Auth.auth().signOut()
-            completion(.success(()))
-        }catch let error {
-            completion(.failure(error))
+    
+    func updateEmail(email: String) async throws {
+        guard let currentUID = auth.currentUser?.uid else {
+            let error = NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
+            throw error
         }
+        
+        let userRef = firestore.collection("users").document(currentUID)
+        
+        try await userRef.updateData(["email": email])
+        
     }
 }

@@ -39,7 +39,7 @@ final class SettingsVM {
     private var cancellables: Set<AnyCancellable> = []
     
     //Services
-    private let userService: UserServiceProtocol
+    private let authService: AuthServiceProtocol
     private let userManager: UserManager
     private let healthKitManager: HealthKitServiceInterface
     private var preferencesService: AppPreferencesServiceInterface
@@ -47,12 +47,13 @@ final class SettingsVM {
     init(userService: UserServiceProtocol = UserService(),
          userManager: UserManager,
          healthKitManager: HealthKitServiceInterface = HealthKitService(),
-         preferancesService: AppPreferencesServiceInterface = AppPreferencesService()
+         preferancesService: AppPreferencesServiceInterface = AppPreferencesService(),
+         authService: AuthServiceProtocol = AuthService()
     ) {
-        self.userService = userService
         self.userManager = userManager
         self.healthKitManager = healthKitManager
         self.preferencesService = preferancesService
+        self.authService = authService
         
         self.input = .init(viewDidLoad: .init(),
                            itemTapped: .init(),
@@ -167,7 +168,7 @@ final class SettingsVM {
     private func performLogout() {
         output.isLoading.send(true)
         
-        userService.signOut { [weak self] result in
+        authService.signOut { [weak self] result in
             guard let self else { return }
             self.output.isLoading.send(false)
             

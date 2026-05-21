@@ -53,10 +53,16 @@ final class EditAccountCoordinator: Coordinator{
         case .deleteAccount:
             print("Soon")
         case .dismiss:
-            navigationController.popViewController(animated: true)
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
             print("this page dismissid")
         }
+    }
+    
+    
+    private func handleUserNameView(){
+        let _ = ChangeUserNameVC()
+        
+        
     }
 }
 
