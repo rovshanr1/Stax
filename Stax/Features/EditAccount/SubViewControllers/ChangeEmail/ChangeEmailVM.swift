@@ -11,7 +11,6 @@ import Combine
 final class ChangeEmailVM {
     
     struct Input {
-        let viewDidLoad: PassthroughSubject<Void, Never>
         let emailChanged: PassthroughSubject<String, Never>
         let updateButtonTapped: PassthroughSubject<Void, Never>
     }
@@ -58,7 +57,6 @@ final class ChangeEmailVM {
         self.originalUser = userModel
         
         self.input = .init(
-            viewDidLoad: .init(),
             emailChanged: .init(),
             updateButtonTapped: .init(),
         )
@@ -86,8 +84,8 @@ final class ChangeEmailVM {
             .store(in: &cancellables)
         
         input.updateButtonTapped
-            .sink { _ in
-                
+            .sink { [weak self] in
+                self?.performSave()
             }
             .store(in: &cancellables)
         
@@ -98,8 +96,12 @@ final class ChangeEmailVM {
     private func checkIfUpdateShouldBeEnabled() {
         let cleanEmail = draftEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let isValidFormat = NSPredicate(format: "SELF MATCHES %@", emailRegex).evaluate(with: cleanEmail)
+        //if we want to use it in the future
+        let _ = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+
+        let _ = NSPredicate(format: "SELF MATCHES %@").evaluate(with: cleanEmail)
+        
+        let isValidFormat = cleanEmail.contains("@")
         
         let hasChanges = !cleanEmail.isEmpty && cleanEmail != originalUser.email && isValidFormat
         

@@ -88,7 +88,7 @@ final class AuthService: AuthServiceProtocol {
         }
         
         
-        try await userEmail.updateEmail(to: email)
+        try await userEmail.sendEmailVerification(beforeUpdatingEmail: email)
     }
     
     func changeUserName(newName: String) async throws {
@@ -102,7 +102,11 @@ final class AuthService: AuthServiceProtocol {
     }
     
     func deleteAccount() async throws {
-        //TODO: - Deleting logic should be here
+        guard let user = auth.currentUser else{
+            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User Not Found"])
+        }
+        
+        try await user.delete()
     }
     
 }

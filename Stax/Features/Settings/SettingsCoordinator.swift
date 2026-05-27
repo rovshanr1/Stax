@@ -112,7 +112,10 @@ final class SettingsCoordinator: Coordinator{
     
     //MARK: - EdditAccount Scrren
     private func editAccountScreen() {
-        let coordinator = EditAccountCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
+        guard let currentUser = settingsVM.output.userInfo.value else { return }
+
+        
+        let coordinator = EditAccountCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, userModel: currentUser)
         
         coordinator.finishDelegate = self
         childCoordinators.append(coordinator)

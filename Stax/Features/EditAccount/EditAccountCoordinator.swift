@@ -23,10 +23,14 @@ final class EditAccountCoordinator: Coordinator{
     
     private var vm: EditAccountVM
     private var appDIContainer: AppDIContainer
+    private var userModel: UserModel
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
+    private var cancellables: Set<AnyCancellable> = []
+    
+    init(navigationController: UINavigationController, appDIContainer: AppDIContainer, userModel: UserModel){
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
+        self.userModel = userModel
         
         self.vm = EditAccountVM(userManager: appDIContainer.userManager)
     }
@@ -38,7 +42,18 @@ final class EditAccountCoordinator: Coordinator{
             self?.handle(event)
         }
         
+        handleNavigation()
+        
         navigationController.pushViewController(editAccountVC, animated: true)
+    }
+    
+    private func handleNavigation(){
+        vm.output.itemsOnTapped
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] editAccountEvent in
+                self?.handle(editAccountEvent)
+            }
+            .store(in: &cancellables)
     }
     
     private func handle(_ event: EditAccountEvent) {
@@ -49,7 +64,7 @@ final class EditAccountCoordinator: Coordinator{
         case .changePassword:
             print("Soon")
         case .changeEmail:
-            print("Soon")
+            handleChangeEmail()
         case .deleteAccount:
             print("Soon")
         case .dismiss:
@@ -58,11 +73,19 @@ final class EditAccountCoordinator: Coordinator{
         }
     }
     
+  
     
-    private func handleUserNameView(){
-        let _ = ChangeUserNameVC()
+    private func handleChangeEmail(){
+        let chnageEmailVM = ChangeEmailVM(userModel: userModel)
+        let changeEmailVC = ChangeEmailVC(viewModel: chnageEmailVM)
         
+        changeEmailVC.navigationItem.largeTitleDisplayMode = .never
         
+        changeEmailVC.onFinis = {[weak self] in
+            self?.navigationController.popViewController(animated: true)
+        }
+        
+        navigationController.pushViewController(changeEmailVC, animated: true)
     }
 }
 
