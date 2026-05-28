@@ -17,21 +17,18 @@ final class EditProfileCoordinator: Coordinator {
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
     
-    
-    private var vm: EditProfileVM
-    private let userModel: UserModel
-    
     private let appDIContainer: AppDIContainer
+  
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer, userModel: UserModel){
+    init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
-        self.userModel = userModel
-        
-        self.vm = EditProfileVM(userModel: userModel, userManager: appDIContainer.userManager)
     }
     
     func start() {
+        
+        let vm = EditProfileVM(userManager: appDIContainer.userManager)
+
         let editProfileVC = EditProfileVC(vm: vm)
         
         editProfileVC.didSentEventClosure = {[weak self] event in

@@ -34,8 +34,6 @@ final class EditProfileVM{
     
     //MARK: - Private Properties
     
-    private let originalUser: UserModel
-    
     //Draft State
     private var draftName: String
     private var draftBio: String
@@ -43,15 +41,15 @@ final class EditProfileVM{
     
     // Initial Items
     var initialImageURL: String?{
-        return originalUser.profileImage
+        return userManager.currentUser?.profileImage
     }
     
     var initialName: String?{
-        return originalUser.name
+        return userManager.currentUser?.name
     }
     
     var initialBio: String?{
-        return originalUser.bio
+        return userManager.currentUser?.bio
     }
     
     //Combine
@@ -64,18 +62,17 @@ final class EditProfileVM{
     
     
     init(
-        userModel: UserModel,
         userService: UserServiceProtocol = UserService(),
         imageService: ImageKitServiceProtocol = ImageKitService(),
         userManager: UserManager
     ) {
-        self.originalUser = userModel
+        
         self.userService = userService
         self.imageService = imageService
         self.userManager = userManager
         
-        self.draftName = userModel.name
-        self.draftBio = userModel.bio ?? ""
+        self.draftName = userManager.currentUser?.name ?? ""
+        self.draftBio = userManager.currentUser?.bio ?? ""
         
         self.input = .init(
             profileItemSelected: .init(),
@@ -132,9 +129,12 @@ final class EditProfileVM{
         let cleanName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanBio = draftBio.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        let originalBio = originalUser.bio ?? ""
+        let originalUserName = userManager.currentUser?.name ?? ""
         
-        let hasChanges = (cleanName != originalUser.name) ||
+        let originalBio = userManager.currentUser?.bio ?? ""
+        
+        
+        let hasChanges = (cleanName != originalUserName) ||
                                  (cleanBio != originalBio) ||
                                  (draftImageData != nil)
         
@@ -159,33 +159,33 @@ final class EditProfileVM{
                 }
             }
         }else{
-            self.updateUserInDB(newURL: originalUser.profileImage)
+            self.updateUserInDB(newURL: userManager.currentUser?.profileImage)
         }
         
     }
     
     private func updateUserInDB(newURL: String?){
-        userService.updateUserProfile(name: draftName, bio: draftBio, imageUrl: newURL) { [weak self] result in
-            guard let self else { return }
-            
-            let finalName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
-            let finalBio = draftBio.trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            self.output.isLoading.send(false)
-            
-            switch result {
-            case .success():
-                var updateUser = self.originalUser
+        Task{
+            do{
+                try await userService.updateUserProfile(name: draftName, bio: draftBio, imageURL: newURL)
+                
+                let finalName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+                let finalBio = draftBio.trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                guard var updateUser = userManager.currentUser else { return }
                 updateUser.name = finalName
                 updateUser.bio = finalBio
-                updateUser.profileImage = newURL ?? self.originalUser.profileImage
+                updateUser.profileImage = newURL ?? userManager.currentUser?.profileImage
                 
-                self.userManager.updateUser(updateUser)
+                userManager.updateUser(updateUser)
                 
-                self.output.saveCompleted.send(())
-            case .failure(let error):
-                self.output.errorMessage.send(error.localizedDescription)
+                output.saveCompleted.send(())
+            }catch{
+                output.errorMessage.send(error.localizedDescription)
             }
+            
+            output.isLoading.send(false)
         }
+        
     }
 }

@@ -101,9 +101,7 @@ final class SettingsCoordinator: Coordinator{
     //MARK: - Profile Screen
     
     private func profileScreen() {
-        guard let currentUser = settingsVM.output.userInfo.value else { return }
-        
-        let coordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, userModel: currentUser)
+        let coordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
        
         coordinator.finishDelegate = self
         childCoordinators.append(coordinator)

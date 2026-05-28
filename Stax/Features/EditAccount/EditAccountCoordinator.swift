@@ -13,6 +13,7 @@ enum EditAccountEvent{
     case changePassword
     case changeEmail
     case deleteAccount
+    case dismiss
 }
 
 final class EditAccountCoordinator: Coordinator{
@@ -22,6 +23,8 @@ final class EditAccountCoordinator: Coordinator{
     
     private var vm: EditAccountVM
     private var appDIContainer: AppDIContainer
+    
+    private var cancellables: Set<AnyCancellable> = []
     
     init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
         self.navigationController = navigationController
@@ -37,22 +40,72 @@ final class EditAccountCoordinator: Coordinator{
             self?.handle(event)
         }
         
+        handleNavigation()
+        
         navigationController.pushViewController(editAccountVC, animated: true)
     }
+    
+    private func handleNavigation(){
+        vm.output.itemsOnTapped
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] editAccountEvent in
+                self?.handle(editAccountEvent)
+            }
+            .store(in: &cancellables)
+    }
+    
     
     private func handle(_ event: EditAccountEvent) {
         switch event{
             
         case .changeUsername:
-            print("Soon")
+            handleChangeUsername()
         case .changePassword:
             print("Soon")
         case .changeEmail:
-            print("Soon")
+            handleChangeEmail()
         case .deleteAccount:
             print("Soon")
+        case .dismiss:
+            finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+            print("this page dismissid")
         }
     }
     
+  
+    //MARK: - Views Handling
     
+    private func handleChangeEmail(){
+        let chnageEmailVM = ChangeEmailVM(userManager: appDIContainer.userManager)
+        let changeEmailVC = ChangeEmailVC(viewModel: chnageEmailVM)
+        
+        changeEmailVC.navigationItem.largeTitleDisplayMode = .never
+        
+        changeEmailVC.onFinis = {[weak self] in
+            self?.navigationController.popViewController(animated: true)
+        }
+        
+        navigationController.pushViewController(changeEmailVC, animated: true)
+    }
+    
+    private func handleChangeUsername(){
+        let chnageUserNameVM = ChangeUserNameVM(userManager: appDIContainer.userManager)
+        
+        let chnageUserNameVC = ChangeUserNameVC(viewModel: chnageUserNameVM)
+        
+        chnageUserNameVC.navigationItem.largeTitleDisplayMode = .never
+        
+        chnageUserNameVC.onFinish = {[weak self] in
+            self?.navigationController.popViewController(animated: true)
+        }
+        
+        navigationController.pushViewController(chnageUserNameVC, animated: true)
+        
+    }
+}
+
+extension EditAccountCoordinator: CoordinatorFinishDelegate{
+    func coordinatorDidFinish(childCoordinator: any Coordinator) {
+        childCoordinators = childCoordinators.filter({$0 !== childCoordinator})
+    }
 }

@@ -58,6 +58,13 @@ class EditAccountVC: UIViewController {
         self.view = contentView
     }
     
+    override func didMove(toParent parent: UIViewController?) {
+        super.didMove(toParent: parent)
+        
+        if parent == nil{
+            didSentEventClosure?(.dismiss)
+        }
+    }
     
     deinit{
      print("EditAccount deinited")
@@ -127,6 +134,10 @@ class EditAccountVC: UIViewController {
 
 extension EditAccountVC: UICollectionViewDelegate{
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
+        guard let tappedItem = dataSource.itemIdentifier(for: indexPath) else{
+            return
+        }
+          
+        viewModel.input.itemTapped.send(tappedItem)
     }
 }

@@ -24,6 +24,7 @@ final class EditAccountVM {
     
     struct Output {
         let editAccountData: CurrentValueSubject<[(EditAccountSection, [EditAccountItem])], Never>
+        let itemsOnTapped: PassthroughSubject<EditAccountEvent, Never>
 
     }
     
@@ -47,6 +48,8 @@ final class EditAccountVM {
         
         self.output = .init(
             editAccountData: .init([]),
+            itemsOnTapped: .init(),
+           
       
         )
         
@@ -57,6 +60,12 @@ final class EditAccountVM {
         input.viewDidLoad
             .sink { [weak self] in
                 self?.buildEditAccountData()
+            }
+            .store(in: &cancellables)
+        
+        input.itemTapped
+            .sink { [weak self] items in
+                self?.handleItemTapped(items)
             }
             .store(in: &cancellables)
     }
@@ -82,6 +91,31 @@ final class EditAccountVM {
     }
     
  
+    private func handleItemTapped(_ item: EditAccountItem){
+        switch item{
+            
+        case .navigation(id: let id, _, _, _):
+            switch id{
+                
+            case .changeUserName:
+                output.itemsOnTapped.send(.changeUsername)
+            case .changePassword:
+                output.itemsOnTapped.send(.changePassword)
+            case .changeEmail:
+                output.itemsOnTapped.send(.changeEmail)
+    
+            default:
+                break
+            }
+        case .deleteAccount(id: let id, _):
+            switch id{
+            case .deleteAccount:
+                output.itemsOnTapped.send(.deleteAccount)
+            default:
+                break
+            }
+        }
+    }
 }
 
 

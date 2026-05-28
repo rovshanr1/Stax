@@ -129,11 +129,8 @@ final class ProfileCoordinator: Coordinator{
     }
     
     private func handleEditProfile(){
-        guard let currentUser = vm.output.userInfo.value else {
-            return
-        }
-        
-        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, userModel: currentUser)
+   
+        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
         
         editProfileCoordinator.finishDelegate = self
         childCoordinators.append(editProfileCoordinator)

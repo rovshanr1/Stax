@@ -37,6 +37,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Support/Key.xcconfig,
 			);
 			target = 44AED9A92ED4E25700C33816 /* Stax */;
 		};
@@ -126,7 +127,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					44AED9A92ED4E25700C33816 = {
 						CreatedOnToolsVersion = 26.0.1;
