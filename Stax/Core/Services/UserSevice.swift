@@ -12,16 +12,14 @@ import FirebaseAuth
 protocol UserServiceProtocol {
     func saveUser(user: UserModel, completion: @escaping (Result<Void, Error>) -> Void)
     func getUser(completion: @escaping (Result<UserModel, Error>) -> Void)
-    func updateUserProfile(name: String, bio: String, imageUrl: String?, completion: @escaping (Result<Void, Error>) -> Void)
     
     //async throws method definitions I made for concurrency testing
+    func updateUserProfile(name: String, bio: String, imageURL: String?) async throws
     func updateEmail(email: String) async throws
     func updateUserName(name: String) async throws
 }
 
 final class UserService: UserServiceProtocol{
-    
-    
     
     private let firestore = Firestore.firestore()
     private let auth = Auth.auth()
@@ -81,11 +79,9 @@ final class UserService: UserServiceProtocol{
         }
     }
     
-    func updateUserProfile(name: String, bio: String, imageUrl: String?, completion: @escaping (Result<Void, Error>) -> Void){
+    func updateUserProfile(name: String, bio: String, imageURL: String?) async throws {
         guard let currentUID = Auth.auth().currentUser?.uid else {
-            let error = NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
-            completion(.failure(error))
-            return
+            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
         }
         
         let userRef = firestore.collection("users").document(currentUID)
@@ -95,24 +91,19 @@ final class UserService: UserServiceProtocol{
             "bio" : bio
         ]
         
-        if let newImageURl = imageUrl{
+        if let newImageURl = imageURL{
             updateData["profileImage"] = newImageURl
         }
         
-        userRef.updateData(updateData){error in
-            if let error = error {
-                completion(.failure(error))
-            }else{
-                completion(.success(()))
-            }
-        }
+        try await userRef.updateData(updateData)
     }
+    
     
     
     func updateEmail(email: String) async throws {
         guard let currentUID = auth.currentUser?.uid else {
-            let error = NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
-            throw error
+            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
+            
         }
         
         let userRef = firestore.collection("users").document(currentUID)

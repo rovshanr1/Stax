@@ -165,27 +165,27 @@ final class EditProfileVM{
     }
     
     private func updateUserInDB(newURL: String?){
-        userService.updateUserProfile(name: draftName, bio: draftBio, imageUrl: newURL) { [weak self] result in
-            guard let self else { return }
-            
-            let finalName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
-            let finalBio = draftBio.trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            self.output.isLoading.send(false)
-            
-            switch result {
-            case .success():
-                guard var updateUser = self.userManager.currentUser else { return }
+        Task{
+            do{
+                try await userService.updateUserProfile(name: draftName, bio: draftBio, imageURL: newURL)
+                
+                let finalName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+                let finalBio = draftBio.trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                guard var updateUser = userManager.currentUser else { return }
                 updateUser.name = finalName
                 updateUser.bio = finalBio
-                updateUser.profileImage = newURL ?? self.userManager.currentUser?.profileImage
-            
-                self.userManager.updateUser(updateUser)
+                updateUser.profileImage = newURL ?? userManager.currentUser?.profileImage
                 
-                self.output.saveCompleted.send(())
-            case .failure(let error):
-                self.output.errorMessage.send(error.localizedDescription)
+                userManager.updateUser(updateUser)
+                
+                output.saveCompleted.send(())
+            }catch{
+                output.errorMessage.send(error.localizedDescription)
             }
+            
+            output.isLoading.send(false)
         }
+        
     }
 }
