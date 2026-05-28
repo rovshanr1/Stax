@@ -1,17 +1,17 @@
 //
-//  ChangeEmailVM.swift
+//  ChangeUserNameVM.swift
 //  Stax
 //
-//  Created by Rovshan Rasulov on 20.05.26.
+//  Created by Rovshan Rasulov on 27.05.26.
 //
 
 import Foundation
 import Combine
 
-final class ChangeEmailVM {
+final class ChangeUserNameVM {
     
     struct Input {
-        let emailChanged: PassthroughSubject<String, Never>
+        let changeUserName: PassthroughSubject<String, Never>
         let updateButtonTapped: PassthroughSubject<Void, Never>
     }
     
@@ -27,17 +27,19 @@ final class ChangeEmailVM {
     
     //MARK: - Private Properties
     
-    // Preivate State
-    private var draftEmail: String
+    // draft User Name
+    private var draftUserName: String
+    
     
     // Services
     private let authService: AuthServiceProtocol
     private let userService: UserServiceProtocol
     private let userManager: UserManager
+    
     // Initial Items
     
-    var initialEmail: String{
-        return userManager.currentUser?.email ?? ""
+    var initialUserName: String {
+        return userManager.currentUser?.name ?? ""
     }
     
     private var cancellables: Set<AnyCancellable> = []
@@ -47,94 +49,84 @@ final class ChangeEmailVM {
          userManager: UserManager
     ) {
         
-        self.draftEmail = userManager.currentUser?.email ?? ""
+        self.draftUserName = userManager.currentUser?.name ?? ""
         
         self.authService = authService
         self.userService = userService
         self.userManager = userManager
         
+        
         self.input = .init(
-            emailChanged: .init(),
-            updateButtonTapped: .init(),
-        )
+            changeUserName: .init(),
+            updateButtonTapped: .init())
         
         self.output = .init(
             isUpdateButtonEnabled: .init(false),
             isLoading: .init(false),
             errorMessage: .init(),
             saveCompletion: .init()
-            
         )
         
         transform()
     }
     
     private func transform() {
-        
-        input.emailChanged
-            .sink { [weak self] newEmail in
-                guard let self else { return }
-                
-                self.draftEmail = newEmail
-                self.checkIfUpdateShouldBeEnabled()
+        input.changeUserName
+            .sink { [weak self] newUserName in
+                self?.draftUserName = newUserName
+                self?.checkIsUpdateButtonEnabled()
             }
             .store(in: &cancellables)
         
         input.updateButtonTapped
             .sink { [weak self] in
-                self?.performSave()
+                self?.saveUserName()
             }
             .store(in: &cancellables)
-        
     }
     
     
-    //MARK: - Helper Methods
-    private func checkIfUpdateShouldBeEnabled() {
-        let cleanEmail = draftEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+    // MARK: - Validation Logic
+    
+    private func checkIsUpdateButtonEnabled() {
+        let cleanUserName = draftUserName.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        //if we want to use it in the future
-        let _ = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-
-        let _ = NSPredicate(format: "SELF MATCHES %@").evaluate(with: cleanEmail)
+        guard let currentUserName = userManager.currentUser?.name else { return }
         
-        let isValidFormat = cleanEmail.contains("@")
-        
-        let currentUserEmail = userManager.currentUser?.email ?? ""
-        
-        let hasChanges = !cleanEmail.isEmpty && cleanEmail != currentUserEmail && isValidFormat
+        let hasChanges = !cleanUserName.isEmpty && cleanUserName != currentUserName
         
         output.isUpdateButtonEnabled.send(hasChanges)
     }
     
-    private func performSave() {
+    
+    //MARK: - Save Operation
+    
+    private func saveUserName() {
         output.isLoading.send(true)
         
-        let cleanEmail = draftEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-
+        let cleanUserName = draftUserName.trimmingCharacters(in: .whitespacesAndNewlines)
         
         Task{
             do{
-                try await authService.changeEmail(email: cleanEmail)
-                try await userService.updateEmail(email: cleanEmail)
+                try await authService.changeUserName(newName: cleanUserName)
+                try await userService.updateUserName(name: cleanUserName)
                 
-                guard var updatedUser = userManager.currentUser else { return }
-                updatedUser.email = cleanEmail
+                guard var upadetedUser = userManager.currentUser else { return }
+                upadetedUser.name = cleanUserName
                 
-                userManager.updateUser(updatedUser)
+                userManager.updateUser(upadetedUser)
                 
                 await MainActor.run {
                     self.output.isLoading.send(false)
                     self.output.saveCompletion.send()
                 }
             }catch{
-                await MainActor.run{
+                await MainActor.run {
                     self.output.isLoading.send(false)
                     self.output.errorMessage.send(error.localizedDescription)
                 }
             }
         }
-        
     }
 }
 

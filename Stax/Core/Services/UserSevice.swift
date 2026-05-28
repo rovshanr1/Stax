@@ -16,6 +16,7 @@ protocol UserServiceProtocol {
     
     //async throws method definitions I made for concurrency testing
     func updateEmail(email: String) async throws
+    func updateUserName(name: String) async throws
 }
 
 final class UserService: UserServiceProtocol{
@@ -118,5 +119,15 @@ final class UserService: UserServiceProtocol{
         
         try await userRef.updateData(["email": email])
         
+    }
+    
+    func updateUserName(name: String) async throws {
+        guard let currentUID = auth.currentUser?.uid else {
+            throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
+        }
+        
+        let userRef = firestore.collection("users").document(currentUID)
+        
+        try await userRef.updateData(["name": name])
     }
 }

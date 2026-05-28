@@ -23,14 +23,12 @@ final class EditAccountCoordinator: Coordinator{
     
     private var vm: EditAccountVM
     private var appDIContainer: AppDIContainer
-    private var userModel: UserModel
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer, userModel: UserModel){
+    init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
-        self.userModel = userModel
         
         self.vm = EditAccountVM(userManager: appDIContainer.userManager)
     }
@@ -56,11 +54,12 @@ final class EditAccountCoordinator: Coordinator{
             .store(in: &cancellables)
     }
     
+    
     private func handle(_ event: EditAccountEvent) {
         switch event{
             
         case .changeUsername:
-            print("Soon")
+            handleChangeUsername()
         case .changePassword:
             print("Soon")
         case .changeEmail:
@@ -74,9 +73,10 @@ final class EditAccountCoordinator: Coordinator{
     }
     
   
+    //MARK: - Views Handling
     
     private func handleChangeEmail(){
-        let chnageEmailVM = ChangeEmailVM(userModel: userModel)
+        let chnageEmailVM = ChangeEmailVM(userManager: appDIContainer.userManager)
         let changeEmailVC = ChangeEmailVC(viewModel: chnageEmailVM)
         
         changeEmailVC.navigationItem.largeTitleDisplayMode = .never
@@ -86,6 +86,21 @@ final class EditAccountCoordinator: Coordinator{
         }
         
         navigationController.pushViewController(changeEmailVC, animated: true)
+    }
+    
+    private func handleChangeUsername(){
+        let chnageUserNameVM = ChangeUserNameVM(userManager: appDIContainer.userManager)
+        
+        let chnageUserNameVC = ChangeUserNameVC(viewModel: chnageUserNameVM)
+        
+        chnageUserNameVC.navigationItem.largeTitleDisplayMode = .never
+        
+        chnageUserNameVC.onFinish = {[weak self] in
+            self?.navigationController.popViewController(animated: true)
+        }
+        
+        navigationController.pushViewController(chnageUserNameVC, animated: true)
+        
     }
 }
 

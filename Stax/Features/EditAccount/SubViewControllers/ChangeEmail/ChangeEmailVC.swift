@@ -13,8 +13,11 @@ class ChangeEmailVC: UIViewController {
     var onFinis: (() -> Void)?
     
     //ContentView
-    private let contentView = EditAccountFormView(textFieldtype: .email,
-                                                  placeholderText: "Change Email")
+    private let contentView = EditAccountFormView(
+        textFieldtype: .email,
+        placeholderText: "Change Email"
+    )
+    
     //ViewModel
     private let viewModel: ChangeEmailVM
     
@@ -82,7 +85,7 @@ class ChangeEmailVC: UIViewController {
             self?.viewModel.input.updateButtonTapped.send()
         }
         
-        contentView.configureTextField(viewModel.initialEmail, "add your new Email")
+        contentView.configureTextField(viewModel.initialEmail)
         
         contentView.textFieldOnChanged = {[weak self] text in
             self?.viewModel.input.emailChanged.send(text)

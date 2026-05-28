@@ -112,9 +112,9 @@ class EditAccountFormView: UIView {
             updateButton.isEnabled = isEnabled
     }
     
-    func configureTextField(_ text: String, _ placeholder: String){
+    func configureTextField(_ text: String){
         if text.isEmpty {
-            textField.placeholder = placeholder
+            textField.placeholder = ""
         }else{
             textField.text = text
             textField.placeholder = nil
