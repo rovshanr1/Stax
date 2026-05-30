@@ -14,7 +14,7 @@ protocol AuthServiceProtocol{
     func signOut(completion: @escaping (Result<Void, Error>) -> Void)
     
     //async throws method definitions I made for concurrency testing
-    func changePassword(newPassword: String) async throws
+    func changePassword(currentPassword: String,newPassword: String) async throws
     func changeEmail(email: String) async throws
     func changeUserName(newName: String) async throws
     func deleteAccount() async throws
@@ -74,12 +74,16 @@ final class AuthService: AuthServiceProtocol {
     }
     
     
-    func changePassword(newPassword: String) async throws {
-        guard let userPassword = auth.currentUser else{
+    func changePassword(currentPassword: String, newPassword: String) async throws {
+        guard let user = auth.currentUser, let email = user.email else{
             throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User Not Found"])
         }
         
-        try await userPassword.updatePassword(to: newPassword)
+        let creditial = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
+        
+        try await user.reauthenticate(with: creditial)
+        
+        try await user.updatePassword(to: newPassword)
     }
     
     func changeEmail(email: String) async throws {

@@ -61,14 +61,13 @@ final class EditAccountCoordinator: Coordinator{
         case .changeUsername:
             handleChangeUsername()
         case .changePassword:
-            print("Soon")
+            handleUserPassword()
         case .changeEmail:
             handleChangeEmail()
         case .deleteAccount:
             print("Soon")
         case .dismiss:
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
-            print("this page dismissid")
         }
     }
     
@@ -81,7 +80,7 @@ final class EditAccountCoordinator: Coordinator{
         
         changeEmailVC.navigationItem.largeTitleDisplayMode = .never
         
-        changeEmailVC.onFinis = {[weak self] in
+        changeEmailVC.onFinish = {[weak self] in
             self?.navigationController.popViewController(animated: true)
         }
         
@@ -101,6 +100,19 @@ final class EditAccountCoordinator: Coordinator{
         
         navigationController.pushViewController(chnageUserNameVC, animated: true)
         
+    }
+    
+    private func handleUserPassword(){
+        let changePasswordVM = ChangePasswordVM()
+        let chnagePasswordVC = ChangePasswordVC(viewModel: changePasswordVM)
+        
+        chnagePasswordVC.navigationItem.largeTitleDisplayMode = .never
+        
+        chnagePasswordVC.onFinished = {[weak self ] in
+            self?.navigationController.popViewController(animated: true)
+        }
+        
+        navigationController.pushViewController(chnagePasswordVC, animated: true)
     }
 }
 
