@@ -1,27 +1,31 @@
 //
-//  EditAccountSubUIView.swift
+//  ChangePasswordFormView.swift
 //  Stax
 //
-//  Created by Rovshan Rasulov on 24.05.26.
+//  Created by Rovshan Rasulov on 31.05.26.
 //
 
 import UIKit
 import SnapKit
 
-final class EditAccountFormView: UIView {
-    
+class ChangePasswordFormView: UIView {
     //closure
     var buttonOnTapped: (() -> Void)?
-    var textFieldOnChanged: ((String) -> Void)?
+    var currentPasswordOnChanged: ((String) -> Void)?
+    var newPasswordOnChanged: ((String) -> Void)?
     
     private var keyboardManager: KeyboardManager?
     
     private let scrollView = UIScrollView()
     
-    private var textField: StaxTextField
+    
+    
+    private var currentPasswordTextField = StaxTextField(type: .password, placeholderText: "add the current password here.")
+    
+    private var newPasswordTextField = StaxTextField(type: .password, placeholderText: "add the new password here.")
+    
     private let updateButton = StaxButton(title: "Update")
     
-  
     
     private lazy var containerStackView: UIStackView = {
        let stack = UIStackView()
@@ -31,29 +35,26 @@ final class EditAccountFormView: UIView {
         stack.layoutMargins = UIEdgeInsets(top: 8, left: 16, bottom: 40, right: 16)
         return stack
     }()
-
-    init(textFieldtype: StaxTextFieldType, placeholderText: String) {
-        
-        self.textField = StaxTextField(type: textFieldtype, placeholderText: placeholderText)
-        
-        super.init(frame: .zero)
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         
         backgroundColor = .systemBackground
         
         setupUI()
-        stupKeyboardManager()
-        setupBindings()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    
     private func setupUI() {
         addSubview(scrollView)
         scrollView.addSubview(containerStackView)
         scrollView.alwaysBounceVertical = true
         scrollView.keyboardDismissMode = .interactive
+        
         
         scrollView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
@@ -64,16 +65,26 @@ final class EditAccountFormView: UIView {
             make.width.equalTo(scrollView.frameLayoutGuide)
         }
         
-        containerStackView.addArrangedSubview(textField)
+        containerStackView.addArrangedSubview(currentPasswordTextField)
+        containerStackView.addArrangedSubview(newPasswordTextField)
         containerStackView.addArrangedSubview(updateButton)
         
-        textField.snp.makeConstraints { make in
+        
+        currentPasswordTextField.snp.makeConstraints { make in
             make.height.equalTo(50)
         }
+        
+        newPasswordTextField.snp.makeConstraints { make in
+            make.height.equalTo(50)
+        }
+        
         
         updateButton.snp.makeConstraints { make in
             make.height.equalTo(54)
         }
+        
+        stupKeyboardManager()
+        setupBindings()
         
     }
     
@@ -91,34 +102,33 @@ final class EditAccountFormView: UIView {
         endEditing(true)
     }
     
-    //MARK: - Setup Bindings
+    
     private func setupBindings() {
-        textField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
+        currentPasswordTextField.addTarget(self, action: #selector(currentPasswordTextFieldDidChange), for: .editingChanged)
+        
+        newPasswordTextField.addTarget(self, action: #selector(newPasswordTextFieldDidChange), for: .editingChanged)
         
         updateButton.addTarget(self, action: #selector(updateButtonTapped), for: .touchUpInside)
     }
     
-   @objc private func textFieldDidChange() {
-       let currentText = textField.text ?? ""
-       textFieldOnChanged?(currentText)
-       
+    
+    @objc private func currentPasswordTextFieldDidChange() {
+        let currentPassword = currentPasswordTextField.text ?? ""
+        currentPasswordOnChanged?(currentPassword)
     }
+    
+    @objc private func newPasswordTextFieldDidChange() {
+        let newPassword = newPasswordTextField.text ?? ""
+        newPasswordOnChanged?(newPassword)
+    }
+    
     
     @objc private func updateButtonTapped() {
         buttonOnTapped?()
     }
     
+    
     func configureButton(_ isEnabled: Bool){
             updateButton.isEnabled = isEnabled
     }
-    
-    func configureTextField(_ text: String){
-        if text.isEmpty {
-            textField.placeholder = ""
-        }else{
-            textField.text = text
-            textField.placeholder = nil
-        }
-    }
-    
 }

@@ -10,7 +10,7 @@ import Combine
 
 class ChangeEmailVC: UIViewController {
     //callback coordinator
-    var onFinis: (() -> Void)?
+    var onFinish: (() -> Void)?
     
     //ContentView
     private let contentView = EditAccountFormView(
@@ -60,7 +60,7 @@ class ChangeEmailVC: UIViewController {
         viewModel.output.saveCompletion
             .receive(on: DispatchQueue.main)
             .sink { [weak self] result in
-                self?.onFinis?()
+                self?.onFinish?()
             }
             .store(in: &cancellables)
         

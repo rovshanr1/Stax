@@ -13,20 +13,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
     var coordinator: MainCoordinator?
+    
+    private let persistenceController = PersistenceController()
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        
         let userManager = UserManager()
-        let appDIContainer = AppDIContainer(userManager: userManager) {
-            return appDelegate.persistentContainer.viewContext
-        }
+        
+        let appDIContainer = AppDIContainer(
+            userManager: userManager,
+            persistenceController: persistenceController
+        )
  
-        appDelegate.persistentContainer.performBackgroundTask{ backgroundContext in
-            let seeder = DataSeeder(context: backgroundContext)
+        persistenceController.performBackgroundTask { backgroundTask in
+            let seeder = DataSeeder(context: backgroundTask)
             seeder.seedExercise()
         }
         
@@ -66,12 +68,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {
-        // Called as the scene transitions from the foreground to the background.
-        // Use this method to save data, release shared resources, and store enough scene-specific state information
-        // to restore the scene back to its current state.
-
-        // Save changes in the application's managed object context when the application transitions to the background.
-        (UIApplication.shared.delegate as? AppDelegate)?.saveContext()
+        
+        persistenceController.saveContext()
     }
 
 

@@ -35,7 +35,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     
     func start() {
         
-        handleIsFirshLaunchCompleted()
+        handleIsFirstLaunchCompleted()
         
         if Auth.auth().currentUser != nil{
             showSplashView()
@@ -76,7 +76,7 @@ class MainCoordinator: MainCoordinatorProtocol{
         childCoordinators.append(tabCoordinator)
     }
     
-    func handleIsFirshLaunchCompleted() {
+    func handleIsFirstLaunchCompleted() {
         let defaults = UserDefaults.standard
         
         if defaults.bool(forKey: "isFirshLaunchCompleted") == false{
