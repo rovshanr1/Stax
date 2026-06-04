@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import CoreData
 
 
 protocol UserDataWipeServiceProtocol{
@@ -15,24 +14,19 @@ protocol UserDataWipeServiceProtocol{
 
 final class UserDataWipeService: UserDataWipeServiceProtocol {
     private let userDefaults: UserDefaults
-    private let fileManager: FileManager
-    private let persistentStoreCoordinator: NSPersistentStoreCoordinator
+    private let persistenceController: PersistenceController
     
     init(userDefaults: UserDefaults,
-         fileManager: FileManager,
-         persistentStoreCoordinator: NSPersistentStoreCoordinator
+         persistenceController: PersistenceController,
     ) {
         self.userDefaults = userDefaults
-        self.fileManager = fileManager
-        self.persistentStoreCoordinator = persistentStoreCoordinator
+        self.persistenceController = persistenceController
     }
     
     
     func wipeAllLocalData() async throws {
-        try await Task(priority: .background) {
-            self.wipeUserDefaults()
-            try self.wipeCoreDataFiles()
-        }.value
+        self.wipeUserDefaults()
+        try self.persistenceController.resetStack()
     }
     
     
@@ -41,20 +35,6 @@ final class UserDataWipeService: UserDataWipeServiceProtocol {
         guard let domain = Bundle.main.bundleIdentifier else { return }
         
         userDefaults.removePersistentDomain(forName: domain)
-    }
-    
-    private func wipeCoreDataFiles() throws{
-        guard let appSupportDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
-            throw NSError(domain: "WipeService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Application Support directory not found."])
-        }
-        
-        let storeName = "Stax"
-        let storeURL = appSupportDirectory.appendingPathComponent("\(storeName).sqlite")
-        
-        try persistentStoreCoordinator.destroyPersistentStore(
-            at: storeURL,
-            type: .sqlite
-        )
     }
     
 }

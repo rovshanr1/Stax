@@ -11,15 +11,15 @@ import CoreData
 final class AppDIContainer{
     let userManager: UserManager
     
-    private let contextProvider: () -> NSManagedObjectContext
+    private let persistenceController: PersistenceControllerProtocol
     
-    init(userManager: UserManager, contextProvider: @escaping () -> NSManagedObjectContext) {
+    init(userManager: UserManager, persistenceController: PersistenceControllerProtocol) {
         self.userManager = userManager
-        self.contextProvider = contextProvider
+        self.persistenceController = persistenceController
     }
     
     lazy var context: NSManagedObjectContext = {
-        return contextProvider()
+        return persistenceController.viewContext
     }()
     
     lazy var genericWorkoutRepo: DataRepository<Workout> = {

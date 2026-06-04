@@ -20,13 +20,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
-        
-        
         let userManager = UserManager()
-        let appDIContainer = AppDIContainer(userManager: userManager) { [weak self] in
-            guard let self else {return NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)}
-            return self.persistenceController.viewContext
-        }
+        
+        let appDIContainer = AppDIContainer(
+            userManager: userManager,
+            persistenceController: persistenceController
+        )
  
         persistenceController.performBackgroundTask { backgroundTask in
             let seeder = DataSeeder(context: backgroundTask)
