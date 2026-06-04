@@ -65,7 +65,7 @@ final class EditAccountCoordinator: Coordinator{
         case .changeEmail:
             handleChangeEmail()
         case .deleteAccount:
-            print("Soon")
+            handleDeleteAccount()
         case .dismiss:
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
         }
@@ -113,6 +113,16 @@ final class EditAccountCoordinator: Coordinator{
         }
         
         navigationController.pushViewController(chnagePasswordVC, animated: true)
+    }
+    
+    private func handleDeleteAccount(){
+        let deleteAccountVM = DeleteAccountVM()
+        let deleteAccountVC = DeleteAccountVC(viewModel: deleteAccountVM)
+        
+        deleteAccountVC.navigationItem.largeTitleDisplayMode = .never
+        
+        
+        navigationController.pushViewController(deleteAccountVC, animated: true)
     }
 }
 

@@ -17,7 +17,7 @@ protocol AuthServiceProtocol{
     func changePassword(currentPassword: String,newPassword: String) async throws
     func changeEmail(email: String) async throws
     func changeUserName(newName: String) async throws
-    func deleteAccount() async throws
+    func deleteAccount(currentPassword: String) async throws
 }
 
 final class AuthService: AuthServiceProtocol {
@@ -79,9 +79,9 @@ final class AuthService: AuthServiceProtocol {
             throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User Not Found"])
         }
         
-        let creditial = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
+        let credential = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
         
-        try await user.reauthenticate(with: creditial)
+        try await user.reauthenticate(with: credential)
         
         try await user.updatePassword(to: newPassword)
     }
@@ -105,10 +105,14 @@ final class AuthService: AuthServiceProtocol {
         try await changeRequset.commitChanges()
     }
     
-    func deleteAccount() async throws {
-        guard let user = auth.currentUser else{
+    func deleteAccount(currentPassword: String) async throws {
+        guard let user = auth.currentUser, let email = user.email else{
             throw NSError(domain: "AuthError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User Not Found"])
         }
+        
+        let credential = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
+        
+        try await user.reauthenticate(with: credential)
         
         try await user.delete()
     }
