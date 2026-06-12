@@ -15,6 +15,16 @@
 		44F0ED552F97E7C600F85666 /* ImageKitIO in Frameworks */ = {isa = PBXBuildFile; productRef = 44F0ED542F97E7C600F85666 /* ImageKitIO */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		4449F2712FDA0A890034553A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44AED9A22ED4E25700C33816 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 44AED9A92ED4E25700C33816;
+			remoteInfo = Stax;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		44AEDA092EDF706000C33816 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -29,6 +39,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4449F26D2FDA0A890034553A /* StaxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StaxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		44AED9AA2ED4E25700C33816 /* Stax.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stax.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -44,6 +55,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		4449F26E2FDA0A890034553A /* StaxTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = StaxTests;
+			sourceTree = "<group>";
+		};
 		44AED9AC2ED4E25700C33816 /* Stax */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -55,6 +71,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		4449F26A2FDA0A890034553A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		44AED9A72ED4E25700C33816 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -75,6 +98,7 @@
 			isa = PBXGroup;
 			children = (
 				44AED9AC2ED4E25700C33816 /* Stax */,
+				4449F26E2FDA0A890034553A /* StaxTests */,
 				44AED9AB2ED4E25700C33816 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -83,6 +107,7 @@
 			isa = PBXGroup;
 			children = (
 				44AED9AA2ED4E25700C33816 /* Stax.app */,
+				4449F26D2FDA0A890034553A /* StaxTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -90,6 +115,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		4449F26C2FDA0A890034553A /* StaxTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4449F2732FDA0A890034553A /* Build configuration list for PBXNativeTarget "StaxTests" */;
+			buildPhases = (
+				4449F2692FDA0A890034553A /* Sources */,
+				4449F26A2FDA0A890034553A /* Frameworks */,
+				4449F26B2FDA0A890034553A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4449F2722FDA0A890034553A /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4449F26E2FDA0A890034553A /* StaxTests */,
+			);
+			name = StaxTests;
+			packageProductDependencies = (
+			);
+			productName = StaxTests;
+			productReference = 4449F26D2FDA0A890034553A /* StaxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		44AED9A92ED4E25700C33816 /* Stax */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 44AED9C02ED4E25900C33816 /* Build configuration list for PBXNativeTarget "Stax" */;
@@ -126,9 +174,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2600;
+				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					4449F26C2FDA0A890034553A = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 44AED9A92ED4E25700C33816;
+					};
 					44AED9A92ED4E25700C33816 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
@@ -155,11 +207,19 @@
 			projectRoot = "";
 			targets = (
 				44AED9A92ED4E25700C33816 /* Stax */,
+				4449F26C2FDA0A890034553A /* StaxTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		4449F26B2FDA0A890034553A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		44AED9A82ED4E25700C33816 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -170,6 +230,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		4449F2692FDA0A890034553A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		44AED9A62ED4E25700C33816 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -179,7 +246,59 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		4449F2722FDA0A890034553A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 44AED9A92ED4E25700C33816 /* Stax */;
+			targetProxy = 4449F2712FDA0A890034553A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		4449F2742FDA0A890034553A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Z3JZRB82A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ios.portfolioMe.StaxTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stax.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stax";
+			};
+			name = Debug;
+		};
+		4449F2752FDA0A890034553A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Z3JZRB82A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ios.portfolioMe.StaxTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stax.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stax";
+			};
+			name = Release;
+		};
 		44AED9C12ED4E25900C33816 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 44AED9AC2ED4E25700C33816 /* Stax */;
@@ -390,6 +509,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		4449F2732FDA0A890034553A /* Build configuration list for PBXNativeTarget "StaxTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4449F2742FDA0A890034553A /* Debug */,
+				4449F2752FDA0A890034553A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		44AED9A52ED4E25700C33816 /* Build configuration list for PBXProject "Stax" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
