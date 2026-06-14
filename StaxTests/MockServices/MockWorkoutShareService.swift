@@ -11,8 +11,14 @@ import Combine
 
 
 final class MockWorkoutShareService: WorkoutShareServiceProtocol{
+    var capturedWorkoutToShare: Stax.WorkoutDomainModel?
+    var stubbedShareText: String = "heute habe ich seher gut Sport gemacht"
+    
+    
+    
     func generateShareText(from workout: Stax.WorkoutDomainModel) -> String {
-        return ""
+        self.capturedWorkoutToShare = workout
+        return stubbedShareText
     }
     
 }
