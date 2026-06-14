@@ -13,10 +13,14 @@ protocol FirebaseSyncServiceInterface{
     func syncWorkoutToCloud(workout: WorkoutDomainModel, completion: @escaping (Result<Void, Error>) -> Void)
     func deleteWorkoutFromCloud(workoutId: String, completion: @escaping (Result<Void, Error>) -> Void)
     func fetchInitialWorkoutsFromCloud(completion: @escaping (Result<[WorkoutDomainModel], Error>) -> Void)
+    
+    func deleteDataBaseFromFirebase() async throws
 }
 
 
 final class FirebaseSyncService: FirebaseSyncServiceInterface {
+    
+    
     
     private let dataBase = Firestore.firestore()
     
@@ -42,24 +46,6 @@ final class FirebaseSyncService: FirebaseSyncServiceInterface {
             completion(.failure(error))
         }
         
-    }
-    
-    func deleteWorkoutFromCloud(workoutId: String, completion: @escaping (Result<Void, any Error>) -> Void) {
-        guard let uid = Auth.auth().currentUser?.uid else {
-            let error = NSError(domain: "Auth Error", code: 401, userInfo: [NSLocalizedDescriptionKey: "User do not signin!"])
-            completion(.failure(error))
-            return
-        }
-        
-        let documentRef = dataBase.collection("users").document(uid).collection("workouts").document(workoutId)
-        
-        documentRef.delete() { error in
-            if let error = error {
-                completion(.failure(error))
-            }else{
-                completion(.success(()))
-            }
-        }
     }
     
     func fetchInitialWorkoutsFromCloud(completion: @escaping (Result<[WorkoutDomainModel], Error>) -> Void){
@@ -89,8 +75,50 @@ final class FirebaseSyncService: FirebaseSyncServiceInterface {
                 
                 completion(.success(workouts))
             }
-           
+            
         }
+    }
+    
+    
+    //Tis Method delete Workout on Data Base
+    func deleteWorkoutFromCloud(workoutId: String, completion: @escaping (Result<Void, any Error>) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            let error = NSError(domain: "Auth Error", code: 401, userInfo: [NSLocalizedDescriptionKey: "User do not signin!"])
+            completion(.failure(error))
+            return
+        }
+        
+        let documentRef = dataBase.collection("users").document(uid).collection("workouts").document(workoutId)
+        
+        documentRef.delete() { error in
+            if let error = error {
+                completion(.failure(error))
+            }else{
+                completion(.success(()))
+            }
+        }
+    }
+    
+    //This method delete Data Base
+    func deleteDataBaseFromFirebase() async throws {
+        guard let uid = Auth.auth().currentUser?.uid else{
+            let error = NSError(domain: "Auth Error", code: 401, userInfo: [NSLocalizedDescriptionKey: "User do not signin!"])
+            throw error
+        }
+        
+        let batch = dataBase.batch()
+        
+        let userRootRef = dataBase.collection("users").document(uid)
+        batch.deleteDocument(userRootRef)
+     
+        
+        let workoutSnapshot = try await userRootRef.collection("workouts").getDocuments()
+        
+        for document in workoutSnapshot.documents {
+            batch.deleteDocument(document.reference)
+        }
+        
+        try await batch.commit()
     }
 }
 

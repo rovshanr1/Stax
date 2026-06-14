@@ -9,24 +9,40 @@ import Foundation
 
 
 protocol UserDataWipeServiceProtocol{
+    func setDeletionPending(_ pending: Bool)
+    func isDeletionPending() -> Bool
     func wipeAllLocalData() async throws
 }
 
 final class UserDataWipeService: UserDataWipeServiceProtocol {
-    private let userDefaults: UserDefaults
-    private let persistenceController: PersistenceController
+  
     
-    init(userDefaults: UserDefaults,
-         persistenceController: PersistenceController,
+    private let userDefaults: UserDefaults
+    private let persistenceController: PersistenceControllerProtocol
+    
+    private let deletionPendingKey = "isAccountDeletionPending"
+    
+    init(userDefaults: UserDefaults = .standard,
+         persistenceController: PersistenceControllerProtocol = PersistenceController(),
     ) {
         self.userDefaults = userDefaults
         self.persistenceController = persistenceController
     }
     
     
+    func setDeletionPending(_ pending: Bool) {
+        userDefaults.set(pending, forKey: deletionPendingKey)
+    }
+    
+    func isDeletionPending() -> Bool {
+        return userDefaults.bool(forKey: deletionPendingKey)
+    }
+    
     func wipeAllLocalData() async throws {
         self.wipeUserDefaults()
         try self.persistenceController.resetStack()
+        
+        setDeletionPending(false)
     }
     
     
