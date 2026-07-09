@@ -13,6 +13,9 @@ final class DeleteAccountVM {
     struct Input {
         let currentPassword: CurrentValueSubject<String, Never>
         let deleteButtonTapped: PassthroughSubject<Void, Never>
+        
+        let viewDidAppear: PassthroughSubject<Void, Never>
+        let viewDidDisappear: PassthroughSubject<Void, Never>
     }
     
     struct Output {
@@ -20,12 +23,16 @@ final class DeleteAccountVM {
         let isLoading: CurrentValueSubject<Bool, Never>
         let errorMessage: PassthroughSubject<String, Never>
         let isDeleteSuccessful: PassthroughSubject<Void, Never>
+        
+        let countdownText: CurrentValueSubject<String?, Never>
     }
     
     let input: Input
     let output: Output
     
     //MARK: - Private Properties
+    private var timerCancellable: AnyCancellable?
+    private var remainingSeconds = 10
     
     //Services
     private let authService: AuthServiceProtocol
@@ -44,13 +51,16 @@ final class DeleteAccountVM {
         self.wipeService = wipeService
         
         self.input = .init(currentPassword: .init(""),
-                           deleteButtonTapped: .init()
+                           deleteButtonTapped: .init(),
+                           viewDidAppear: .init(),
+                           viewDidDisappear: .init()
         )
         
         self.output = .init(isDeleteButtonEnabled: .init(false),
                             isLoading: .init(false),
                             errorMessage: .init(),
-                            isDeleteSuccessful: .init()
+                            isDeleteSuccessful: .init(),
+                            countdownText: .init("")
         )
         
         transform()
@@ -58,10 +68,25 @@ final class DeleteAccountVM {
     
     private func transform() {
         input.currentPassword
-            .map {password in
-                return !password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            .combineLatest(output.countdownText)
+            .map {password, countdownText in
+                let isPasswordValid = !password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                let isTimerFinished = (countdownText == nil)
+                
+                return isPasswordValid && isTimerFinished
             }
             .assign(to: \.value, on: output.isDeleteButtonEnabled)
+            .store(in: &cancellables)
+        
+        input.viewDidAppear
+            .sink { [weak self] in
+                self?.startTimer()
+            }
+            .store(in: &cancellables)
+        input.viewDidDisappear
+            .sink { [weak self] in
+                self?.stopTimer()
+            }
             .store(in: &cancellables)
         
         input.deleteButtonTapped
@@ -82,7 +107,7 @@ final class DeleteAccountVM {
         
         Task{
             do{
-               
+                
                 try await authService.reauthenticateUser(currentPassword: cleanPassword)
                 
                 try await syncService.deleteDataBaseFromFirebase()
@@ -98,6 +123,36 @@ final class DeleteAccountVM {
                 output.errorMessage.send(error.localizedDescription)
             }
         }
+    }
+    
+    private func startTimer(){
+        guard timerCancellable == nil else { return }
+        
+        remainingSeconds = 10
+        output.countdownText.send("Wait \(remainingSeconds)")
+        
+        timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
+            .autoconnect()
+            .sink{ [weak self] _ in
+                guard let self else { return }
+                
+                self.remainingSeconds = -1
+                
+                if self.remainingSeconds > 0 {
+                    self.output.countdownText.send("Wait \(self.remainingSeconds)")
+                }else{
+                    self.output.countdownText.send(nil)
+                    self.stopTimer()
+                    
+                    self.input.currentPassword.send(self.input.currentPassword.value)
+                }
+            }
+            
+    }
+    
+    private func stopTimer(){
+        timerCancellable?.cancel()
+        timerCancellable = nil
     }
     
 }

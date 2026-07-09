@@ -121,8 +121,16 @@ final class EditAccountCoordinator: Coordinator{
         
         deleteAccountVC.navigationItem.largeTitleDisplayMode = .never
         
+        let modalNavController = UINavigationController(rootViewController: deleteAccountVC)
         
-        navigationController.pushViewController(deleteAccountVC, animated: true)
+        modalNavController.modalPresentationStyle = .fullScreen
+        modalNavController.modalTransitionStyle = .coverVertical
+        
+        deleteAccountVC.onDismiss = { [weak self] in
+            self?.navigationController.presentedViewController?.dismiss(animated: true)
+        }
+        
+        navigationController.present(modalNavController, animated: true)
     }
 }
 
