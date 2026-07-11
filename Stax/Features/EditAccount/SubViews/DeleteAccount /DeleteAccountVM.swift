@@ -106,6 +106,10 @@ final class DeleteAccountVM {
         output.isLoading.send(true)
         
         Task{
+            defer{
+                output.isLoading.send(false)
+            }
+            
             do{
                 
                 try await authService.reauthenticateUser(currentPassword: cleanPassword)
@@ -131,12 +135,12 @@ final class DeleteAccountVM {
         remainingSeconds = 10
         output.countdownText.send("Wait \(remainingSeconds)")
         
-        timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
+        self.timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
             .autoconnect()
             .sink{ [weak self] _ in
                 guard let self else { return }
                 
-                self.remainingSeconds = -1
+                self.remainingSeconds -= 1
                 
                 if self.remainingSeconds > 0 {
                     self.output.countdownText.send("Wait \(self.remainingSeconds)")
