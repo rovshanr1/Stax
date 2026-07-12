@@ -91,13 +91,10 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     }
     
     func create() -> T {
-        let entityName = T.entity()
+        let entityName = String(describing: T.self)
+
         
-        guard let name = entityName.name else {
-            return T()
-        }
-        
-        let object = NSEntityDescription.insertNewObject(forEntityName: name, into: context) as! T
+        let object = NSEntityDescription.insertNewObject(forEntityName: entityName, into: context) as! T
         return object
     }
     

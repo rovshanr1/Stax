@@ -11,7 +11,7 @@ import CoreData
 final class AppDIContainer{
     let userManager: UserManager
     
-    private let persistenceController: PersistenceControllerProtocol
+    let persistenceController: PersistenceControllerProtocol
     
     init(userManager: UserManager, persistenceController: PersistenceControllerProtocol) {
         self.userManager = userManager

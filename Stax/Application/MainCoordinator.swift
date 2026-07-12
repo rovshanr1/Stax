@@ -24,7 +24,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     
    
     //Container
-    let appDIContainer: AppDIContainer
+    var appDIContainer: AppDIContainer
    
     var cancellables: Set<AnyCancellable> = []
     
@@ -96,6 +96,16 @@ extension MainCoordinator: CoordinatorFinishDelegate{
         
         if childCoordinator is TabCoordinator {
             navigationController.viewControllers.removeAll()
+            
+            try? appDIContainer.persistenceController.resetStack()
+            
+            let newUserManager = UserManager()
+            let newPersistenceController = PersistenceController()
+            
+            let newDIContainer = AppDIContainer(userManager: newUserManager, persistenceController: newPersistenceController)
+            
+            self.appDIContainer = newDIContainer
+            
             authFlow()
         }else if childCoordinator is AuthCoordinator{
             navigationController.viewControllers.removeAll()
