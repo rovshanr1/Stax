@@ -94,22 +94,52 @@ extension MainCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({ $0 !== childCoordinator})
         
-        if childCoordinator is TabCoordinator {
-            navigationController.viewControllers.removeAll()
-            
-            try? appDIContainer.persistenceController.resetStack()
-            
-            let newUserManager = UserManager()
-            let newPersistenceController = PersistenceController()
-            
-            let newDIContainer = AppDIContainer(userManager: newUserManager, persistenceController: newPersistenceController)
-            
-            self.appDIContainer = newDIContainer
-            
-            authFlow()
+        
+        if childCoordinator is TabCoordinator{
+            animatedAndResetAppFlow()
         }else if childCoordinator is AuthCoordinator{
             navigationController.viewControllers.removeAll()
             showSplashView()
         }
+    }
+    
+    
+    private func animatedAndResetAppFlow(){
+     
+        guard let window = navigationController.view.window,
+              let snapshot = window.snapshotView(afterScreenUpdates: false) else {
+            
+            performDataResetAndGoToAuth()
+            return
+        }
+        
+        window.addSubview(snapshot)
+        
+        performDataResetAndGoToAuth()
+        
+        UIView.animate(withDuration: 0.4, delay:0, options: .curveEaseInOut ,animations: {
+            snapshot.alpha = 0.0
+            snapshot.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+        }) { _ in
+            snapshot.removeFromSuperview()
+        }
+    }
+    
+    
+    private func performDataResetAndGoToAuth() {
+        navigationController.viewControllers.removeAll()
+        
+        try? appDIContainer.persistenceController.resetStack()
+        
+        UserDefaults.standard.set(false, forKey: "isSeededFromFirebase")
+        
+        let newUserManager = UserManager()
+        let newPersistenceController = PersistenceController()
+        
+        let newDIContainer = AppDIContainer(userManager: newUserManager, persistenceController: newPersistenceController)
+        
+        self.appDIContainer = newDIContainer
+        
+        authFlow()
     }
 }
