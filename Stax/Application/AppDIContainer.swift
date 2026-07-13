@@ -26,6 +26,10 @@ final class AppDIContainer{
         return DataRepository<Workout>(context: context)
     }()
     
+    lazy var dataSeeder: DataSeederProtocol = {
+        return DataSeeder(context: context)
+    }()
+    
     lazy var sharedWorkoutRepo: WorkoutRepositoryProtocol = {
         let dataRepository = DataRepository<Workout>(context: context)
         return WorkoutRepository(genericRepository: dataRepository)

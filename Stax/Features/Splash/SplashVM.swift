@@ -18,15 +18,17 @@ final class SplashVM{
     //Services
     private let firebaseSyncService: FirebaseSyncServiceInterface
     private let syncManager: SyncManagerInterface
+    private let dataSeeder: DataSeederProtocol
     
     private let workoutRepo: DataRepository<Workout>
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>) {
+    init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol) {
         self.firebaseSyncService = firebaseSyncService
         self.syncManager = syncManager
         self.workoutRepo = workoutRepo
+        self.dataSeeder = dataSeeder
         
         self.output = .init(syncCompleted: .init())
         
@@ -34,66 +36,66 @@ final class SplashVM{
     }
     
     private func startInitialization(){
-        cleanAbandonedWorkouts()
-        performSync()
+        Task{
+            await dataSeeder.seed()
+            
+            await cleanAbandonedWorkouts()
+            
+            await performSync()
+        }
     }
     
     //MARK: - Garbage Collection
-    private func cleanAbandonedWorkouts(){
-        workoutRepo.fetchAll()
-            .sink(receiveCompletion: { _ in }, receiveValue: {[weak self] workouts in
-                guard let self else { return }
-                
-                let abandoned = workouts.filter { $0.name == nil || $0.name == ""   }
-                
-                for draft in abandoned{
-                    if let id = draft.id?.uuidString{
-                        self.workoutRepo.delete(by: id)
-                            .sink(receiveCompletion: { _ in }, receiveValue: {_ in })
-                            .store(in: &cancellables)
-                    }
-                }
-                
-                if !abandoned.isEmpty {
-                    print("🧹 SplashVM: \(abandoned.count) abandoned workout(s) cleaned up.")
-                }
-                
-            })
-            .store(in: &cancellables)
-       
+    private func cleanAbandonedWorkouts() async{
+        let workouts = await workoutRepo.fetchAllAsync()
+        let abandoned = workouts.filter { $0.name == nil || $0.name == ""   }
         
+        for draft in abandoned{
+            if let id = draft.id?.uuidString{
+                await workoutRepo.deleteAsync(id)
+            }
+        }
+        
+        if !abandoned.isEmpty {
+            print("SplashVM: \(abandoned.count) abandoned workout(s) cleaned up.")
+        }
     }
     
     
     //MARK: - FirebaseSync
-    private func performSync(){
+    private func performSync() async{
         let defaults = UserDefaults.standard
-        
-        if defaults.bool(forKey: "isSeededFromFirebase") == true{
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
-                self.output.syncCompleted.send()
-            })
-            
+        if defaults.bool(forKey: "isSeededFromFirebase") == true {
+            output.syncCompleted.send()
             return
         }
         
-        firebaseSyncService.fetchInitialWorkoutsFromCloud { [weak self] result in
-            guard let self else { return }
-            
-            switch result{
-            case .success(let cloudWorkouts):
-                for workout in cloudWorkouts{
-                    self.syncManager.saveCloudWorkoutToLocal(cloudWorkout: workout)
+        await withCheckedContinuation { continuation in
+            firebaseSyncService.fetchInitialWorkoutsFromCloud { [weak self] result in
+                guard let self else {
+                    continuation.resume()
+                    return
                 }
                 
-                defaults.set(true, forKey: "isSeededFromFirebase")
-                self.output.syncCompleted.send()
+                switch result{
+                case .success(let cloudWorkouts):
+                    for workout in cloudWorkouts{
+                        self.syncManager.saveCloudWorkoutToLocal(cloudWorkout: workout)
+                    }
+                    
+                    defaults.set(true, forKey: "isSeededFromFirebase")
+                    output.syncCompleted.send()
+                case .failure(let error):
+                    print(error.localizedDescription)
+                    output.syncCompleted.send()
+                }
                 
-            case .failure(let error):
-                print(error.localizedDescription)
-                self.output.syncCompleted.send()
+                continuation.resume()
             }
         }
+        
+        
+        
     }
     
 }

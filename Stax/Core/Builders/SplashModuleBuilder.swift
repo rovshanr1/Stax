@@ -11,8 +11,9 @@ final class SplashModuleBuilder{
     static func build(container: AppDIContainer) -> (UIViewController, SplashVM){
         let firebaseService = container.sharedFirebaseService
         let syncManager = container.sharedSyncManager
+        let dataSeeder = container.dataSeeder
         
-        let splashVM = SplashVM(firebaseSyncService: firebaseService, syncManager: syncManager, workoutRepo: container.genericWorkoutRepo)
+        let splashVM = SplashVM(firebaseSyncService: firebaseService, syncManager: syncManager, workoutRepo: container.genericWorkoutRepo, dataSeeder: dataSeeder)
         let splashVC = SplashVC(vm: splashVM)
         
         return (splashVC, splashVM)
