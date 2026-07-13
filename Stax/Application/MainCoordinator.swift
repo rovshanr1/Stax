@@ -79,11 +79,11 @@ class MainCoordinator: MainCoordinatorProtocol{
     func handleIsFirstLaunchCompleted() {
         let defaults = UserDefaults.standard
         
-        if defaults.bool(forKey: "isFirshLaunchCompleted") == false{
+        if defaults.bool(forKey: UserDefaultsKeys.isFirstLaunchCompleted) == false{
             
             try? Auth.auth().signOut()
             
-            defaults.set(true, forKey: "isFirshLaunchCompleted")
+            defaults.set(true, forKey: UserDefaultsKeys.isFirstLaunchCompleted)
         }
     }
 }
@@ -131,7 +131,7 @@ extension MainCoordinator: CoordinatorFinishDelegate{
         
         try? appDIContainer.persistenceController.resetStack()
         
-        UserDefaults.standard.set(false, forKey: "isSeededFromFirebase")
+        UserDefaults.standard.set(false, forKey: UserDefaultsKeys.isSeededFromFirebase)
         
         let newUserManager = UserManager()
         let newPersistenceController = PersistenceController()

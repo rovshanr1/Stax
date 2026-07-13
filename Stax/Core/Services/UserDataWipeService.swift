@@ -15,12 +15,12 @@ protocol UserDataWipeServiceProtocol{
 }
 
 final class UserDataWipeService: UserDataWipeServiceProtocol {
-  
+    
     
     private let userDefaults: UserDefaults
     private let persistenceController: PersistenceControllerProtocol
     
-    private let deletionPendingKey = "isAccountDeletionPending"
+    private let deletionPendingKey = UserDefaultsKeys.isAccountDeletionPending
     
     init(userDefaults: UserDefaults = .standard,
          persistenceController: PersistenceControllerProtocol = PersistenceController(),
@@ -48,9 +48,14 @@ final class UserDataWipeService: UserDataWipeServiceProtocol {
     
     
     private func wipeUserDefaults() {
-        guard let domain = Bundle.main.bundleIdentifier else { return }
+        let keysToWipe = [
+            UserDefaultsKeys.healthKitEnabled,
+            UserDefaultsKeys.isSeededFromFirebase
+        ]
         
-        userDefaults.removePersistentDomain(forName: domain)
+        for key in keysToWipe {
+            userDefaults.removeObject(forKey: key)
+        }
     }
     
 }

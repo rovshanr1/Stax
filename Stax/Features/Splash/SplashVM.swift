@@ -24,11 +24,14 @@ final class SplashVM{
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol) {
+    private let userDefaults: UserDefaults
+    
+    init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol, userDefaults: UserDefaults = .standard) {
         self.firebaseSyncService = firebaseSyncService
         self.syncManager = syncManager
         self.workoutRepo = workoutRepo
         self.dataSeeder = dataSeeder
+        self.userDefaults = userDefaults
         
         self.output = .init(syncCompleted: .init())
         
@@ -64,8 +67,7 @@ final class SplashVM{
     
     //MARK: - FirebaseSync
     private func performSync() async{
-        let defaults = UserDefaults.standard
-        if defaults.bool(forKey: "isSeededFromFirebase") == true {
+        if userDefaults.bool(forKey: UserDefaultsKeys.isSeededFromFirebase) == true {
             output.syncCompleted.send()
             return
         }
@@ -83,7 +85,7 @@ final class SplashVM{
                         self.syncManager.saveCloudWorkoutToLocal(cloudWorkout: workout)
                     }
                     
-                    defaults.set(true, forKey: "isSeededFromFirebase")
+                    userDefaults.set(true, forKey: UserDefaultsKeys.isSeededFromFirebase)
                     output.syncCompleted.send()
                 case .failure(let error):
                     print(error.localizedDescription)
