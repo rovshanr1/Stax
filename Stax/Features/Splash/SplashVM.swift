@@ -40,7 +40,7 @@ final class SplashVM{
     
     private func startInitialization(){
         Task{
-            await dataSeeder.seed()
+            await dataSeeder.seedExercise()
             
             await cleanAbandonedWorkouts()
             

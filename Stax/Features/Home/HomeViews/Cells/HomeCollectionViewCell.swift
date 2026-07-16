@@ -1,5 +1,5 @@
 //
-//  HomeTableViewCell.swift
+//  HomeCollectionViewCell.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 08.03.26.

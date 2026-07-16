@@ -12,6 +12,7 @@ enum HomeEvent{
     case workoutMenuButtonTapped(id: String)
     case presentShareSheet(text: String)
     case presentWorkoutDetails(id: String)
+    case startEmptyWorkout
 }
 
 
@@ -58,6 +59,8 @@ final class HomeCoordinator: Coordinator{
             self.handleShareSheet(with: text)
         case .presentWorkoutDetails(id: let id):
             handleWorkoutDetailView(for: id)
+        case .startEmptyWorkout:
+            handleWorkoutSession(for: nil)
         }
     }
     
@@ -85,7 +88,7 @@ final class HomeCoordinator: Coordinator{
             
             switch action{
             case .edit:
-                self.handleEditWorkout(for: id)
+                self.handleWorkoutSession(for: id)
             case .share:
               self.vm?.input.shareWorkout.send(id)
             case .delete:
@@ -99,7 +102,7 @@ final class HomeCoordinator: Coordinator{
         navigationController.present(activityVC, animated: true)
     }
     
-    private func handleEditWorkout(for id: String){
+    private func handleWorkoutSession(for id: String?){
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         

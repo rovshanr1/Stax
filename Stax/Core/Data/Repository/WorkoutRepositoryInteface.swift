@@ -10,7 +10,7 @@ import CoreData
 import Combine
 
 protocol WorkoutRepositoryProtocol{
-    var workoutPublisher: CurrentValueSubject<[WorkoutDomainModel], Never> { get }
+    var workoutPublisher: CurrentValueSubject<[WorkoutDomainModel]?, Never> { get }
     func fetchWorkouts()
     func deleteWorkout(by id: String)
     func getWorkout(by id: String) -> WorkoutDomainModel?
@@ -19,7 +19,7 @@ protocol WorkoutRepositoryProtocol{
 final class WorkoutRepository: NSObject, WorkoutRepositoryProtocol {
    
     
-    var workoutPublisher = CurrentValueSubject<[WorkoutDomainModel], Never>([])
+    var workoutPublisher = CurrentValueSubject<[WorkoutDomainModel]?, Never>(nil)
     
     private let genericRepository: DataRepository<Workout>
     private var frc: NSFetchedResultsController<Workout>?

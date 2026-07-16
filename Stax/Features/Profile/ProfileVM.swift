@@ -93,6 +93,7 @@ final class ProfileVM{
         
         workoutRepo.workoutPublisher
             .receive(on: DispatchQueue.main)
+            .compactMap { $0 }
             .sink { [weak self] workouts in
                 guard let self else { return }
                 
