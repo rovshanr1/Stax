@@ -10,7 +10,6 @@ import CoreData
 
 protocol DataSeederProtocol{
     func seedExercise() async
-    func seed() async
 }
 
 final class DataSeeder: DataSeederProtocol{
@@ -36,7 +35,7 @@ final class DataSeeder: DataSeederProtocol{
     }
     
     
-    func seed() async{
+    private func seed() async{
         
         //Finding json data
         guard let url = Bundle.main.url(forResource: "exercises_seed", withExtension: "json"),
