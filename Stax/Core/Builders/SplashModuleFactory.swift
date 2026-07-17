@@ -1,5 +1,5 @@
 //
-//  SplashModuleBuilder.swift
+//  SplashModuleFactory.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 06.05.26.
@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class SplashModuleBuilder{
+final class SplashModuleFactory{
     static func build(container: AppDIContainer) -> (UIViewController, SplashVM){
         let firebaseService = container.sharedFirebaseService
         let syncManager = container.sharedSyncManager

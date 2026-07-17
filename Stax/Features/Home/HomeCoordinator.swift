@@ -9,10 +9,10 @@ import UIKit
 import Combine
 
 enum HomeEvent{
-    case workoutMenuButtonTapped(id: String)
     case presentShareSheet(text: String)
     case presentWorkoutDetails(id: String)
     case startEmptyWorkout
+    case editWorkout(id: String)
 }
 
 
@@ -53,47 +53,14 @@ final class HomeCoordinator: Coordinator{
     
     private func handle(_ event: HomeEvent){
         switch event{
-        case .workoutMenuButtonTapped(let id):
-            self.showMoreSheet(for: id)
         case .presentShareSheet(text: let text):
             self.handleShareSheet(with: text)
         case .presentWorkoutDetails(id: let id):
             handleWorkoutDetailView(for: id)
         case .startEmptyWorkout:
             handleWorkoutSession(for: nil)
-        }
-    }
-    
-   
-    
-    private func showMoreSheet(for id: String){
-        let sheetNav = WorkoutMenuViewController()
-        sheetNav.modalPresentationStyle = .pageSheet
-        
-        if let sheet = sheetNav.sheetPresentationController{
-            sheet.detents = [.custom(resolver: { _ in 190})]
-            sheet.prefersGrabberVisible = true
-        }
-        
-        sheetNav.onActionSelected = {[weak self] action in
-            self?.handleWorkoutMenu(action, for: id)
-        }
-         
-        navigationController.present(sheetNav, animated: true)
-    }
-    
-    private func handleWorkoutMenu(_ action: WorkoutMenuViewController.Action, for id: String){
-        navigationController.dismiss(animated: true) { [weak self] in
-            guard let self else {return}
-            
-            switch action{
-            case .edit:
-                self.handleWorkoutSession(for: id)
-            case .share:
-              self.vm?.input.shareWorkout.send(id)
-            case .delete:
-                self.vm?.input.deleteWorkout.send(id)
-            }
+        case .editWorkout(id: let id):
+            handleWorkoutSession(for: id)
         }
     }
     

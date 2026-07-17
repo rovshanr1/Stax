@@ -45,7 +45,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func showSplashView(){
-        let (splashVC, splashVM) = SplashModuleBuilder.build(container: appDIContainer)
+        let (splashVC, splashVM) = SplashModuleFactory.build(container: appDIContainer)
     
         
         navigationController.setNavigationBarHidden(true, animated: false)

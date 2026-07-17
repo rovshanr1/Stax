@@ -49,12 +49,12 @@ class HomeVC: UIViewController {
     }
     
     
-    // MARK: - Dinamic Compositional Layout Creation
+    // MARK: - Dynamic Compositional Layout Creation
     private func createLayout() -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { [weak self] (sectionIndex, layoutEnvironment) -> NSCollectionLayoutSection? in
             guard let self = self else { return nil }
             
-            // O anki snapshot durumunu sorguluyoruz (VC kontrolünde!)
+            
             let snapshot = self.dataSource?.snapshot()
             let isListEmpty = snapshot?.itemIdentifiers.contains(.emty) ?? true
             
@@ -80,7 +80,7 @@ class HomeVC: UIViewController {
                 }
                 cell.headerView.configureHomeHeaderView(name: presentationItem.title, time: presentationItem.time, volume: presentationItem.volume )
                 cell.headerMoreButtonTapped = { [weak self] in
-                    self?.didSendEventClosure?(.workoutMenuButtonTapped(id: presentationItem.id))
+                    self?.workoutMenuPresent(for: presentationItem.id)
                 }
                 
                 cell.configureExercise(exercise: presentationItem.exerciseSummar, moreText: presentationItem.moreText)
@@ -93,7 +93,7 @@ class HomeVC: UIViewController {
                 cell.startWorkoutButtonTapped = {[weak self] in
                     self?.didSendEventClosure?(.startEmptyWorkout)
                 }
-                    
+                
                 return cell
             }
         })
@@ -127,6 +127,35 @@ class HomeVC: UIViewController {
         
     }
     
+    //MARK: - Workout Menu Presentation
+    private func workoutMenuPresent(for id: String){
+        let sheetNav = WorkoutMenuViewController()
+        sheetNav.modalPresentationStyle = .pageSheet
+        
+        if let sheet = sheetNav.sheetPresentationController{
+            sheet.detents = [.custom(resolver: { _ in 190})]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        sheetNav.onActionSelected = { [weak self, weak sheetNav] action in
+            guard let self, let sheetNav else { return }
+            
+            sheetNav.dismiss(animated: true) {
+                switch action{
+                case .edit:
+                    self.didSendEventClosure?(.editWorkout(id: id))
+                case .share:
+                    self.vm.input.shareWorkout.send(id)
+                case .delete:
+                    self.vm.input.deleteWorkout.send(id)
+                }
+            }
+        }
+        
+        self.present(sheetNav, animated: true)
+        
+    }
+    
     //MARK: - Update Snapshot
     private func updateSnapshot(with items: [HomeWorkoutPresentationItem]){
         var snaphot = Snapshot()
@@ -142,8 +171,8 @@ class HomeVC: UIViewController {
         let isVisible = self.view.window != nil
         
         dataSource.apply(snaphot, animatingDifferences: isVisible) { [weak self] in
-              self?.contentView.collectionView.collectionViewLayout.invalidateLayout()
-          }
+            self?.contentView.collectionView.collectionViewLayout.invalidateLayout()
+        }
     }
 }
 
