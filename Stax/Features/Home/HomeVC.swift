@@ -27,7 +27,17 @@ class HomeVC: UIViewController {
     private var currentWorkout: [HomeWorkoutPresentationItem] = []
     
     //ViewModel
-    var vm: HomeVM!
+    var vm: HomeVM
+    
+    init(vm: HomeVM){
+        self.vm = vm
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     //private properties
     private let contentView = HomeUIView()

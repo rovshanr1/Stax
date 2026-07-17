@@ -70,5 +70,8 @@ final class AppDIContainer{
         return WorkoutTextShareService()
     }()
     
-    
+    //MARK: - SceneDIContainer
+    func makeHomeDependencyFactory() -> HomeCoordinatorFactory {
+        return HomeModuleFactory(appDIContainer: self)
+    }
 }

@@ -24,25 +24,16 @@ final class HomeCoordinator: Coordinator{
     var navigationController: UINavigationController
 
     
-    //Container
-    let appDIContainer: AppDIContainer
+    //Factory
+    private let factory: HomeCoordinatorFactory
     
-    var vm: HomeVM?
-    
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer) {
+    init(navigationController: UINavigationController, factory: HomeCoordinatorFactory) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
-        
-        self.vm = HomeVM(workoutRepo: appDIContainer.sharedWorkoutRepo,
-                         shareService: appDIContainer.shareService
-        )
+        self.factory = factory
     }
     
     func start() {
-        let homeVC = HomeVC()
-    
-        homeVC.vm = self.vm
-        homeVC.navigationItem.largeTitleDisplayMode = .always
+        let homeVC = factory.makeHomeViewController()
         
         homeVC.didSendEventClosure = { [weak self] event in
             self?.handle(event)
@@ -73,7 +64,7 @@ final class HomeCoordinator: Coordinator{
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, appDIContainer: appDIContainer, workoutId: id)
+        let sessionCoordinator = factory.makeWorkoutSessionCoordinator(navigationController: modalNav, workoutId: id)
         
         sessionCoordinator.finishDelegate = self
         
@@ -84,7 +75,7 @@ final class HomeCoordinator: Coordinator{
     }
     
     private func handleWorkoutDetailView(for id: String){
-        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, workoutID: id)
+        let workoutDetailCoordinator = factory.makeWorkoutDetailCoordinator(navigationController: navigationController, workoutId: id)
         
         workoutDetailCoordinator.finishDelegate = self
         childCoordinators.append(workoutDetailCoordinator)
