@@ -113,6 +113,7 @@ final class SettingsCoordinator: Coordinator{
         let coordinator = EditAccountCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
         
         coordinator.finishDelegate = self
+        coordinator.editDelegate = self
         childCoordinators.append(coordinator)
         coordinator.start()
     }
@@ -124,6 +125,16 @@ extension SettingsCoordinator: CoordinatorFinishDelegate {
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({$0 !== childCoordinator})
     }
+}
+
+extension SettingsCoordinator: EditAccountCoordinatorDelegate {
+    func editAccountCoordinatorDidDeleteAccount() {
+        settingsDelegate?.settingsCoordinatorDidLogout()
+        
+        finishDelegate?.coordinatorDidFinish(childCoordinator: self)
+    }
+    
+    
 }
 
 

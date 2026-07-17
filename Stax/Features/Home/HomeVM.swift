@@ -19,7 +19,7 @@ final class HomeVM {
     
     ///Output: "Data" to VC (Data Streams)
     struct Output{
-        let workouts: CurrentValueSubject<[HomeWorkoutPresentationItem], Never>
+        let workouts: CurrentValueSubject<[HomeWorkoutPresentationItem]?, Never>
         let showShareSheet: PassthroughSubject<String, Never>
     }
     
@@ -45,7 +45,7 @@ final class HomeVM {
                            deleteWorkout: .init(),
                            shareWorkout: .init()
         )
-        self.output = .init(workouts: .init([]),
+        self.output = .init(workouts: .init(nil),
                             showShareSheet: .init()
             
         )
@@ -83,6 +83,7 @@ final class HomeVM {
     
     private func bindRepository(){
         workoutRepo.workoutPublisher
+            .compactMap {$0}
             .map {domainModels in
                 
                 return domainModels.map { workout in
@@ -118,21 +119,6 @@ final class HomeVM {
         }
  
         return summaryItems
-    }
-    
- 
-    
-    private func formatDuration(seconds: Double) -> String{
-        let totalSeconds = Int(seconds)
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-        
-        if hours == 0{
-            return String(format: "%02dmin %02dsec", minutes, seconds)
-        }else{
-            return String(format: "%02dh %02dmin %02dsec", hours, minutes, seconds)
-        }
     }
  
     

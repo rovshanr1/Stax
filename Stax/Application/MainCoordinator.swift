@@ -24,7 +24,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     
    
     //Container
-    let appDIContainer: AppDIContainer
+    var appDIContainer: AppDIContainer
    
     var cancellables: Set<AnyCancellable> = []
     
@@ -45,7 +45,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func showSplashView(){
-        let (splashVC, splashVM) = SplashModuleBuilder.build(container: appDIContainer)
+        let (splashVC, splashVM) = SplashModuleFactory.build(container: appDIContainer)
     
         
         navigationController.setNavigationBarHidden(true, animated: false)
@@ -79,11 +79,11 @@ class MainCoordinator: MainCoordinatorProtocol{
     func handleIsFirstLaunchCompleted() {
         let defaults = UserDefaults.standard
         
-        if defaults.bool(forKey: "isFirshLaunchCompleted") == false{
+        if defaults.bool(forKey: UserDefaultsKeys.isFirstLaunchCompleted) == false{
             
             try? Auth.auth().signOut()
             
-            defaults.set(true, forKey: "isFirshLaunchCompleted")
+            defaults.set(true, forKey: UserDefaultsKeys.isFirstLaunchCompleted)
         }
     }
 }
@@ -94,12 +94,52 @@ extension MainCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({ $0 !== childCoordinator})
         
-        if childCoordinator is TabCoordinator {
-            navigationController.viewControllers.removeAll()
-            authFlow()
+        
+        if childCoordinator is TabCoordinator{
+            animatedAndResetAppFlow()
         }else if childCoordinator is AuthCoordinator{
             navigationController.viewControllers.removeAll()
             showSplashView()
         }
+    }
+    
+    
+    private func animatedAndResetAppFlow(){
+     
+        guard let window = navigationController.view.window,
+              let snapshot = window.snapshotView(afterScreenUpdates: false) else {
+            
+            performDataResetAndGoToAuth()
+            return
+        }
+        
+        window.addSubview(snapshot)
+        
+        performDataResetAndGoToAuth()
+        
+        UIView.animate(withDuration: 0.4, delay:0, options: .curveEaseInOut ,animations: {
+            snapshot.alpha = 0.0
+            snapshot.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+        }) { _ in
+            snapshot.removeFromSuperview()
+        }
+    }
+    
+    
+    private func performDataResetAndGoToAuth() {
+        navigationController.viewControllers.removeAll()
+        
+        try? appDIContainer.persistenceController.resetStack()
+        
+        UserDefaults.standard.set(false, forKey: UserDefaultsKeys.isSeededFromFirebase)
+        
+        let newUserManager = UserManager()
+        let newPersistenceController = PersistenceController()
+        
+        let newDIContainer = AppDIContainer(userManager: newUserManager, persistenceController: newPersistenceController)
+        
+        self.appDIContainer = newDIContainer
+        
+        authFlow()
     }
 }

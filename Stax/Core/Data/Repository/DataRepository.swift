@@ -16,6 +16,8 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     //Properties
     private let context: NSManagedObjectContext
     
+    private var cancellables: Set<AnyCancellable> = []
+    
     init(context: NSManagedObjectContext) {
         self.context = context
     }
@@ -91,9 +93,10 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     }
     
     func create() -> T {
-        let entityName = T.entity()
+        let entityName = String(describing: T.self)
         
-        let object = NSEntityDescription.insertNewObject(forEntityName: entityName.name!, into: context) as! T
+        
+        let object = NSEntityDescription.insertNewObject(forEntityName: entityName, into: context) as! T
         return object
     }
     
@@ -140,7 +143,9 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     }
     
     func makeFetchResultsController(sortDescriptors: [NSSortDescriptor], predicate: NSPredicate? = nil) -> NSFetchedResultsController<T>{
-        let request = NSFetchRequest<T>(entityName: T.entity().name!)
+        let entityName = String(describing: T.self)
+        
+        let request = NSFetchRequest<T>(entityName: entityName)
         request.sortDescriptors = sortDescriptors
         request.predicate = predicate
         
@@ -206,3 +211,61 @@ extension DataRepository where T == WorkoutExercise {
     }
 }
 
+extension DataRepository{
+    func fetchAllAsync() async -> [T] {
+        return await withCheckedContinuation {[weak self] continuation in
+            var isResumed: Bool = false
+            
+            guard let self else {
+                continuation.resume(returning: [])
+                return
+            }
+            
+            
+            self.fetchAll()
+                .first()
+                .sink(receiveCompletion: {completion in
+                    if case .failure(_) = completion, !isResumed {
+                        isResumed = true
+                        continuation.resume(returning: [])
+                    }
+                }) { result in
+                    if !isResumed{
+                       isResumed = true
+                       continuation.resume(returning: result)
+                        print("\(result)")
+                    }
+                }
+                .store(in: &self.cancellables)
+        }
+    }
+    
+    func deleteAsync(_ id: String) async {
+        return await withCheckedContinuation {[weak self] continuation in
+            var isResumed: Bool = false
+            
+            guard let self else {
+                continuation.resume()
+                return
+            }
+            
+            self.delete(by: id)
+                .first()
+                .sink(receiveCompletion: {_ in
+                    if !isResumed{
+                        isResumed = true
+                        continuation.resume()
+                    }
+                }) { _ in
+                    
+                    if !isResumed{
+                        isResumed = true
+                        continuation.resume()
+                        
+                        print("deletion success")
+                    }
+                }
+                .store(in: &self.cancellables)
+        }
+    }
+}

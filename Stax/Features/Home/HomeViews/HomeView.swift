@@ -10,17 +10,24 @@ import SnapKit
 
 class HomeUIView: UIView {
     var headerMoreButtonOnTap: (() -> Void)?
-
-    let tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.register(HomeTableViewCell.self, forCellReuseIdentifier: HomeTableViewCell.identifier)
-        tableView.separatorStyle = .none
-        return tableView
+    
+    lazy var collectionView: UICollectionView = {
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
+        collectionView.backgroundColor = .systemGroupedBackground
+        
+        collectionView.register(HomeCollectionViewCell.self, forCellWithReuseIdentifier: HomeCollectionViewCell.identifier)
+        collectionView.register(HomeEmptyStateCell.self, forCellWithReuseIdentifier: HomeEmptyStateCell.identifier)
+        
+        return collectionView
     }()
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
+        backgroundColor = .systemBackground
+        
         setupUI()
+        
     }
     
     required init?(coder: NSCoder) {
@@ -28,11 +35,13 @@ class HomeUIView: UIView {
     }
     
     private func setupUI(){
-        addSubview(tableView)
-        backgroundColor = .systemBackground
-        
-        tableView.snp.makeConstraints { (make) in
+        addSubview(collectionView)
+        collectionView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview()
         }
+    }
+    
+    func updateCollectionViewLayout(_ layout: UICollectionViewLayout) {
+        collectionView.setCollectionViewLayout(layout, animated: false)
     }
 }

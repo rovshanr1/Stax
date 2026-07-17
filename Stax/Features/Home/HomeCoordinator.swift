@@ -9,9 +9,10 @@ import UIKit
 import Combine
 
 enum HomeEvent{
-    case workoutMenuButtonTapped(id: String)
     case presentShareSheet(text: String)
     case presentWorkoutDetails(id: String)
+    case startEmptyWorkout
+    case editWorkout(id: String)
 }
 
 
@@ -23,25 +24,16 @@ final class HomeCoordinator: Coordinator{
     var navigationController: UINavigationController
 
     
-    //Container
-    let appDIContainer: AppDIContainer
+    //Factory
+    private let factory: HomeCoordinatorFactory
     
-    var vm: HomeVM?
-    
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer) {
+    init(navigationController: UINavigationController, factory: HomeCoordinatorFactory) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
-        
-        self.vm = HomeVM(workoutRepo: appDIContainer.sharedWorkoutRepo,
-                         shareService: appDIContainer.shareService
-        )
+        self.factory = factory
     }
     
     func start() {
-        let homeVC = HomeVC()
-    
-        homeVC.vm = self.vm
-        homeVC.navigationItem.largeTitleDisplayMode = .always
+        let homeVC = factory.makeHomeViewController()
         
         homeVC.didSendEventClosure = { [weak self] event in
             self?.handle(event)
@@ -52,45 +44,14 @@ final class HomeCoordinator: Coordinator{
     
     private func handle(_ event: HomeEvent){
         switch event{
-        case .workoutMenuButtonTapped(let id):
-            self.showMoreSheet(for: id)
         case .presentShareSheet(text: let text):
             self.handleShareSheet(with: text)
         case .presentWorkoutDetails(id: let id):
             handleWorkoutDetailView(for: id)
-        }
-    }
-    
-   
-    
-    private func showMoreSheet(for id: String){
-        let sheetNav = WorkoutMenuViewController()
-        sheetNav.modalPresentationStyle = .pageSheet
-        
-        if let sheet = sheetNav.sheetPresentationController{
-            sheet.detents = [.custom(resolver: { _ in 190})]
-            sheet.prefersGrabberVisible = true
-        }
-        
-        sheetNav.onActionSelected = {[weak self] action in
-            self?.handleWorkoutMenu(action, for: id)
-        }
-         
-        navigationController.present(sheetNav, animated: true)
-    }
-    
-    private func handleWorkoutMenu(_ action: WorkoutMenuViewController.Action, for id: String){
-        navigationController.dismiss(animated: true) { [weak self] in
-            guard let self else {return}
-            
-            switch action{
-            case .edit:
-                self.handleEditWorkout(for: id)
-            case .share:
-              self.vm?.input.shareWorkout.send(id)
-            case .delete:
-                self.vm?.input.deleteWorkout.send(id)
-            }
+        case .startEmptyWorkout:
+            handleWorkoutSession(for: nil)
+        case .editWorkout(id: let id):
+            handleWorkoutSession(for: id)
         }
     }
     
@@ -99,11 +60,11 @@ final class HomeCoordinator: Coordinator{
         navigationController.present(activityVC, animated: true)
     }
     
-    private func handleEditWorkout(for id: String){
+    private func handleWorkoutSession(for id: String?){
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, appDIContainer: appDIContainer, workoutId: id)
+        let sessionCoordinator = factory.makeWorkoutSessionCoordinator(navigationController: modalNav, workoutId: id)
         
         sessionCoordinator.finishDelegate = self
         
@@ -114,7 +75,7 @@ final class HomeCoordinator: Coordinator{
     }
     
     private func handleWorkoutDetailView(for id: String){
-        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, workoutID: id)
+        let workoutDetailCoordinator = factory.makeWorkoutDetailCoordinator(navigationController: navigationController, workoutId: id)
         
         workoutDetailCoordinator.finishDelegate = self
         childCoordinators.append(workoutDetailCoordinator)

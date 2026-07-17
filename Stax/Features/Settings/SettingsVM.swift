@@ -43,17 +43,21 @@ final class SettingsVM {
     private let userManager: UserManager
     private let healthKitManager: HealthKitServiceInterface
     private var preferencesService: AppPreferencesServiceInterface
+    private let wipeService: UserDataWipeServiceProtocol
     
     init(userService: UserServiceProtocol = UserService(),
          userManager: UserManager,
          healthKitManager: HealthKitServiceInterface = HealthKitService(),
          preferancesService: AppPreferencesServiceInterface = AppPreferencesService(),
-         authService: AuthServiceProtocol = AuthService()
+         authService: AuthServiceProtocol = AuthService(),
+         wipeService: UserDataWipeServiceProtocol = UserDataWipeService()
     ) {
         self.userManager = userManager
         self.healthKitManager = healthKitManager
         self.preferencesService = preferancesService
         self.authService = authService
+        self.wipeService = wipeService
+        
         
         self.input = .init(viewDidLoad: .init(),
                            itemTapped: .init(),
@@ -124,7 +128,7 @@ final class SettingsVM {
         ]
         data.append((.preferences, preferenceItems))
         
-       
+        
         
         let logoutItem: [SettingsItem] = [
             .logout(id: .logout, title: "Logout")
@@ -148,9 +152,9 @@ final class SettingsVM {
             default:
                 break
             }
-        
+            
         case .toggle:
-          break
+            break
             
         case .logout(let id, _):
             switch id {
@@ -168,18 +172,38 @@ final class SettingsVM {
     private func performLogout() {
         output.isLoading.send(true)
         
-        authService.signOut { [weak self] result in
-            guard let self else { return }
-            self.output.isLoading.send(false)
+        Task{
+            defer{
+                output.isLoading.send(false)
+            }
             
-            switch result {
-            case .success():
-
-                self.userManager.updateUser(nil)
+            do{
+                try await wipeService.wipeAllLocalData()
                 
-                self.output.logoutCompleted.send(())
-            case .failure(let error):
-                self.output.errorMessage.send(error.localizedDescription)
+                try await performAuthSignOut()
+                
+                await MainActor.run { [weak self] in
+                    self?.userManager.updateUser(nil)
+                    self?.output.logoutCompleted.send(())
+                }
+            }catch{
+                await MainActor.run { [weak self] in
+                    self?.output.errorMessage.send(error.localizedDescription)
+                }
+            }
+        }
+        
+    }
+    
+    private func performAuthSignOut() async throws{
+        return try await withCheckedThrowingContinuation { continuation in
+            authService.signOut { result in
+                switch result {
+                case .success:
+                    continuation.resume()
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
             }
         }
     }
@@ -191,11 +215,15 @@ final class SettingsVM {
                 
                 if success {
                     self.preferencesService.isHealthKitSyncEnabled = true
-                    self.buildSettingsData()
+                    Task { @MainActor in
+                        self.buildSettingsData()
+                    }
                 }else{
-                    print("HealhKit Authorization Failed: \(error?.localizedDescription ?? "Unknown Error")")
+                    output.errorMessage.send(error?.localizedDescription ?? "HealthKit authorization failed")
                     self.preferencesService.isHealthKitSyncEnabled = false
-                    
+                    Task { @MainActor in
+                        self.buildSettingsData()
+                    }
                 }
             }
         }else{

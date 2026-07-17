@@ -11,9 +11,12 @@ import Combine
 class HomeVC: UIViewController {
     //MARK: - Diffable Data Source
     nonisolated enum Section: CaseIterable, Sendable {case main}
-    nonisolated enum RowItem: Hashable, Sendable {case workout(HomeWorkoutPresentationItem)}
+    nonisolated enum RowItem: Hashable, Sendable {
+        case workout(HomeWorkoutPresentationItem)
+        case emty
+    }
     
-    typealias DataSource = UITableViewDiffableDataSource<Section, RowItem>
+    typealias DataSource = UICollectionViewDiffableDataSource<Section, RowItem>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, RowItem>
     
     
@@ -24,7 +27,17 @@ class HomeVC: UIViewController {
     private var currentWorkout: [HomeWorkoutPresentationItem] = []
     
     //ViewModel
-    var vm: HomeVM!
+    var vm: HomeVM
+    
+    init(vm: HomeVM){
+        self.vm = vm
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     //private properties
     private let contentView = HomeUIView()
@@ -34,8 +47,10 @@ class HomeVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupLeftAlignedNavigationTitle(with: "Home")
-    
+        
         configureDataSource()
+        
+        contentView.updateCollectionViewLayout(createLayout())
         bindVM()
     }
     
@@ -43,24 +58,52 @@ class HomeVC: UIViewController {
         self.view = contentView
     }
     
-
+    
+    // MARK: - Dynamic Compositional Layout Creation
+    private func createLayout() -> UICollectionViewLayout {
+        return UICollectionViewCompositionalLayout { [weak self] (sectionIndex, layoutEnvironment) -> NSCollectionLayoutSection? in
+            guard let self = self else { return nil }
+            
+            
+            let snapshot = self.dataSource?.snapshot()
+            let isListEmpty = snapshot?.itemIdentifiers.contains(.emty) ?? true
+            
+            
+            if isListEmpty {
+                return HomeLayoutFactory.createEmptyStateSection()
+            } else {
+                return HomeLayoutFactory.createWorkoutListSection()
+            }
+        }
+    }
+    
     //MARK: - Datasource Configuration
     private func configureDataSource(){
-        contentView.tableView.delegate = self
+        contentView.collectionView.delegate = self
         
-        dataSource = DataSource(tableView: contentView.tableView, cellProvider: { [weak self] tableView, indexPath, itemIdentifier in
-            
-            guard self != nil else {return nil}
+        dataSource = DataSource(collectionView: contentView.collectionView, cellProvider: {collectionView, indexPath, itemIdentifier in
             
             switch itemIdentifier {
             case .workout(let presentationItem):
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: HomeTableViewCell.identifier,for: indexPath) as? HomeTableViewCell else {return UITableViewCell()}
+                guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HomeCollectionViewCell.identifier, for: indexPath) as? HomeCollectionViewCell else {
+                    return UICollectionViewCell()
+                }
                 cell.headerView.configureHomeHeaderView(name: presentationItem.title, time: presentationItem.time, volume: presentationItem.volume )
                 cell.headerMoreButtonTapped = { [weak self] in
-                    self?.didSendEventClosure?(.workoutMenuButtonTapped(id: presentationItem.id))
+                    self?.workoutMenuPresent(for: presentationItem.id)
                 }
                 
                 cell.configureExercise(exercise: presentationItem.exerciseSummar, moreText: presentationItem.moreText)
+                return cell
+            case .emty:
+                guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HomeEmptyStateCell.identifier, for: indexPath) as? HomeEmptyStateCell else {
+                    return UICollectionViewCell()
+                }
+                
+                cell.startWorkoutButtonTapped = {[weak self] in
+                    self?.didSendEventClosure?(.startEmptyWorkout)
+                }
+                
                 return cell
             }
         })
@@ -71,9 +114,11 @@ class HomeVC: UIViewController {
     private func bindVM(){
         vm.output.workouts
             .receive(on: DispatchQueue.main)
+            .compactMap { $0 }
             .sink { [weak self] workouts in
-                self?.currentWorkout = workouts
-                self?.updateSnapshot(with: workouts)
+                guard let self else { return }
+                self.currentWorkout = workouts
+                self.updateSnapshot(with: workouts)
             }
             .store(in: &cancellables)
         
@@ -92,31 +137,67 @@ class HomeVC: UIViewController {
         
     }
     
+    //MARK: - Workout Menu Presentation
+    private func workoutMenuPresent(for id: String){
+        let sheetNav = WorkoutMenuViewController()
+        sheetNav.modalPresentationStyle = .pageSheet
+        
+        if let sheet = sheetNav.sheetPresentationController{
+            sheet.detents = [.custom(resolver: { _ in 190})]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        sheetNav.onActionSelected = { [weak self, weak sheetNav] action in
+            guard let self, let sheetNav else { return }
+            
+            sheetNav.dismiss(animated: true) {
+                switch action{
+                case .edit:
+                    self.didSendEventClosure?(.editWorkout(id: id))
+                case .share:
+                    self.vm.input.shareWorkout.send(id)
+                case .delete:
+                    self.vm.input.deleteWorkout.send(id)
+                }
+            }
+        }
+        
+        self.present(sheetNav, animated: true)
+        
+    }
+    
     //MARK: - Update Snapshot
     private func updateSnapshot(with items: [HomeWorkoutPresentationItem]){
         var snaphot = Snapshot()
         snaphot.appendSections([.main])
         
-        let rowItems = items.map { RowItem.workout($0)}
-        snaphot.appendItems(rowItems, toSection: .main)
+        if items.isEmpty{
+            snaphot.appendItems([.emty], toSection: .main)
+        }else{
+            let rowItems = items.map { RowItem.workout($0)}
+            snaphot.appendItems(rowItems, toSection: .main)
+        }
         
         let isVisible = self.view.window != nil
         
-        dataSource.apply(snaphot, animatingDifferences: isVisible)
+        dataSource.apply(snaphot, animatingDifferences: isVisible) { [weak self] in
+            self?.contentView.collectionView.collectionViewLayout.invalidateLayout()
+        }
     }
 }
 
-//MARK: - TableViewDelegate
-extension HomeVC: UITableViewDelegate{
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
+//MARK: - CollectionViewDelegate
+extension HomeVC: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
         
         guard let selectedItem = dataSource.itemIdentifier(for: indexPath) else { return }
         
         switch selectedItem {
-        case .workout(let presentetionItem):
-            didSendEventClosure?(.presentWorkoutDetails(id: presentetionItem.id))
+        case .workout(let presentationItem):
+            didSendEventClosure?(.presentWorkoutDetails(id: presentationItem.id))
+        case .emty:
+            break
         }
     }
 }

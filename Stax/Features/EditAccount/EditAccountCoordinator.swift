@@ -8,6 +8,11 @@
 import UIKit
 import Combine
 
+//MARK: - Delegation
+protocol EditAccountCoordinatorDelegate: AnyObject {
+    func editAccountCoordinatorDidDeleteAccount()
+}
+
 enum EditAccountEvent{
     case changeUsername
     case changePassword
@@ -20,6 +25,9 @@ final class EditAccountCoordinator: Coordinator{
     var finishDelegate: (CoordinatorFinishDelegate)?
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
+    
+    //Delegate
+    weak var editDelegate: EditAccountCoordinatorDelegate?
     
     private var vm: EditAccountVM
     private var appDIContainer: AppDIContainer
@@ -121,9 +129,25 @@ final class EditAccountCoordinator: Coordinator{
         
         deleteAccountVC.navigationItem.largeTitleDisplayMode = .never
         
+        let modalNavController = UINavigationController(rootViewController: deleteAccountVC)
         
-        navigationController.pushViewController(deleteAccountVC, animated: true)
+        modalNavController.modalPresentationStyle = .fullScreen
+        modalNavController.modalTransitionStyle = .coverVertical
+        
+        deleteAccountVC.onDismiss = { [weak self] in
+            self?.navigationController.presentedViewController?.dismiss(animated: true)
+        }
+        
+        deleteAccountVC.onDeletionSuccess = {[weak self] in
+            self?.navigationController.presentedViewController?.dismiss(animated: true){
+                self?.editDelegate?.editAccountCoordinatorDidDeleteAccount()
+            }
+        }
+        
+        navigationController.present(modalNavController, animated: true)
     }
+    
+    
 }
 
 extension EditAccountCoordinator: CoordinatorFinishDelegate{

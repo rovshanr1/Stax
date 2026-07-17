@@ -11,7 +11,7 @@ import CoreData
 final class AppDIContainer{
     let userManager: UserManager
     
-    private let persistenceController: PersistenceControllerProtocol
+    let persistenceController: PersistenceControllerProtocol
     
     init(userManager: UserManager, persistenceController: PersistenceControllerProtocol) {
         self.userManager = userManager
@@ -24,6 +24,10 @@ final class AppDIContainer{
     
     lazy var genericWorkoutRepo: DataRepository<Workout> = {
         return DataRepository<Workout>(context: context)
+    }()
+    
+    lazy var dataSeeder: DataSeederProtocol = {
+        return DataSeeder(context: context)
     }()
     
     lazy var sharedWorkoutRepo: WorkoutRepositoryProtocol = {
@@ -66,5 +70,8 @@ final class AppDIContainer{
         return WorkoutTextShareService()
     }()
     
-    
+    //MARK: - SceneDIContainer
+    func makeHomeDependencyFactory() -> HomeCoordinatorFactory {
+        return HomeModuleFactory(appDIContainer: self)
+    }
 }

@@ -24,10 +24,19 @@ final class PersistenceController: PersistenceControllerProtocol {
         container.viewContext
     }
     
+    static let sharedModel: NSManagedObjectModel = {
+        guard let url = Bundle.main.url(forResource: "Stax", withExtension: "momd"),
+              let model = NSManagedObjectModel(contentsOf: url) else{
+            fatalError("Could not load model")
+        }
+        
+        return model
+    }()
+    
     init(modelName: String = "Stax") {
         self.modelName = modelName
         
-        self.container = NSPersistentContainer(name: modelName)
+        self.container = NSPersistentContainer(name: modelName, managedObjectModel: Self.sharedModel)
         self.container.loadPersistentStores { _, error in
             if let error = error { fatalError("Core Data did not load: \(error)") }
         }
@@ -45,7 +54,7 @@ final class PersistenceController: PersistenceControllerProtocol {
         
         try coordinator.destroyPersistentStore(at: storeURL, type: .sqlite)
         
-        self.container = NSPersistentContainer(name: modelName)
+        self.container = NSPersistentContainer(name: modelName, managedObjectModel: Self.sharedModel)
         self.container.loadPersistentStores { _, error in
             if let error = error { print("Reload error: \(error)") }
         }
