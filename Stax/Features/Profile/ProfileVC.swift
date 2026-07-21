@@ -89,7 +89,7 @@ class ProfileVC: UIViewController {
         
         let monthlyChartregistration = UICollectionView.CellRegistration<UICollectionViewCell, [MonthlyChartData]>{(cell, _, item) in
             cell.contentConfiguration = UIHostingConfiguration{
-                MonthlyChart(data: item)
+                MonthlyChartView(data: item)
             }
             
             var background = UIBackgroundConfiguration.listCell()
