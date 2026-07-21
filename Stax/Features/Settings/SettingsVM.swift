@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-nonisolated enum SettingsItemIdentity: Sendable{
+nonisolated enum SettingsItemIdentity: Sendable, Hashable{
     case editProfile
     case editAccount
     case healthKit
