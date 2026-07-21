@@ -13,7 +13,7 @@ class HomeVC: UIViewController {
     nonisolated enum Section: CaseIterable, Sendable {case main}
     nonisolated enum RowItem: Hashable, Sendable {
         case workout(HomeWorkoutPresentationItem)
-        case emty
+        
     }
     
     typealias DataSource = UICollectionViewDiffableDataSource<Section, RowItem>
@@ -49,8 +49,8 @@ class HomeVC: UIViewController {
         setupLeftAlignedNavigationTitle(with: "Home")
         
         configureDataSource()
-        
-        contentView.updateCollectionViewLayout(createLayout())
+
+        createLayout()
         bindVM()
     }
     
@@ -59,22 +59,10 @@ class HomeVC: UIViewController {
     }
     
     
-    // MARK: - Dynamic Compositional Layout Creation
-    private func createLayout() -> UICollectionViewLayout {
-        return UICollectionViewCompositionalLayout { [weak self] (sectionIndex, layoutEnvironment) -> NSCollectionLayoutSection? in
-            guard let self = self else { return nil }
-            
-            
-            let snapshot = self.dataSource?.snapshot()
-            let isListEmpty = snapshot?.itemIdentifiers.contains(.emty) ?? true
-            
-            
-            if isListEmpty {
-                return HomeLayoutFactory.createEmptyStateSection()
-            } else {
-                return HomeLayoutFactory.createWorkoutListSection()
-            }
-        }
+    // MARK: - Compositional Layout Creation
+    private func createLayout(){
+        let layout = UICollectionViewCompositionalLayout(section: HomeLayoutFactory.createWorkoutListSection())
+        contentView.updateCollectionViewLayout(layout)
     }
     
     //MARK: - Datasource Configuration
@@ -95,16 +83,6 @@ class HomeVC: UIViewController {
                 
                 cell.configureExercise(exercise: presentationItem.exerciseSummar, moreText: presentationItem.moreText)
                 return cell
-            case .emty:
-                guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HomeEmptyStateCell.identifier, for: indexPath) as? HomeEmptyStateCell else {
-                    return UICollectionViewCell()
-                }
-                
-                cell.startWorkoutButtonTapped = {[weak self] in
-                    self?.didSendEventClosure?(.startEmptyWorkout)
-                }
-                
-                return cell
             }
         })
         
@@ -122,9 +100,8 @@ class HomeVC: UIViewController {
             }
             .store(in: &cancellables)
         
-        DispatchQueue.main.async {[weak self] in
-            self?.vm.input.viewDidLoad.send()
-        }
+        
+        vm.input.viewDidLoad.send()
         
         
         vm.output.showShareSheet
@@ -171,18 +148,25 @@ class HomeVC: UIViewController {
         var snaphot = Snapshot()
         snaphot.appendSections([.main])
         
-        if items.isEmpty{
-            snaphot.appendItems([.emty], toSection: .main)
+        let isEnabled = items.isEmpty
+        
+        if isEnabled {
+            let emptyView = HomeEmptyStateView()
+            contentView.collectionView.backgroundView = emptyView
+            
+            emptyView.startWorkoutButtonTapped = { [weak self] in
+                self?.didSendEventClosure?(.startEmptyWorkout)
+            }
         }else{
+            contentView.collectionView.backgroundView = nil
             let rowItems = items.map { RowItem.workout($0)}
             snaphot.appendItems(rowItems, toSection: .main)
         }
         
+        
         let isVisible = self.view.window != nil
         
-        dataSource.apply(snaphot, animatingDifferences: isVisible) { [weak self] in
-            self?.contentView.collectionView.collectionViewLayout.invalidateLayout()
-        }
+        dataSource.apply(snaphot, animatingDifferences: isVisible)
     }
 }
 
@@ -196,8 +180,7 @@ extension HomeVC: UICollectionViewDelegate {
         switch selectedItem {
         case .workout(let presentationItem):
             didSendEventClosure?(.presentWorkoutDetails(id: presentationItem.id))
-        case .emty:
-            break
+
         }
     }
 }

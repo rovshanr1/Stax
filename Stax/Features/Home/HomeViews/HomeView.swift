@@ -17,7 +17,6 @@ class HomeUIView: UIView {
         collectionView.backgroundColor = .systemGroupedBackground
         
         collectionView.register(HomeCollectionViewCell.self, forCellWithReuseIdentifier: HomeCollectionViewCell.identifier)
-        collectionView.register(HomeEmptyStateCell.self, forCellWithReuseIdentifier: HomeEmptyStateCell.identifier)
         
         return collectionView
     }()
