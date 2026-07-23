@@ -15,7 +15,7 @@ final class ProfileVM{
         let viewDidLoad: PassthroughSubject<Void, Never>
         let logoutTapped: PassthroughSubject<Void, Never>
         let shareWorkout: PassthroughSubject<String, Never>
-        let deleteWokrout: PassthroughSubject<String, Never>
+        let deleteWorkout: PassthroughSubject<String, Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
@@ -65,7 +65,7 @@ final class ProfileVM{
         self.input = .init( viewDidLoad: .init(),
                             logoutTapped: .init(),
                             shareWorkout: .init(),
-                            deleteWokrout: .init()
+                            deleteWorkout: .init()
         )
         
         self.output = .init( userInfo: .init(nil),
@@ -130,7 +130,7 @@ final class ProfileVM{
             }
             .store(in: &cancellables)
         
-        input.deleteWokrout
+        input.deleteWorkout
             .sink { [weak self] id in
                 guard let self else {return}
                 workoutRepo.deleteWorkout(by: id)

@@ -185,7 +185,7 @@ class SettingsVC: UIViewController {
             snapshot.appendItems(items, toSection: section)
         }
         
-//        snapshot.reconfigureItems(data.flatMap(\.1))
+
         
         
         dataSource.apply(snapshot, animatingDifferences: true)

@@ -72,6 +72,10 @@ final class AppDIContainer{
     
     //MARK: - SceneDIContainer
     func makeHomeDependencyFactory() -> HomeCoordinatorFactory {
-        return HomeModuleFactory(appDIContainer: self)
+        return DefaultHomeModuleFactory(appDIContainer: self)
+    }
+    
+    func makeProfileDependencyFactory() -> ProfileCoordinatorFactory {
+        return DefaultProfileModuleFactory(appDIContainer: self)
     }
 }

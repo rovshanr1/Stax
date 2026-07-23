@@ -15,7 +15,7 @@ protocol HomeCoordinatorFactory{
     func makeWorkoutDetailCoordinator(navigationController: UINavigationController, workoutId: String) -> WorkoutDetailCoordinator
 }
 
-struct HomeModuleFactory: HomeCoordinatorFactory{
+struct DefaultHomeModuleFactory: HomeCoordinatorFactory{
     
     let appDIContainer: AppDIContainer
     

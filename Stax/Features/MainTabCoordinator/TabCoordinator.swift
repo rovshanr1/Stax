@@ -78,7 +78,7 @@ class TabCoordinator: NSObject, Coordinator {
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()
         case .profile:
-            let profileCoordinator = ProfileCoordinator(navController, appDIContainer: appDIContainer)
+            let profileCoordinator = ProfileCoordinator(navController, factory: appDIContainer.makeProfileDependencyFactory())
             profileCoordinator.finishDelegate = self
             childCoordinators.append(profileCoordinator)
             profileCoordinator.start()
