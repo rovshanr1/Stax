@@ -28,10 +28,10 @@ final class WorkoutDetailCoordinator: Coordinator{
     private let workoutID: String
     
     //Container
-    private let appDIContainer: AppDIContainer
+    private let appDIContainer: AppDependencies
     
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer, workoutID: String) {
+    init(navigationController: UINavigationController, appDIContainer: AppDependencies, workoutID: String) {
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
         self.workoutID = workoutID

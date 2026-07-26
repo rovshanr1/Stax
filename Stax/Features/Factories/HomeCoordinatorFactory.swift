@@ -17,9 +17,9 @@ protocol HomeCoordinatorFactory{
 
 struct DefaultHomeModuleFactory: HomeCoordinatorFactory{
     
-    let appDIContainer: AppDIContainer
+    let appDIContainer: AppDependencies
     
-    init(appDIContainer: AppDIContainer) {
+    init(appDIContainer: AppDependencies) {
         self.appDIContainer = appDIContainer
     }
     

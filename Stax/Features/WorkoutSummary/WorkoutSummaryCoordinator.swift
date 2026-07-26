@@ -30,11 +30,11 @@ final class WorkoutSummaryCoordinator: Coordinator {
     
     var vm: WorkoutSummaryViewModel?
     
-    let appDIContainer: AppDIContainer
+    let appDIContainer: AppDependencies
     private let workoutID: String
     private let stats: WorkoutStats
     
-    init(navigationController: UINavigationController, appDIContaioner: AppDIContainer, workoutID: String, stats: WorkoutStats) {
+    init(navigationController: UINavigationController, appDIContaioner: AppDependencies, workoutID: String, stats: WorkoutStats) {
         self.navigationController = navigationController
         self.appDIContainer = appDIContaioner
         self.workoutID = workoutID

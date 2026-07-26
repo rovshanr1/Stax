@@ -8,7 +8,7 @@
 import UIKit
 
 final class SplashModuleFactory{
-    static func build(container: AppDIContainer) -> (UIViewController, SplashVM){
+    static func build(container: AppDependencies) -> (UIViewController, SplashVM){
         let firebaseService = container.sharedFirebaseService
         let syncManager = container.sharedSyncManager
         let dataSeeder = container.dataSeeder

@@ -17,10 +17,10 @@ final class EditProfileCoordinator: Coordinator {
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
     
-    private let appDIContainer: AppDIContainer
+    private let appDIContainer: AppDependencies
   
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
+    init(navigationController: UINavigationController, appDIContainer: AppDependencies){
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
     }

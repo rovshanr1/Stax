@@ -30,11 +30,11 @@ final class EditAccountCoordinator: Coordinator{
     weak var editDelegate: EditAccountCoordinatorDelegate?
     
     private var vm: EditAccountVM
-    private var appDIContainer: AppDIContainer
+    private var appDIContainer: AppDependencies
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
+    init(navigationController: UINavigationController, appDIContainer: AppDependencies){
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
         

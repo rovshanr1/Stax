@@ -38,12 +38,12 @@ final class SettingsCoordinator: Coordinator{
     private let settingsVM: SettingsVM
     
     //Container
-    let appDIContainer: AppDIContainer
+    let appDIContainer: AppDependencies
     
     private var cancellables: Set<AnyCancellable> = []
 
     
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
+    init(_ navigationController: UINavigationController, appDIContainer: AppDependencies) {
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
         

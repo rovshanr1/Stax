@@ -18,7 +18,7 @@ protocol ProfileCoordinatorFactory{
 }
 
 struct DefaultProfileModuleFactory: ProfileCoordinatorFactory {
-    let appDIContainer: AppDIContainer
+    let appDIContainer: AppDependencies
     
     
     func makeProfileViewController() -> ProfileVC {

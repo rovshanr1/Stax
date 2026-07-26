@@ -24,9 +24,9 @@ final class ExerciseListCoordinator: Coordinator {
     
     
     
-    let appDIContainer: AppDIContainer
+    let appDIContainer: AppDependencies
     
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer){
+    init(_ navigationController: UINavigationController, appDIContainer: AppDependencies){
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
     }

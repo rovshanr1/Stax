@@ -25,14 +25,14 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     
     //Container
-    let appDIContainer: AppDIContainer
+    let appDIContainer: AppDependencies
     
     var cancellables: Set<AnyCancellable> = []
     
     var vm: WorkoutSessionViewModel?
     var workoutId: String?
     
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer, workoutId: String? = nil) {
+    init(_ navigationController: UINavigationController, appDIContainer: AppDependencies, workoutId: String? = nil) {
         self.navigationController = navigationController
         self.appDIContainer = appDIContainer
         self.workoutId = workoutId
