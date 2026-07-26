@@ -8,7 +8,21 @@
 import Foundation
 import CoreData
 
-final class AppDIContainer{
+protocol AppDependencies{
+    var userManager: UserManager { get }
+    var context: NSManagedObjectContext { get }
+    var sharedWorkoutRepo: WorkoutRepositoryProtocol { get }
+    var sharedFirebaseService: FirebaseSyncService { get }
+    
+    var dataSeeder: DataSeederProtocol { get }
+    var genericWorkoutRepo: DataRepository<Workout> { get }
+    var sharedExerciseDefRepo: ExerciseRepositoryProtocol { get }
+    var sharedSessionService: SessionServiceProtocol { get }
+    var sharedSyncManager: SyncManager {get}
+    var shareService: WorkoutShareServiceProtocol { get }
+}
+
+final class AppDIContainer: AppDependencies{
     let userManager: UserManager
     
     let persistenceController: PersistenceControllerProtocol
@@ -69,13 +83,4 @@ final class AppDIContainer{
     lazy var shareService: WorkoutShareServiceProtocol = {
         return WorkoutTextShareService()
     }()
-    
-    //MARK: - SceneDIContainer
-    func makeHomeDependencyFactory() -> HomeCoordinatorFactory {
-        return DefaultHomeModuleFactory(appDIContainer: self)
-    }
-    
-    func makeProfileDependencyFactory() -> ProfileCoordinatorFactory {
-        return DefaultProfileModuleFactory(appDIContainer: self)
-    }
 }

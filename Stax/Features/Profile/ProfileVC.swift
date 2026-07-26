@@ -301,7 +301,7 @@ extension ProfileVC: UICollectionViewDelegate{
         case .chart:
             return false
         case .workout:
-            return false
+            return true
         }
     }
     
