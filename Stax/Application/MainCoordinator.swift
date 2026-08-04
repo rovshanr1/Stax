@@ -45,19 +45,17 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func showSplashView(){
-        let (splashVC, splashVM) = SplashModuleFactory.build(container: appDIContainer)
-    
+        let factory = SplashModuleFactory(appDIContainer: appDIContainer)
+        let splashVC = factory.makeSplashModule()
+        
+        splashVC.didSentEventClosure = { [weak self] event in
+            self?.handle(event)
+        }
         
         navigationController.setNavigationBarHidden(true, animated: false)
         navigationController.setViewControllers([splashVC], animated: false)
         
-        splashVM.output.syncCompleted
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                guard let self = self else { return }
-                self.showMainFlow()
-            }
-            .store(in: &cancellables)
+        
     }
     
     func authFlow() {
@@ -84,6 +82,14 @@ class MainCoordinator: MainCoordinatorProtocol{
             try? Auth.auth().signOut()
             
             defaults.set(true, forKey: UserDefaultsKeys.isFirstLaunchCompleted)
+        }
+    }
+    
+    
+    private func handle(_ event: SplashEvent){
+        switch event{
+        case .syncComplated:
+            showMainFlow()
         }
     }
 }

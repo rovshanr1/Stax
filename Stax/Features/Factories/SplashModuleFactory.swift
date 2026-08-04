@@ -7,15 +7,25 @@
 
 import UIKit
 
-final class SplashModuleFactory{
-    static func build(container: AppDependencies) -> (UIViewController, SplashVM){
-        let firebaseService = container.sharedFirebaseService
-        let syncManager = container.sharedSyncManager
-        let dataSeeder = container.dataSeeder
-        
-        let splashVM = SplashVM(firebaseSyncService: firebaseService, syncManager: syncManager, workoutRepo: container.genericWorkoutRepo, dataSeeder: dataSeeder)
+protocol SplashCoordinatorFactory{
+    func makeSplashModule() -> SplashVC
+}
+
+struct SplashModuleFactory: SplashCoordinatorFactory{
+    let appDIContainer: AppDIContainer
+    
+    init(appDIContainer: AppDIContainer) {
+        self.appDIContainer = appDIContainer
+    }
+    
+    func makeSplashModule() -> SplashVC {
+       
+        let splashVM = SplashVM(firebaseSyncService: appDIContainer.sharedFirebaseService, syncManager: appDIContainer.sharedSyncManager, workoutRepo: appDIContainer.genericWorkoutRepo, dataSeeder: appDIContainer.dataSeeder
+        )
         let splashVC = SplashVC(vm: splashVM)
         
-        return (splashVC, splashVM)
+        return splashVC
     }
+    
+    
 }
