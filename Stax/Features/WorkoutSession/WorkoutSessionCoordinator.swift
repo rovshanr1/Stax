@@ -84,7 +84,9 @@ final class WorkoutSessionCoordinator: Coordinator{
         let listNav = UINavigationController()
         listNav.modalPresentationStyle = .fullScreen
         
-        let exerciseCoordinator = ExerciseListCoordinator(listNav, appDIContainer: appDIContainer)
+        let factory = DefaultExerciseListFactory(appDependencies: appDIContainer)
+        
+        let exerciseCoordinator = ExerciseListCoordinator(listNav, factory: factory)
         exerciseCoordinator.finishDelegate = self
         
         exerciseCoordinator.didFinishWithSelection = {[weak self] selectedExercise in

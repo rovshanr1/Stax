@@ -20,7 +20,17 @@ class ExerciseListVC: UIViewController {
     
     //Internal Properties
     var didSendEventClosure: ((ExerciseListEvent) -> Void)?
-    var viewModel: ExerciseListVM!
+    var viewModel: ExerciseListVM
+    
+    init(viewModel: ExerciseListVM){
+        self.viewModel = viewModel
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     //Private Properties
     private var cancellables: Set<AnyCancellable> = []

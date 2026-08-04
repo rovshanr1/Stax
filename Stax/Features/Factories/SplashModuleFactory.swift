@@ -7,14 +7,14 @@
 
 import UIKit
 
-protocol SplashCoordinatorFactory{
+protocol SplashModuleFactoryProtocol{
     func makeSplashModule() -> SplashVC
 }
 
-struct SplashModuleFactory: SplashCoordinatorFactory{
-    let appDIContainer: AppDIContainer
+struct SplashModuleFactory: SplashModuleFactoryProtocol{
+    let appDIContainer: AppDependencies
     
-    init(appDIContainer: AppDIContainer) {
+    init(appDIContainer: AppDependencies) {
         self.appDIContainer = appDIContainer
     }
     
