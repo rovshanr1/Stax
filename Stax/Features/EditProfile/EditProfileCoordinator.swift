@@ -20,9 +20,9 @@ final class EditProfileCoordinator: Coordinator {
     private let dependency: AppDependencies
   
     
-    init(navigationController: UINavigationController, appDIContainer: AppDependencies){
+    init(navigationController: UINavigationController, dependency: AppDependencies){
         self.navigationController = navigationController
-        self.dependency = appDIContainer
+        self.dependency = dependency
     }
     
     func start() {

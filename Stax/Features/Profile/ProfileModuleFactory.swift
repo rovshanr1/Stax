@@ -11,7 +11,7 @@ protocol ProfileCoordinatorFactory{
     func makeProfileViewController() -> ProfileVC
     
     //Child
-    func makeSettingsCoordinates(navigationController: UINavigationController) -> SettingsCoordinator
+    func makeSettingsCoordinator(navigationController: UINavigationController) -> SettingsCoordinator
     func makeEditProfileCoordinator(navigationController: UINavigationController) -> EditProfileCoordinator
     func makeWorkoutDetailCoordinator(navigationController: UINavigationController, workoutID: String) -> WorkoutDetailCoordinator
     func makeWorkoutSessionCoordinator(navigationController: UINavigationController, workoutID: String) -> WorkoutSessionCoordinator
@@ -29,12 +29,13 @@ struct DefaultProfileModuleFactory: ProfileCoordinatorFactory {
         return ProfileVC(viewModel: vm)
     }
     
-    func makeSettingsCoordinates(navigationController: UINavigationController) -> SettingsCoordinator {
-        SettingsCoordinator(navigationController, appDIContainer: dependency)
+    func makeSettingsCoordinator(navigationController: UINavigationController) -> SettingsCoordinator {
+        let factory = DefaultSettingsCoordinatorFactory(dependency: dependency)
+        return SettingsCoordinator(navigationController, factory: factory, dependency: dependency)
     }
     
     func makeEditProfileCoordinator(navigationController: UINavigationController) -> EditProfileCoordinator {
-        EditProfileCoordinator(navigationController: navigationController, appDIContainer: dependency)
+        EditProfileCoordinator(navigationController: navigationController, dependency: dependency)
     }
     
     func makeWorkoutDetailCoordinator(navigationController: UINavigationController, workoutID: String) -> WorkoutDetailCoordinator {

@@ -100,7 +100,7 @@ final class ProfileCoordinator: Coordinator{
     }
     
     private func handleSettings(){
-        let settingsCoordinator = factory.makeSettingsCoordinates(navigationController: navigationController)
+        let settingsCoordinator = factory.makeSettingsCoordinator(navigationController: navigationController)
         
         settingsCoordinator.finishDelegate = self
         settingsCoordinator.settingsDelegate = self

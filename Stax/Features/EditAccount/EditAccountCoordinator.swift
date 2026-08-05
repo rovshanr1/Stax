@@ -34,11 +34,11 @@ final class EditAccountCoordinator: Coordinator{
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(navigationController: UINavigationController, appDIContainer: AppDependencies){
+    init(navigationController: UINavigationController, dependency: AppDependencies){
         self.navigationController = navigationController
-        self.dependency = appDIContainer
+        self.dependency = dependency
         
-        self.vm = EditAccountVM(userManager: appDIContainer.userManager)
+        self.vm = EditAccountVM(userManager: dependency.userManager)
     }
     
     func start() {

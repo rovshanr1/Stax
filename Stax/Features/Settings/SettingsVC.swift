@@ -109,6 +109,13 @@ class SettingsVC: UIViewController {
             }
             .store(in: &cancellables)
         
+        vm.output.preferencesOnTapped
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                self?.didSentEventClosure?(.preferencesOnTapped(event: event))
+            }
+            .store(in: &cancellables)
+        
         
         vm.input.viewDidLoad.send()
         
@@ -134,7 +141,6 @@ class SettingsVC: UIViewController {
                 cell.toggleValueChanged = { [weak self] newValue in
                     if id == .healthKit{
                         self?.vm.input.toggleHealthKit.send(newValue)
-                        print("healthkitIsEnable: \(newValue)")
                     }
                 }
                 
