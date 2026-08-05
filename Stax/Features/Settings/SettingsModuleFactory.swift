@@ -35,7 +35,8 @@ struct DefaultSettingsCoordinatorFactory: SettingsCoordinatorFactory {
     }
     
     func makeEditAccountCoordinator(navigationConroller: UINavigationController) -> EditAccountCoordinator {
-        EditAccountCoordinator(navigationController: navigationConroller, dependency: dependency)
+        let factory = DefaultEditAccountModuleFactory(dependency: dependency)
+        return EditAccountCoordinator(navigationController: navigationConroller, factory: factory)
     }
     
 }

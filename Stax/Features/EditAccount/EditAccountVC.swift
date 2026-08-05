@@ -27,7 +27,8 @@ class EditAccountVC: UIViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<EditAccountSection, EditAccountItem>
     
     //Event Closure
-    var didSentEventClosure: ((EditAccountEvent) -> Void)?
+    var coordinatorEventClosure: ((EditAccountEvent) -> Void)?
+    
     
     //ViewModel and Conten View
     private var viewModel: EditAccountVM
@@ -62,7 +63,7 @@ class EditAccountVC: UIViewController {
         super.didMove(toParent: parent)
         
         if parent == nil{
-            didSentEventClosure?(.dismiss)
+            coordinatorEventClosure?(.dismiss)
         }
     }
     
@@ -78,6 +79,14 @@ class EditAccountVC: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] data in
                 self?.updateSnapshot(with: data)
+            }
+            .store(in: &cancellables)
+        
+        
+        viewModel.output.itemsOnTapped
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] events in
+                self?.coordinatorEventClosure?(events)
             }
             .store(in: &cancellables)
         
