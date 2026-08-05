@@ -16,20 +16,17 @@ final class EditProfileCoordinator: Coordinator {
     var finishDelegate: CoordinatorFinishDelegate?
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
-    
-    private let dependency: AppDependencies
   
+    //Factory
+    private let factory: EditProfileCoordinatorFactory
     
-    init(navigationController: UINavigationController, dependency: AppDependencies){
+    init(navigationController: UINavigationController, factory: EditProfileCoordinatorFactory){
         self.navigationController = navigationController
-        self.dependency = dependency
+        self.factory = factory
     }
     
     func start() {
-        
-        let vm = EditProfileVM(userManager: dependency.userManager)
-
-        let editProfileVC = EditProfileVC(vm: vm)
+        let editProfileVC = factory.makeEditProfileViewController()
         
         editProfileVC.didSentEventClosure = {[weak self] event in
             self?.handle(event)

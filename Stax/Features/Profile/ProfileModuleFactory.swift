@@ -35,7 +35,8 @@ struct DefaultProfileModuleFactory: ProfileCoordinatorFactory {
     }
     
     func makeEditProfileCoordinator(navigationController: UINavigationController) -> EditProfileCoordinator {
-        EditProfileCoordinator(navigationController: navigationController, dependency: dependency)
+        let factory = DefaultEditProfileModuleFactory(dependency: dependency)
+        return EditProfileCoordinator(navigationController: navigationController, factory: factory)
     }
     
     func makeWorkoutDetailCoordinator(navigationController: UINavigationController, workoutID: String) -> WorkoutDetailCoordinator {
