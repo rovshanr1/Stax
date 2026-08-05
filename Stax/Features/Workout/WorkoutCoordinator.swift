@@ -23,11 +23,11 @@ final class WorkoutCoordinator: Coordinator{
     
     
     //Container
-    let appDIContainer: AppDIContainer
+    let dependency: AppDependencies
     
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
+    init(_ navigationController: UINavigationController, appDIContainer: AppDependencies) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.dependency = appDIContainer
     }
     
     
@@ -54,7 +54,7 @@ final class WorkoutCoordinator: Coordinator{
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordionator = WorkoutSessionCoordinator(modalNav, appDIContainer: appDIContainer)
+        let sessionCoordionator = WorkoutSessionCoordinator(modalNav, dependency: dependency)
         sessionCoordionator.finishDelegate = self
         
         childCoordinators.append(sessionCoordionator)

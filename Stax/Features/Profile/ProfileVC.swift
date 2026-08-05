@@ -89,7 +89,7 @@ class ProfileVC: UIViewController {
         
         let monthlyChartregistration = UICollectionView.CellRegistration<UICollectionViewCell, [MonthlyChartData]>{(cell, _, item) in
             cell.contentConfiguration = UIHostingConfiguration{
-                MonthlyChart(data: item)
+                MonthlyChartView(data: item)
             }
             
             var background = UIBackgroundConfiguration.listCell()
@@ -100,7 +100,7 @@ class ProfileVC: UIViewController {
         let profileWorkoutsRegistration = UICollectionView.CellRegistration<ProfileWorkoutsCell, WorkoutDomainModel>  { (cell, _, workoutsData) in
             cell.configureProfileWorkoutCell(with: workoutsData)
             cell.menuButtonTapped = { [weak self] in
-                self?.didSendEventClosure?(.showWorkoutMenu(id: workoutsData.id))
+                self?.workoutMenuPresent(for: workoutsData.id)
             }
         }
         
@@ -132,6 +132,34 @@ class ProfileVC: UIViewController {
         dataSource.supplementaryViewProvider = { (collectionView, _, indexPath) in
             return collectionView.dequeueConfiguredReusableSupplementary(using: headerRegistration, for: indexPath)
         }
+    }
+    //MARK: - Workout Menu Presentation
+    private func workoutMenuPresent(for id: String){
+        let sheetNav = WorkoutMenuViewController()
+        sheetNav.modalPresentationStyle = .pageSheet
+        
+        if let sheet = sheetNav.sheetPresentationController{
+            sheet.detents = [.custom(resolver: { _ in 190})]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        sheetNav.onActionSelected = { [weak self, weak sheetNav] action in
+            guard let self, let sheetNav else { return }
+            
+            sheetNav.dismiss(animated: true) {
+                switch action{
+                case .edit:
+                    self.didSendEventClosure?(.editWorkout(id: id))
+                case .share:
+                    self.viewModel.input.shareWorkout.send(id)
+                case .delete:
+                    self.viewModel.input.deleteWorkout.send(id)
+                }
+            }
+        }
+        
+        self.present(sheetNav, animated: true)
+        
     }
     
     //MARK: - ViewModel configuration
@@ -223,14 +251,18 @@ class ProfileVC: UIViewController {
     private func updateSnapshot(with profileInfo: UserModel, chartData: [MonthlyChartData], profileWorkouts: [WorkoutDomainModel]){
         var snapshot = Snapshot()
         
-        snapshot.appendSections([.profile, .charts, .workouts])
+        snapshot.appendSections([.profile, .charts])
         
         snapshot.appendItems([.profileInfo(profileInfo)], toSection: .profile)
         snapshot.appendItems([.chart(chartData)], toSection: .charts)
         
-        let workoutItems = profileWorkouts.map {RowItem.workout($0)}
-        snapshot.appendItems(workoutItems, toSection: .workouts)
         
+        if !profileWorkouts.isEmpty {
+             snapshot.appendSections([.workouts])
+             let workoutItems = profileWorkouts.map { RowItem.workout($0) }
+             snapshot.appendItems(workoutItems, toSection: .workouts)
+         }
+         
         
         dataSource.apply(snapshot, animatingDifferences: false)
     }

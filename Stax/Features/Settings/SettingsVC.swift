@@ -27,10 +27,18 @@ nonisolated enum SettingsSection: Int, Hashable, Sendable, CaseIterable{
 }
 
 //MARK: - Items
-nonisolated enum SettingsItem: Hashable, Sendable{
+nonisolated enum SettingsItem: Sendable{
     case navigation(id: SettingsItemIdentity, icon: String, title: String, color: String)
     case toggle(id: SettingsItemIdentity, icon: String, title: String, isOn: Bool, color: String)
     case logout(id: SettingsItemIdentity, title: String)
+    
+    var identity: SettingsItemIdentity {
+        switch self {
+        case .navigation(let id, _, _, _): return id
+        case .toggle(let id, _, _, _, _): return id
+        case .logout(let id, _): return id
+        }
+    }
 }
 
 
@@ -78,7 +86,7 @@ class SettingsVC: UIViewController {
             didSentEventClosure?(.dismiss)
         }
     }
-
+    
     
     deinit{
         print("Setting Deinited")
@@ -101,6 +109,13 @@ class SettingsVC: UIViewController {
             }
             .store(in: &cancellables)
         
+        vm.output.preferencesOnTapped
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                self?.didSentEventClosure?(.preferencesOnTapped(event: event))
+            }
+            .store(in: &cancellables)
+        
         
         vm.input.viewDidLoad.send()
         
@@ -120,16 +135,15 @@ class SettingsVC: UIViewController {
                 
             case .toggle(id: let id, icon: let icon, title: let title, isOn: let isOn, color: let color):
                 let iconColor = UIColor(hex: color) ?? .systemBlue
-
+                
                 cell.configureiconListCell(title: title, icon: icon, iconColor: iconColor, showChevron: false, showSwitch: true, isSwitchOn: isOn)
                 
                 cell.toggleValueChanged = { [weak self] newValue in
                     if id == .healthKit{
                         self?.vm.input.toggleHealthKit.send(newValue)
-                        print("healthkitIsEnable: \(newValue)")
                     }
                 }
-
+                
             default:
                 break
             }
@@ -177,6 +191,9 @@ class SettingsVC: UIViewController {
             snapshot.appendItems(items, toSection: section)
         }
         
+
+        
+        
         dataSource.apply(snapshot, animatingDifferences: true)
         
         
@@ -192,3 +209,7 @@ extension SettingsVC: UICollectionViewDelegate {
         vm.input.itemTapped.send(tappedItem)
     }
 }
+
+
+
+

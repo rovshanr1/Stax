@@ -30,15 +30,15 @@ final class EditAccountCoordinator: Coordinator{
     weak var editDelegate: EditAccountCoordinatorDelegate?
     
     private var vm: EditAccountVM
-    private var appDIContainer: AppDIContainer
+    private var dependency: AppDependencies
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
+    init(navigationController: UINavigationController, dependency: AppDependencies){
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.dependency = dependency
         
-        self.vm = EditAccountVM(userManager: appDIContainer.userManager)
+        self.vm = EditAccountVM(userManager: dependency.userManager)
     }
     
     func start() {
@@ -83,7 +83,7 @@ final class EditAccountCoordinator: Coordinator{
     //MARK: - Views Handling
     
     private func handleChangeEmail(){
-        let chnageEmailVM = ChangeEmailVM(userManager: appDIContainer.userManager)
+        let chnageEmailVM = ChangeEmailVM(userManager: dependency.userManager)
         let changeEmailVC = ChangeEmailVC(viewModel: chnageEmailVM)
         
         changeEmailVC.navigationItem.largeTitleDisplayMode = .never
@@ -96,7 +96,7 @@ final class EditAccountCoordinator: Coordinator{
     }
     
     private func handleChangeUsername(){
-        let chnageUserNameVM = ChangeUserNameVM(userManager: appDIContainer.userManager)
+        let chnageUserNameVM = ChangeUserNameVM(userManager: dependency.userManager)
         
         let chnageUserNameVC = ChangeUserNameVC(viewModel: chnageUserNameVM)
         

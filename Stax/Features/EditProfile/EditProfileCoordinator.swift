@@ -17,17 +17,17 @@ final class EditProfileCoordinator: Coordinator {
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
     
-    private let appDIContainer: AppDIContainer
+    private let dependency: AppDependencies
   
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
+    init(navigationController: UINavigationController, dependency: AppDependencies){
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.dependency = dependency
     }
     
     func start() {
         
-        let vm = EditProfileVM(userManager: appDIContainer.userManager)
+        let vm = EditProfileVM(userManager: dependency.userManager)
 
         let editProfileVC = EditProfileVC(vm: vm)
         

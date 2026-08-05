@@ -25,20 +25,20 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     
     //Container
-    let appDIContainer: AppDIContainer
+    let dependency: AppDependencies
     
     var cancellables: Set<AnyCancellable> = []
     
     var vm: WorkoutSessionViewModel?
     var workoutId: String?
     
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer, workoutId: String? = nil) {
+    init(_ navigationController: UINavigationController, dependency: AppDependencies, workoutId: String? = nil) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.dependency = dependency
         self.workoutId = workoutId
         
-        self.vm = WorkoutSessionViewModel(sessionService: appDIContainer.sharedSessionService,
-                                          workoutRepository: appDIContainer.sharedWorkoutRepo, workoutId: workoutId)
+        self.vm = WorkoutSessionViewModel(sessionService: dependency.sharedSessionService,
+                                          workoutRepository: dependency.sharedWorkoutRepo, workoutId: workoutId)
     }
     
     
@@ -84,7 +84,9 @@ final class WorkoutSessionCoordinator: Coordinator{
         let listNav = UINavigationController()
         listNav.modalPresentationStyle = .fullScreen
         
-        let exerciseCoordinator = ExerciseListCoordinator(listNav, appDIContainer: appDIContainer)
+        let factory = DefaultExerciseListFactory(appDependencies: dependency)
+        
+        let exerciseCoordinator = ExerciseListCoordinator(listNav, factory: factory)
         exerciseCoordinator.finishDelegate = self
         
         exerciseCoordinator.didFinishWithSelection = {[weak self] selectedExercise in
@@ -107,7 +109,7 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     private func showWorkoutSummary(){
         
-        guard let workoutID = appDIContainer.sharedSessionService.currentWorkoutID,
+        guard let workoutID = dependency.sharedSessionService.currentWorkoutID,
               let duration = vm?.timerService.seconsElapsed
         else {return}
         
@@ -121,7 +123,7 @@ final class WorkoutSessionCoordinator: Coordinator{
             caloriesBurned: estimatedCalories
         )
         
-        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, appDIContaioner: appDIContainer, workoutID: workoutID, stats: summaryStats)
+        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, dependency: dependency, workoutID: workoutID, stats: summaryStats)
         summaryCoordinator.finishDelegate = self
         
         summaryCoordinator.onWorkoutSaved = {[weak self] in

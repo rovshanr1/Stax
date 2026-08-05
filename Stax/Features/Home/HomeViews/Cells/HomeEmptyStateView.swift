@@ -8,8 +8,7 @@
 import UIKit
 import SnapKit
 
-final class HomeEmptyStateCell: UICollectionViewCell {
-    static let identifier = "HomeEmptyStateCell"
+final class HomeEmptyStateView: UIView {
     
     //Closures
     var startWorkoutButtonTapped: (() -> Void)?
@@ -90,7 +89,7 @@ final class HomeEmptyStateCell: UICollectionViewCell {
     }
     
     private func setupUI() {
-        contentView.addSubview(contentStackView)
+        self.addSubview(contentStackView)
         iconBackgroundView.addSubview(iconImageView)
         
         contentStackView.setCustomSpacing(28, after: textStackView)

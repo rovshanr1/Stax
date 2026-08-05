@@ -22,25 +22,20 @@ final class ExerciseListCoordinator: Coordinator {
     
     var navigationController: UINavigationController
     
+    let factory: ExerciseListCoordinatorFactory
     
-    
-    let appDIContainer: AppDIContainer
-    
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer){
+    init(_ navigationController: UINavigationController, factory: ExerciseListCoordinatorFactory){
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.factory = factory
     }
     
     func start() {
-        let exerciseListVC = ExerciseListVC()
+
+        let exerciseListVC = factory.makeExerciseList()
         
         exerciseListVC.didSendEventClosure = { [weak self] event in
             self?.handle(event)
         }
-        
-
-        let viewModel = ExerciseListVM(repository: appDIContainer.sharedExerciseDefRepo)
-        exerciseListVC.viewModel = viewModel
         
         navigationController.pushViewController(exerciseListVC, animated: true)
     }

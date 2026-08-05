@@ -30,13 +30,13 @@ final class WorkoutSummaryCoordinator: Coordinator {
     
     var vm: WorkoutSummaryViewModel?
     
-    let appDIContainer: AppDIContainer
+    let dependency: AppDependencies
     private let workoutID: String
     private let stats: WorkoutStats
     
-    init(navigationController: UINavigationController, appDIContaioner: AppDIContainer, workoutID: String, stats: WorkoutStats) {
+    init(navigationController: UINavigationController, dependency: AppDependencies, workoutID: String, stats: WorkoutStats) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContaioner
+        self.dependency = dependency
         self.workoutID = workoutID
         self.stats = stats
     }
@@ -45,7 +45,7 @@ final class WorkoutSummaryCoordinator: Coordinator {
         let summaryVC = WorkoutSummaryVC()
     
         //VM Injection 
-        self.vm = WorkoutSummaryViewModel(workoutID: workoutID, workoutRepository: appDIContainer.genericWorkoutRepo, stats: stats, appDIContainer: appDIContainer)
+        self.vm = WorkoutSummaryViewModel(workoutID: workoutID, workoutRepository: dependency.genericWorkoutRepo, stats: stats, dependency: dependency)
         
         summaryVC.viewModel = self.vm
         

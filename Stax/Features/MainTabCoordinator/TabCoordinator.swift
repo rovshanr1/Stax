@@ -25,14 +25,14 @@ class TabCoordinator: NSObject, Coordinator {
     var tabBarController: UITabBarController
 
     //Container
-    private let appDIContainer: AppDIContainer
+    private let dependencies: AppDependencies
     
     
     
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
+    init(_ navigationController: UINavigationController, appDIContainer: AppDependencies) {
         self.navigationController = navigationController
         self.tabBarController = MainTabBarController()
-        self.appDIContainer = appDIContainer
+        self.dependencies = appDIContainer
     }
   
     func start() {
@@ -68,17 +68,21 @@ class TabCoordinator: NSObject, Coordinator {
         
         switch page {
         case .home:
-            let homeCoordinator = HomeCoordinator(navigationController: navController, factory: appDIContainer.makeHomeDependencyFactory())
+            let factory = DefaultHomeModuleFactory(dependency: dependencies)
+            
+            let homeCoordinator = HomeCoordinator(navigationController: navController, factory: factory)
             homeCoordinator.finishDelegate = self
             childCoordinators.append(homeCoordinator)
             homeCoordinator.start()
         case .workout:
-            let exerciseCoordinator = WorkoutCoordinator(navController, appDIContainer: appDIContainer)
+            let exerciseCoordinator = WorkoutCoordinator(navController, appDIContainer: dependencies)
             exerciseCoordinator.finishDelegate = self
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()
         case .profile:
-            let profileCoordinator = ProfileCoordinator(navController, appDIContainer: appDIContainer)
+            let factory = DefaultProfileModuleFactory(dependency: dependencies)
+            
+            let profileCoordinator = ProfileCoordinator(navController, factory: factory)
             profileCoordinator.finishDelegate = self
             childCoordinators.append(profileCoordinator)
             profileCoordinator.start()
