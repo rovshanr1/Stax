@@ -38,14 +38,14 @@ final class SettingsCoordinator: Coordinator{
     private let settingsVM: SettingsVM
     
     //Container
-    let appDIContainer: AppDependencies
+    let dependency: AppDependencies
     
     private var cancellables: Set<AnyCancellable> = []
 
     
     init(_ navigationController: UINavigationController, appDIContainer: AppDependencies) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.dependency = appDIContainer
         
         self.settingsVM = SettingsVM(userManager: appDIContainer.userManager)
     }
@@ -101,7 +101,7 @@ final class SettingsCoordinator: Coordinator{
     //MARK: - Profile Screen
     
     private func profileScreen() {
-        let coordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
+        let coordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: dependency)
        
         coordinator.finishDelegate = self
         childCoordinators.append(coordinator)
@@ -110,7 +110,7 @@ final class SettingsCoordinator: Coordinator{
     
     //MARK: - EdditAccount Scrren
     private func editAccountScreen() {
-        let coordinator = EditAccountCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
+        let coordinator = EditAccountCoordinator(navigationController: navigationController, appDIContainer: dependency)
         
         coordinator.finishDelegate = self
         coordinator.editDelegate = self

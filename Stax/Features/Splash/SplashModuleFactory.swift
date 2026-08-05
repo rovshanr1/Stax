@@ -12,15 +12,15 @@ protocol SplashModuleFactoryProtocol{
 }
 
 struct SplashModuleFactory: SplashModuleFactoryProtocol{
-    let appDIContainer: AppDependencies
+    let dependency: AppDependencies
     
     init(appDIContainer: AppDependencies) {
-        self.appDIContainer = appDIContainer
+        self.dependency = appDIContainer
     }
     
     func makeSplashModule() -> SplashVC {
        
-        let splashVM = SplashVM(firebaseSyncService: appDIContainer.sharedFirebaseService, syncManager: appDIContainer.sharedSyncManager, workoutRepo: appDIContainer.genericWorkoutRepo, dataSeeder: appDIContainer.dataSeeder
+        let splashVM = SplashVM(firebaseSyncService: dependency.sharedFirebaseService, syncManager: dependency.sharedSyncManager, workoutRepo: dependency.genericWorkoutRepo, dataSeeder: dependency.dataSeeder
         )
         let splashVC = SplashVC(vm: splashVM)
         

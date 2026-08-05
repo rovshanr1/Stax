@@ -17,17 +17,17 @@ protocol HomeCoordinatorFactory{
 
 struct DefaultHomeModuleFactory: HomeCoordinatorFactory{
     
-    let appDIContainer: AppDependencies
+    let dependency: AppDependencies
     
-    init(appDIContainer: AppDependencies) {
-        self.appDIContainer = appDIContainer
+    init(dependency: AppDependencies) {
+        self.dependency = dependency
     }
     
     func makeHomeViewController() -> HomeVC {
         let vm = HomeVM(
-            workoutRepo: appDIContainer.sharedWorkoutRepo,
-            shareService: appDIContainer.shareService,
-            synService: appDIContainer.sharedFirebaseService)
+            workoutRepo: dependency.sharedWorkoutRepo,
+            shareService: dependency.shareService,
+            synService: dependency.sharedFirebaseService)
         
         let vc = HomeVC(vm: vm)
         
@@ -35,10 +35,10 @@ struct DefaultHomeModuleFactory: HomeCoordinatorFactory{
     }
     
     func makeWorkoutSessionCoordinator(navigationController: UINavigationController, workoutId: String?) -> WorkoutSessionCoordinator {
-        return WorkoutSessionCoordinator(navigationController, appDIContainer: appDIContainer, workoutId: workoutId)
+        return WorkoutSessionCoordinator(navigationController, dependency: dependency, workoutId: workoutId)
     }
     
     func makeWorkoutDetailCoordinator(navigationController: UINavigationController, workoutId workoutID: String) -> WorkoutDetailCoordinator {
-        return WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, workoutID: workoutID)
+        return WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: dependency, workoutID: workoutID)
     }
 }

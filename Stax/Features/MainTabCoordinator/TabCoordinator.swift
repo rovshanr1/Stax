@@ -68,7 +68,7 @@ class TabCoordinator: NSObject, Coordinator {
         
         switch page {
         case .home:
-            let factory = DefaultHomeModuleFactory(appDIContainer: dependencies)
+            let factory = DefaultHomeModuleFactory(dependency: dependencies)
             
             let homeCoordinator = HomeCoordinator(navigationController: navController, factory: factory)
             homeCoordinator.finishDelegate = self
@@ -80,7 +80,7 @@ class TabCoordinator: NSObject, Coordinator {
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()
         case .profile:
-            let factory = DefaultProfileModuleFactory(appDIContainer: dependencies)
+            let factory = DefaultProfileModuleFactory(dependency: dependencies)
             
             let profileCoordinator = ProfileCoordinator(navController, factory: factory)
             profileCoordinator.finishDelegate = self

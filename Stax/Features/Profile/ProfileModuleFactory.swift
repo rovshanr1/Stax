@@ -18,31 +18,31 @@ protocol ProfileCoordinatorFactory{
 }
 
 struct DefaultProfileModuleFactory: ProfileCoordinatorFactory {
-    let appDIContainer: AppDependencies
+    let dependency: AppDependencies
     
     
     func makeProfileViewController() -> ProfileVC {
         let vm = ProfileVM(
-            workoutRepo: appDIContainer.sharedWorkoutRepo,
-            userManger: appDIContainer.userManager)
+            workoutRepo: dependency.sharedWorkoutRepo,
+            userManger: dependency.userManager)
         
         return ProfileVC(viewModel: vm)
     }
     
     func makeSettingsCoordinates(navigationController: UINavigationController) -> SettingsCoordinator {
-        SettingsCoordinator(navigationController, appDIContainer: appDIContainer)
+        SettingsCoordinator(navigationController, appDIContainer: dependency)
     }
     
     func makeEditProfileCoordinator(navigationController: UINavigationController) -> EditProfileCoordinator {
-        EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
+        EditProfileCoordinator(navigationController: navigationController, appDIContainer: dependency)
     }
     
     func makeWorkoutDetailCoordinator(navigationController: UINavigationController, workoutID: String) -> WorkoutDetailCoordinator {
-        WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, workoutID: workoutID)
+        WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: dependency, workoutID: workoutID)
     }
     
     func makeWorkoutSessionCoordinator(navigationController: UINavigationController, workoutID: String) -> WorkoutSessionCoordinator {
-        WorkoutSessionCoordinator(navigationController, appDIContainer: appDIContainer, workoutId: workoutID)
+        WorkoutSessionCoordinator(navigationController, dependency: dependency, workoutId: workoutID)
     }
     
     

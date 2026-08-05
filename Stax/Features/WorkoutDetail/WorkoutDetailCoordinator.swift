@@ -28,12 +28,12 @@ final class WorkoutDetailCoordinator: Coordinator{
     private let workoutID: String
     
     //Container
-    private let appDIContainer: AppDependencies
+    private let dependency: AppDependencies
     
     
     init(navigationController: UINavigationController, appDIContainer: AppDependencies, workoutID: String) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.dependency = appDIContainer
         self.workoutID = workoutID
     }
     
@@ -41,7 +41,7 @@ final class WorkoutDetailCoordinator: Coordinator{
         let workoutDetailVC = WorkoutDetailVC()
         
         //VM injection
-        self.vm = WorkoutDetailVM(workoutID: workoutID, workoutRepo: appDIContainer.sharedWorkoutRepo)
+        self.vm = WorkoutDetailVM(workoutID: workoutID, workoutRepo: dependency.sharedWorkoutRepo)
         workoutDetailVC.vm = self.vm
         
         workoutDetailVC.hidesBottomBarWhenPushed = true
