@@ -75,7 +75,8 @@ class TabCoordinator: NSObject, Coordinator {
             childCoordinators.append(homeCoordinator)
             homeCoordinator.start()
         case .workout:
-            let exerciseCoordinator = WorkoutCoordinator(navController, appDIContainer: dependencies)
+            let factory = DefaultWorkoutModuleFactory(dependency: dependencies)
+            let exerciseCoordinator = WorkoutCoordinator(navController, factory: factory)
             exerciseCoordinator.finishDelegate = self
             childCoordinators.append(exerciseCoordinator)
             exerciseCoordinator.start()

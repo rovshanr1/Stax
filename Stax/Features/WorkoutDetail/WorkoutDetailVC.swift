@@ -30,7 +30,18 @@ final class WorkoutDetailVC: UIViewController{
     //Closures
     var didSendEventClosure: ((WorkoutDetailEvent) -> Void)?
     
-    var vm: WorkoutDetailVM!
+    //ViewModel
+    var viewModel: WorkoutDetailVM
+    
+    init(viewModel: WorkoutDetailVM){
+        self.viewModel = viewModel
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     //private properties
     private var contentView = WorkoutDetailView()
@@ -126,7 +137,7 @@ final class WorkoutDetailVC: UIViewController{
     
     private func bindViewModel(){
         
-        Publishers.CombineLatest3(vm.output.summaryData, vm.output.muscleSplitData, vm.output.exerciseData)
+        Publishers.CombineLatest3(viewModel.output.summaryData, viewModel.output.muscleSplitData, viewModel.output.exerciseData)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] summaryData, muscleSplit, exerciseData in
                 guard let self = self,
@@ -140,7 +151,7 @@ final class WorkoutDetailVC: UIViewController{
             
         
         DispatchQueue.main.async {[weak self] in
-            self?.vm.input.viewDidLoad.send()
+            self?.viewModel.input.viewDidLoad.send()
         }
     }
     

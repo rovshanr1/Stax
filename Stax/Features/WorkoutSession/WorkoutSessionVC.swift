@@ -27,7 +27,17 @@ class WorkoutSessionVC: UIViewController {
     
     //Internal Properties
     var didSendEventClosure: ((WorkoutSessionEvent) -> Void)?
-    var viewModel: WorkoutSessionViewModel!
+    private let viewModel: WorkoutSessionViewModel
+    
+    init(viewModel: WorkoutSessionViewModel){
+        self.viewModel = viewModel
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     //Private Properties
     private var cancellables = Set<AnyCancellable>()
@@ -59,7 +69,7 @@ class WorkoutSessionVC: UIViewController {
         super.viewDidAppear(animated)
         
         isViewApeared = true
-        viewModel?.input.viewDidAppear.send()
+        viewModel.input.viewDidAppear.send()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -72,9 +82,12 @@ class WorkoutSessionVC: UIViewController {
     }
     
     //MARK: - Event Binding
-    private func bindEvents(){
+    private func bindEvents() {
         contentView.addExerciseButtonTapped = { [weak self] in
-            self?.didSendEventClosure?(.addExercise)
+            guard let self else { return }
+            self.didSendEventClosure?(.addExercise(onSelected: { [weak self] exercise in
+                self?.viewModel.input.addExercise.send(exercise)
+            }))
         }
     }
     
@@ -122,7 +135,7 @@ class WorkoutSessionVC: UIViewController {
                     }
                     
                     cell.exerciseMenuOnTapped = { [weak self] in
-                        self?.didSendEventClosure?(.exerciseMenuButtonTapped(exerciseItem))
+                        self?.showExerciseMenu(for: exerciseItem)
                     }
                     
                     cell.addSetTapped = { [weak self] exercise in
@@ -207,8 +220,8 @@ class WorkoutSessionVC: UIViewController {
         
         viewModel.output.finishWorkoutEvent
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                self?.didSendEventClosure?(.finishWorkout)
+            .sink { [weak self] (workout, stats) in
+                self?.didSendEventClosure?(.finishWorkout(workoutID: workout, stats: stats))
             }
             .store(in: &cancellables)
         
@@ -277,6 +290,44 @@ class WorkoutSessionVC: UIViewController {
             self.contentView.tableView.endUpdates()
         }
        
+    }
+    
+    //MARK: - Exercise Menu Navigation
+    private func showExerciseMenu(for exercise: WorkoutExerciseDomainModel) {
+        let sheetNav = ExerciseMenuSheet()
+        sheetNav.modalPresentationStyle = .pageSheet
+        
+        if let sheet = sheetNav.sheetPresentationController {
+            sheet.detents = [.custom(identifier: .init("small")) { _ in 120 }]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        sheetNav.onActionSelected = { [weak self, weak sheetNav] action in
+            guard let self, let sheetNav else { return }
+            
+            sheetNav.dismiss(animated: true) {
+                switch action {
+                case .replaceExercise:
+                    self.didSendEventClosure?(.replaceExercise(exercise, onSelected: { [weak self] newExercise in
+                        self?.viewModel.input.replaceExercise.send((exercise, newExercise))
+                    }))
+                case .deleteExercise:
+                    self.viewModel.input.deleteExercise.send(exercise)
+                }
+            }
+        }
+        
+        present(sheetNav, animated: true)
+    }
+    
+    
+    //MARK: - Public Methods
+    func addExercise(_ exercise: ExerciseDomainModel){
+        viewModel.input.addExercise.send(exercise)
+    }
+    
+    func replaceExercise(_ old: WorkoutExerciseDomainModel, with new: ExerciseDomainModel){
+        viewModel.input.replaceExercise.send((old, new))
     }
 }
 

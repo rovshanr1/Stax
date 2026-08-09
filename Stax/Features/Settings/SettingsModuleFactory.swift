@@ -26,16 +26,17 @@ struct DefaultSettingsCoordinatorFactory: SettingsCoordinatorFactory {
     func makeSettingViewController() -> SettingsVC {
         let viewModel = SettingsVM(userManager: dependency.userManager)
         let viewController = SettingsVC(vm: viewModel)
-        
         return viewController
     }
     
     func makeEditProfileCoordinator(navigationController: UINavigationController) -> EditProfileCoordinator {
-        EditProfileCoordinator(navigationController: navigationController, dependency: dependency)
+        let factory = DefaultEditProfileModuleFactory(dependency: dependency)
+        return EditProfileCoordinator(navigationController: navigationController, factory: factory)
     }
     
     func makeEditAccountCoordinator(navigationConroller: UINavigationController) -> EditAccountCoordinator {
-        EditAccountCoordinator(navigationController: navigationConroller, dependency: dependency)
+        let factory = DefaultEditAccountModuleFactory(dependency: dependency)
+        return EditAccountCoordinator(navigationController: navigationConroller, factory: factory)
     }
     
 }

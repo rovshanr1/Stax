@@ -29,39 +29,25 @@ final class EditAccountCoordinator: Coordinator{
     //Delegate
     weak var editDelegate: EditAccountCoordinatorDelegate?
     
-    private var vm: EditAccountVM
-    private var dependency: AppDependencies
+    //Factory
+    private let factory: EditAccountCoordinatorFactory
     
     private var cancellables: Set<AnyCancellable> = []
     
-    init(navigationController: UINavigationController, dependency: AppDependencies){
+    init(navigationController: UINavigationController, factory: EditAccountCoordinatorFactory){
         self.navigationController = navigationController
-        self.dependency = dependency
-        
-        self.vm = EditAccountVM(userManager: dependency.userManager)
+        self.factory = factory
     }
     
     func start() {
-        let editAccountVC = EditAccountVC(viewModel: vm)
+        let editAccountVC = factory.makeEditAccountViewController()
         
-        editAccountVC.didSentEventClosure = { [weak self] event in
+        editAccountVC.coordinatorEventClosure = { [weak self] event in
             self?.handle(event)
         }
         
-        handleNavigation()
-        
         navigationController.pushViewController(editAccountVC, animated: true)
     }
-    
-    private func handleNavigation(){
-        vm.output.itemsOnTapped
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] editAccountEvent in
-                self?.handle(editAccountEvent)
-            }
-            .store(in: &cancellables)
-    }
-    
     
     private func handle(_ event: EditAccountEvent) {
         switch event{
@@ -83,8 +69,7 @@ final class EditAccountCoordinator: Coordinator{
     //MARK: - Views Handling
     
     private func handleChangeEmail(){
-        let chnageEmailVM = ChangeEmailVM(userManager: dependency.userManager)
-        let changeEmailVC = ChangeEmailVC(viewModel: chnageEmailVM)
+        let changeEmailVC = factory.makeChangeEmail()
         
         changeEmailVC.navigationItem.largeTitleDisplayMode = .never
         
@@ -96,9 +81,7 @@ final class EditAccountCoordinator: Coordinator{
     }
     
     private func handleChangeUsername(){
-        let chnageUserNameVM = ChangeUserNameVM(userManager: dependency.userManager)
-        
-        let chnageUserNameVC = ChangeUserNameVC(viewModel: chnageUserNameVM)
+        let chnageUserNameVC = factory.makeChangeUserName()
         
         chnageUserNameVC.navigationItem.largeTitleDisplayMode = .never
         
@@ -111,8 +94,7 @@ final class EditAccountCoordinator: Coordinator{
     }
     
     private func handleUserPassword(){
-        let changePasswordVM = ChangePasswordVM()
-        let chnagePasswordVC = ChangePasswordVC(viewModel: changePasswordVM)
+        let chnagePasswordVC = factory.makeChangePassword()
         
         chnagePasswordVC.navigationItem.largeTitleDisplayMode = .never
         
@@ -124,8 +106,7 @@ final class EditAccountCoordinator: Coordinator{
     }
     
     private func handleDeleteAccount(){
-        let deleteAccountVM = DeleteAccountVM()
-        let deleteAccountVC = DeleteAccountVC(viewModel: deleteAccountVM)
+        let deleteAccountVC = factory.makeDeleteAccount()
         
         deleteAccountVC.navigationItem.largeTitleDisplayMode = .never
         

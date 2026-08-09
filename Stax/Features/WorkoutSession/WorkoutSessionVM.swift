@@ -28,7 +28,7 @@ final class WorkoutSessionViewModel{
     ///Output: "Data" to VC (Data Streams)
     struct Output{
         let timerSubject: CurrentValueSubject<String, Never>
-        let finishWorkoutEvent: PassthroughSubject<Void, Never>
+        let finishWorkoutEvent: PassthroughSubject<(String, WorkoutStats), Never>
         let cancelWorkoutEvent: PassthroughSubject<Void, Never>
         let exercises: CurrentValueSubject<[WorkoutExerciseDomainModel], Never>
         let sessionStats: CurrentValueSubject<(volume: Double, sets: Int), Never>
@@ -111,7 +111,9 @@ final class WorkoutSessionViewModel{
         
         sessionService.sessionStatsPublisher
             .sink { [weak self] stats in
-                self?.output.sessionStats.send(stats)
+                guard let self else { return }
+                self.currentStats = stats
+                self.output.sessionStats.send(stats)
             }
             .store(in: &cancellables)
         
@@ -142,9 +144,20 @@ final class WorkoutSessionViewModel{
                 
                 let finalDuration = Double(self.timerService.seconsElapsed)
                 
+                guard let workoutID = self.sessionService.currentWorkoutID else { return }
+                
+                let stats = self.output.sessionStats.value
+                let estimatedCalories = (finalDuration / 60.0) * 6.0
+                
+                let summaryStats = WorkoutStats(
+                    duration: finalDuration,
+                    volume: stats.volume,
+                    totalSets: stats.sets,
+                    caloriesBurned: estimatedCalories)
+                
                 self.sessionService.finishWorkout(duration: finalDuration)
                 
-                self.output.finishWorkoutEvent.send()
+                self.output.finishWorkoutEvent.send((workoutID, summaryStats))
             }
             .store(in: &cancellables)
         

@@ -19,15 +19,14 @@ final class WorkoutCoordinator: Coordinator{
     var childCoordinators: [Coordinator] = []
     
     var navigationController: UINavigationController
-    
+    private let factory: WorkoutCoordinatorFactory
     
     
     //Container
-    let dependency: AppDependencies
     
-    init(_ navigationController: UINavigationController, appDIContainer: AppDependencies) {
+    init(_ navigationController: UINavigationController, factory: WorkoutCoordinatorFactory) {
         self.navigationController = navigationController
-        self.dependency = appDIContainer
+        self.factory = factory
     }
     
     
@@ -54,7 +53,7 @@ final class WorkoutCoordinator: Coordinator{
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordionator = WorkoutSessionCoordinator(modalNav, dependency: dependency)
+        let sessionCoordionator = factory.makeWorkoutSessionCoordinator(navigationController: modalNav, workoutId: nil)
         sessionCoordionator.finishDelegate = self
         
         childCoordinators.append(sessionCoordionator)
