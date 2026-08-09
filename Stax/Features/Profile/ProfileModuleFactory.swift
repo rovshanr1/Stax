@@ -45,7 +45,8 @@ struct DefaultProfileModuleFactory: ProfileCoordinatorFactory {
     }
     
     func makeWorkoutSessionCoordinator(navigationController: UINavigationController, workoutID: String) -> WorkoutSessionCoordinator {
-        WorkoutSessionCoordinator(navigationController, dependency: dependency, workoutId: workoutID)
+        let factory = DefaultWorkoutSessionFactory(dependency: dependency)
+        return WorkoutSessionCoordinator(navigationController, factory: factory, workoutId: workoutID)
     }
     
     

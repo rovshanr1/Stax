@@ -35,7 +35,8 @@ struct DefaultHomeModuleFactory: HomeCoordinatorFactory{
     }
     
     func makeWorkoutSessionCoordinator(navigationController: UINavigationController, workoutId: String?) -> WorkoutSessionCoordinator {
-        return WorkoutSessionCoordinator(navigationController, dependency: dependency, workoutId: workoutId)
+        let factory = DefaultWorkoutSessionFactory(dependency: dependency)
+        return WorkoutSessionCoordinator(navigationController, factory: factory, workoutId: workoutId)
     }
     
     func makeWorkoutDetailCoordinator(navigationController: UINavigationController, workoutId workoutID: String) -> WorkoutDetailCoordinator {
