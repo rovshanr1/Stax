@@ -18,7 +18,20 @@ class WorkoutSummaryVC: UIViewController {
     
     //Internal Properties
     var didSendEventClosure: ((WorkoutSummaryEvent) -> Void)?
-    var viewModel: WorkoutSummaryViewModel!
+    var viewModel: WorkoutSummaryViewModel
+    
+    init(viewModel: WorkoutSummaryViewModel) {
+        self.viewModel = viewModel
+        
+        super.init(nibName: nil, bundle: nil)
+        
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
     
     //Private Properties
     private var cancellables = Set<AnyCancellable>()
@@ -41,68 +54,102 @@ class WorkoutSummaryVC: UIViewController {
         print("deinited summary")
     }
     
- 
-    private func bindEvent(){
-        //Header View Callback
-        contentView.titleOnChanged = {[weak self] title in
-            guard let self else {return}
-            
-                self.viewModel?.input.updateTitle.send(title)
-            
-          
+    
+    private func bindEvent() {
+        contentView.titleOnChanged = { [weak self] title in
+            self?.viewModel.input.updateTitle.send(title)
         }
-
-        //Description View Callback
+        
         contentView.descriptionOnChange = { [weak self] description in
-            guard let self else { return }
-            self.viewModel.input.updateDescription.send(description)
+            self?.viewModel.input.updateDescription.send(description)
         }
         
         contentView.syncButtonOnTapped = { [weak self] in
-            guard let self else {return}
-            self.didSendEventClosure?(.syncButtpPressed)
+            self?.showSyncSheet()
         }
         
         contentView.discardButtonOnTapped = { [weak self] in
-            guard let self else {return}
-            self.didSendEventClosure?(.discardWokrout)
+            self?.confirmDiscard()
         }
     }
     
-    private func bindViewModel(){
+    private func bindViewModel() {
         DispatchQueue.main.async { [weak self] in
             self?.viewModel.input.viewDidLoad.send()
         }
         
-        
-        viewModel?.output.workoutStats
+        viewModel.output.workoutStats
             .receive(on: DispatchQueue.main)
             .sink { [weak self] presentation in
                 guard let self, let workout = viewModel.workout else { return }
-                
-                print("\(presentation)")
-                
-                self.contentView.informationView.configureInformations(duration: presentation.duration, volume: presentation.volume, sets: presentation.sets, date: workout.date ?? Date())
+                self.contentView.informationView.configureInformations(
+                    duration: presentation.duration,
+                    volume: presentation.volume,
+                    sets: presentation.sets,
+                    date: workout.date ?? Date()
+                )
             }
             .store(in: &cancellables)
         
         viewModel.output.defaultTitle
             .receive(on: DispatchQueue.main)
             .sink { [weak self] title in
-                guard let self else {return}
-                self.contentView.headerView.configureHeader(title)
+                self?.contentView.headerView.configureHeader(title)
             }
             .store(in: &cancellables)
         
-        
-        viewModel?.output.isHealthKitSyncEnabled
+        viewModel.output.isHealthKitSyncEnabled
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isEnabled in
                 self?.contentView.configureSyncButton(isEnabled: isEnabled)
             }
             .store(in: &cancellables)
+        
+        viewModel.output.finished
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                self?.didSendEventClosure?(.workoutSaved)
+            }
+            .store(in: &cancellables)
     }
     
+    private func showSyncSheet() {
+        let currentState = viewModel.output.isHealthKitSyncEnabled.value
+        let sheetNav = SyncWithSheet(initialSyncState: currentState)
+        sheetNav.modalPresentationStyle = .pageSheet
+        
+        if let sheet = sheetNav.sheetPresentationController {
+            sheet.detents = [.custom(identifier: .init("small")) { _ in 150 }]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        sheetNav.syncWithHealth = { [weak self] isEnabled in
+            self?.viewModel.input.toggleHealthKitSync.send(isEnabled)
+        }
+        
+        viewModel.output.isHealthKitSyncEnabled
+            .receive(on: DispatchQueue.main)
+            .sink { [weak sheetNav] isEnabled in
+                sheetNav?.forceUpdateState(isEnabled)
+            }
+            .store(in: &cancellables)
+        
+        present(sheetNav, animated: true)
+    }
+    
+    private func confirmDiscard() {
+        AlertManager.showConfirmationAlert(
+            on: self,
+            title: nil,
+            message: "Are you sure you want to discard this workout?",
+            confirmTitle: "Discard Workout",
+            cancelTitle: "Cancel"
+        ) { [weak self] in
+            guard let self else { return }
+            self.viewModel.input.discardWorkout.send(())
+            self.didSendEventClosure?(.workoutDiscarded)
+        }
+    }
 }
 
 //MARK: - NavigationBarItems
@@ -125,7 +172,7 @@ extension WorkoutSummaryVC{
     @objc private func saveButtonTapped(){
         AlertManager.showConfirmationAlert(on: self, title: nil, message: "Save this workout?", confirmTitle: "Save", cancelTitle: "Cancel", action: { [weak self] in
             guard let self else {return}
-            self.didSendEventClosure?(.saveWorkout)
+            self.viewModel.input.saveWorkout.send()
         })
     }
 }

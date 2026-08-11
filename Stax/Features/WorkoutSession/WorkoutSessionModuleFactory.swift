@@ -33,6 +33,7 @@ struct DefaultWorkoutSessionFactory: WorkoutSessionCoordinatorFactory {
     }
     
     func makeWorkoutSummaryCoordinator(navigationController: UINavigationController, workoutID: String, stats: WorkoutStats) -> WorkoutSummaryCoordinator {
-        WorkoutSummaryCoordinator(navigationController: navigationController, dependency: dependency, workoutID: workoutID, stats: stats)
+        let summaryFactory = DefaultWorkoutSummaryFactory(dependency: dependency)
+        return WorkoutSummaryCoordinator(navigationController: navigationController, factory: summaryFactory, workoutID: workoutID, stats: stats)
     }
 }
