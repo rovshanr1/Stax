@@ -26,6 +26,8 @@ final class SplashVM{
     
     private let userDefaults: UserDefaults
     
+    private let minimumDisplayDuration: TimeInterval = 1.0
+    
     init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol, userDefaults: UserDefaults = .standard) {
         self.firebaseSyncService = firebaseSyncService
         self.syncManager = syncManager
@@ -40,12 +42,26 @@ final class SplashVM{
     
     private func startInitialization(){
         Task{
+            let startTime = Date()
+            
             await dataSeeder.seedExercise()
-            
             await cleanAbandonedWorkouts()
-            
             await performSync()
+            
+            await enforceMinimumDisplayDuration(since: startTime)
+            
+            output.syncCompleted.send()
         }
+    }
+    
+    //MARK: - Minimum Duration Enforcement
+    private func enforceMinimumDisplayDuration(since startTime: Date) async{
+        let elapsed = Date().timeIntervalSince(startTime)
+        let remaining = minimumDisplayDuration - elapsed
+        
+        guard remaining > 0 else { return }
+        
+        try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
     }
     
     //MARK: - Garbage Collection
@@ -68,7 +84,6 @@ final class SplashVM{
     //MARK: - FirebaseSync
     private func performSync() async{
         if userDefaults.bool(forKey: UserDefaultsKeys.isSeededFromFirebase) == true {
-            output.syncCompleted.send()
             return
         }
         
@@ -86,10 +101,8 @@ final class SplashVM{
                     }
                     
                     userDefaults.set(true, forKey: UserDefaultsKeys.isSeededFromFirebase)
-                    output.syncCompleted.send()
                 case .failure(let error):
                     print(error.localizedDescription)
-                    output.syncCompleted.send()
                 }
                 
                 continuation.resume()
