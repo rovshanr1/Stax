@@ -20,7 +20,7 @@ struct DefaultWorkoutSessionFactory: WorkoutSessionCoordinatorFactory {
     let dependency: AppDependencies
     
     func makeWorkoutSessionVC(workoutID: String?) -> WorkoutSessionVC {
-        let viewModel = WorkoutSessionViewModel(sessionService: dependency.sharedSessionService, workoutRepository: dependency.sharedWorkoutRepo, workoutId: workoutID)
+        let viewModel = WorkoutSessionViewModel(sessionService: dependency.sharedSessionService, workoutId: workoutID)
         
         let viewController = WorkoutSessionVC(viewModel: viewModel)
         

@@ -12,14 +12,18 @@ extension Exercise{
     func toDomain() -> ExerciseDomainModel {
         
         let rawMuscleString = self.targetMuscle ?? ""
-        let safeMusleGroup = MuscleGroup(rawValue: rawMuscleString) ?? .other
+        let rawTargetString = self.type ?? ""
         
+        let safeMusleGroup = MuscleGroup(rawValue: rawMuscleString) ?? .other
+        let exerciseType = ExerciseType(rawValue: rawTargetString) ?? .weighted
+
         return ExerciseDomainModel(
             id: self.id?.uuidString ?? UUID().uuidString,
             name: self.name ?? "",
             targetMuscleGroups: safeMusleGroup,
             videoURL: self.videoURL ?? "",
-            exerciseImage: self.exerciseImage ?? ""
+            exerciseImage: self.exerciseImage ?? "",
+            type: exerciseType
         )
     }
 }

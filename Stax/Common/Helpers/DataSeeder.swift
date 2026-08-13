@@ -50,6 +50,7 @@ final class DataSeeder: DataSeederProtocol{
             newExercise.name = dto.name
             newExercise.targetMuscle = dto.targetMuscle
             newExercise.exerciseImage = dto.exerciseImage
+            newExercise.type = dto.type
             
             if let staticUUID = UUID(uuidString: dto.id) {
                 newExercise.id = staticUUID

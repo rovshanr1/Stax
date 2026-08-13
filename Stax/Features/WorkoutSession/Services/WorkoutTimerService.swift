@@ -10,7 +10,7 @@ import Combine
 
 protocol WorkoutTimerServiceProtocol {
     var timerPublisher: PassthroughSubject<String, Never> {get}
-    var seconsElapsed: Double {get}
+    var secondsElapsed: Double {get}
     func start()
     func stop()
     func setInitialTime(_ seconds: Double)
@@ -18,7 +18,7 @@ protocol WorkoutTimerServiceProtocol {
 
 final class WorkoutTimerService: WorkoutTimerServiceProtocol{
     let timerPublisher = PassthroughSubject<String, Never>()
-    var seconsElapsed: Double = 0.0
+    var secondsElapsed: Double = 0.0
     private var timer: Timer?
     
     func start() {
@@ -27,8 +27,8 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [weak self] _ in
             guard let self else {return}
             
-            self.seconsElapsed += 1
-            self.timerPublisher.send(self.seconsElapsed.formatDuration())
+            self.secondsElapsed += 1
+            self.timerPublisher.send(self.secondsElapsed.formatDuration())
         })
         
     }
@@ -40,7 +40,7 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
     
     
     func setInitialTime(_ seconds: Double) {
-        self.seconsElapsed = seconds
+        self.secondsElapsed = seconds
         timerPublisher.send(seconds.formatDuration())
     }
 }
