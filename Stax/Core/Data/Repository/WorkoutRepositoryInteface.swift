@@ -9,15 +9,23 @@ import Foundation
 import CoreData
 import Combine
 
+enum WorkoutFinalizationError: Error {
+    case workoutNotFound
+}
+
 protocol WorkoutRepositoryProtocol{
     var workoutPublisher: CurrentValueSubject<[WorkoutDomainModel]?, Never> { get }
     func fetchWorkouts()
     func deleteWorkout(by id: String)
     func getWorkout(by id: String) -> WorkoutDomainModel?
+    
+    func fetchWorkoutDetails(by id: String) -> WorkoutDomainModel?
+    func finalizeWorkout(id: String, title: String, description: String, stats: WorkoutStats) async throws -> WorkoutDomainModel
+    
 }
 
 final class WorkoutRepository: NSObject, WorkoutRepositoryProtocol {
-   
+    
     
     var workoutPublisher = CurrentValueSubject<[WorkoutDomainModel]?, Never>(nil)
     
@@ -60,6 +68,32 @@ final class WorkoutRepository: NSObject, WorkoutRepositoryProtocol {
         
         let domainModels = workouts.map { $0.toDomain() }
         workoutPublisher.send(domainModels)
+    }
+    
+    func fetchWorkoutDetails(by id: String) -> WorkoutDomainModel? {
+        genericRepository.fetch(by: id)?.toDomain()
+    }
+    
+    func finalizeWorkout(id: String, title: String, description: String, stats: WorkoutStats) async throws -> WorkoutDomainModel {
+        guard let workout = genericRepository.fetch(by: id) else {
+            throw WorkoutFinalizationError.workoutNotFound
+        }
+        
+        if !title.isEmpty {
+            workout.name = title
+        }
+        workout.workoutDescription = description
+        
+        if let calories = stats.caloriesBurned {
+            workout.calories = Int16(calories)
+        }
+        workout.sets = Int16(stats.totalSets)
+        workout.volume = stats.volume
+        workout.duration = stats.duration
+        
+        try await genericRepository.saveAsync()
+        
+        return workout.toDomain()
     }
 }
 

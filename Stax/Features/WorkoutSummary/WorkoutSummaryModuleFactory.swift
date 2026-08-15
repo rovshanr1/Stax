@@ -15,7 +15,7 @@ struct DefaultWorkoutSummaryFactory: WorkoutSummaryCoordinatorFactory{
     let dependency: AppDependencies
     
     func makeWorkoutSummaryVC(workoutID: String, stats: WorkoutStats) -> WorkoutSummaryVC {
-        let viewModel = WorkoutSummaryViewModel(workoutID: workoutID, workoutRepository: dependency.genericWorkoutRepo, stats: stats, dependency: dependency)
+        let viewModel = WorkoutSummaryViewModel(workoutID: workoutID, workoutRepository: dependency.genericWorkoutRepo, stats: stats)
         let viewController = WorkoutSummaryVC(viewModel: viewModel)
         
         return viewController

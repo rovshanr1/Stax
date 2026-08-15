@@ -46,7 +46,6 @@ final class WorkoutSummaryViewModel{
     private var preferencesService: AppPreferencesServiceInterface
     private let healthKitService: HealthKitServiceInterface?
     private let syncService: FirebaseSyncServiceInterface
-    private let dependency: AppDependencies
     
     private var cancellables: Set<AnyCancellable> = []
     
@@ -58,11 +57,9 @@ final class WorkoutSummaryViewModel{
          preferancesService: AppPreferencesServiceInterface = AppPreferencesService(),
          healthKitService: HealthKitServiceInterface = HealthKitService(),
          syncService: FirebaseSyncServiceInterface = FirebaseSyncService(),
-         dependency: AppDependencies
     ){
         self.workoutID = workoutID
         self.workoutRepository = workoutRepository
-        self.dependency = dependency
         self.stats = stats
         self.preferencesService = preferancesService
         self.healthKitService = healthKitService
