@@ -8,10 +8,22 @@
 import Foundation
 import HealthKit
 
-protocol HealthKitServiceInterface{
+protocol HealthKitServiceInterface {
     var isAvailable: Bool { get }
-    func requestAuthorization(completion: @escaping (Bool, Error?) -> Void)
-    func saveWorkout(duration: TimeInterval, volume: Double, sets: Int, calories: Double, date: Date, completion: @escaping (Bool, Error?) -> Void)
+    func requestAuthorization() async -> Bool
+    func saveWorkout(duration: TimeInterval, volume: Double, sets: Int, calories: Double, date: Date) async throws
+}
+
+enum HealthKitServiceError: LocalizedError {
+    case missingType(String)
+    case operationFailed(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .missingType(let name): return "\(name) type not available"
+        case .operationFailed(let step): return "HealthKit \(step) failed"
+        }
+    }
 }
 
 final class HealthKitService: HealthKitServiceInterface{
@@ -23,113 +35,106 @@ final class HealthKitService: HealthKitServiceInterface{
         return HKHealthStore.isHealthDataAvailable()
     }
     
-    func requestAuthorization(completion: @escaping (Bool, (any Error)?) -> Void) {
-        guard isAvailable else {
-            completion(false, NSError(domain: "Stax", code: 1, userInfo: [NSLocalizedDescriptionKey: "HealthKit is not available on this device"]))
-            return
-        }
+    func requestAuthorization() async -> Bool {
+        guard isAvailable else { return false }
         
         guard let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
-            completion(false, NSError(domain: "Stax", code: 2, userInfo:[NSLocalizedDescriptionKey: "Active Energy Type not available"]))
-            return
+            return false
         }
         
         let typesToWrite: Set<HKSampleType> = [
             HKObjectType.workoutType(),
-            activeEnergy,
+            activeEnergy
         ]
-        
         let typesToRead: Set<HKObjectType> = []
         
-        healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead){success, error in
-            DispatchQueue.main.async {
-                if success{
-                    let workoutType = HKObjectType.workoutType()
-                    let status = self.healthStore.authorizationStatus(for: workoutType)
-                    
-                    if status == .sharingAuthorized{
-                        completion(true , nil)
-                    }else{
-                        completion(false, nil)
-                    }
-                }else{
-                    completion(false, error)
-                }
-                
+        let granted: Bool = await withCheckedContinuation { continuation in
+            healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { success, _ in
+                continuation.resume(returning: success)
             }
-            
+        }
+        
+        guard granted else { return false }
+        
+        let status = healthStore.authorizationStatus(for: HKObjectType.workoutType())
+        return status == .sharingAuthorized
+    }
+    
+    func saveWorkout(duration: TimeInterval, volume: Double, sets: Int, calories: Double, date: Date) async throws {
+        let endDate = date
+        let startDate = endDate.addingTimeInterval(-duration)
+        
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = .traditionalStrengthTraining
+        configuration.locationType = .indoor
+        
+        let builder = HKWorkoutBuilder(healthStore: healthStore, configuration: configuration, device: .local())
+        
+        try await beginCollection(builder: builder, startDate: startDate)
+        
+        guard let activeEnergyBurnedType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
+            throw HealthKitServiceError.missingType("Active Energy")
+        }
+        
+        let energySample = HKQuantitySample(
+            type: activeEnergyBurnedType,
+            quantity: HKQuantity(unit: .kilocalorie(), doubleValue: calories),
+            start: startDate,
+            end: endDate
+        )
+        
+        let metadata: [String: Any] = [
+            HKMetadataKeyIndoorWorkout: true,
+            "Total Volume (kg)": volume,
+            "Total Set": sets
+        ]
+        
+        try await addMetadata(builder: builder, metadata: metadata)
+        try await addSamples(builder: builder, samples: [energySample])
+        try await endCollection(builder: builder, endDate: endDate)
+        try await finishWorkout(builder: builder)
+    }
+    
+    //MARK: - Continuation-wrapped builder
+    private func beginCollection(builder: HKWorkoutBuilder, startDate: Date) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            builder.beginCollection(withStart: startDate) { success, error in
+                success ? continuation.resume() : continuation.resume(throwing: error ?? HealthKitServiceError.operationFailed("beginCollection"))
+            }
         }
     }
     
-    func saveWorkout(duration: TimeInterval, volume: Double, sets: Int,calories: Double, date: Date, completion: @escaping (Bool, (any Error)?) -> Void) {
-        //Date calculation
-        let endDate = date
-        let startDate = endDate.addingTimeInterval( -duration )
-        
-        //HKConfiguration
-        let hkConfiguration = HKWorkoutConfiguration()
-        hkConfiguration.activityType = .traditionalStrengthTraining
-        hkConfiguration.locationType = .indoor
-        
-        let hKWorkoutBuilder = HKWorkoutBuilder(healthStore: healthStore, configuration: hkConfiguration, device: .local())
-        
-        //Begin Collection
-        hKWorkoutBuilder.beginCollection(withStart: startDate) { (success, error) in
-            guard success else{
-                completion(false,error)
-                return
+    private func addMetadata(builder: HKWorkoutBuilder, metadata: [String: Any]) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            builder.addMetadata(metadata) { success, error in
+                success ? continuation.resume() : continuation.resume(throwing: error ?? HealthKitServiceError.operationFailed("addMetadata"))
             }
-            
-            guard let activeEnergyBurnedType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
-                completion(false, NSError(domain: "Stax", code: 3, userInfo: [NSLocalizedDescriptionKey: "Type Error"]))
-                return
+        }
+    }
+    
+    private func addSamples(builder: HKWorkoutBuilder, samples: [HKSample]) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            builder.add(samples) { success, error in
+                success ? continuation.resume() : continuation.resume(throwing: error ?? HealthKitServiceError.operationFailed("add samples"))
             }
-            let energyBurnedQuantity = HKQuantity(unit: .kilocalorie(), doubleValue: calories)
-            
-            
-            let energySample = HKQuantitySample(
-                type: activeEnergyBurnedType,
-                quantity: energyBurnedQuantity,
-                start: startDate,
-                end: endDate
-            )
-            
-            
-            // Metadata
-            let metadata: [String: Any] = [
-                HKMetadataKeyIndoorWorkout: true,
-                "Total Volume (kg)": volume,
-                "Total Set": sets
-            ]
-            
-            hKWorkoutBuilder.addMetadata(metadata) {(success, error ) in
-                guard success else{
-                    completion(false, error)
-                    return
-                }
-                
-                hKWorkoutBuilder.add([energySample]) {(success, error) in
-                    guard success else{
-                        completion(false, error)
-                        return
-                    }
-                    
-                    hKWorkoutBuilder.endCollection(withEnd: endDate) {(success, error) in
-                        guard success else{
-                            completion(false, error)
-                            return
-                        }
-                    }
-                    
-                    hKWorkoutBuilder.finishWorkout { (workout, error) in
-                        if workout != nil {
-                            print("Calorie: \(calories)")
-                            completion(true, nil)
-                        }else{
-                            print("Builder finish workout error: \(error?.localizedDescription ?? "Unknown error")")
-                            completion(false, error)
-                        }
-                    }
+        }
+    }
+    
+    private func endCollection(builder: HKWorkoutBuilder, endDate: Date) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            builder.endCollection(withEnd: endDate) { success, error in
+                success ? continuation.resume() : continuation.resume(throwing: error ?? HealthKitServiceError.operationFailed("endCollection"))
+            }
+        }
+    }
+    
+    private func finishWorkout(builder: HKWorkoutBuilder) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            builder.finishWorkout { workout, error in
+                if workout != nil {
+                    continuation.resume()
+                } else {
+                    continuation.resume(throwing: error ?? HealthKitServiceError.operationFailed("finishWorkout"))
                 }
             }
         }
