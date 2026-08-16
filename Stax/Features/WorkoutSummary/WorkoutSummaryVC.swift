@@ -81,12 +81,12 @@ class WorkoutSummaryVC: UIViewController {
         viewModel.output.workoutStats
             .receive(on: DispatchQueue.main)
             .sink { [weak self] presentation in
-                guard let self, let workout = viewModel.workout else { return }
+                guard let self else { return }
                 self.contentView.informationView.configureInformations(
                     duration: presentation.duration,
                     volume: presentation.volume,
                     sets: presentation.sets,
-                    date: workout.date ?? Date()
+                    date: presentation.date
                 )
             }
             .store(in: &cancellables)
@@ -109,6 +109,14 @@ class WorkoutSummaryVC: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 self?.didSendEventClosure?(.workoutSaved)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.output.syncWarning
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] message in
+                guard let self else { return }
+                AlertManager.showErrorAlert(on: self, message: message)
             }
             .store(in: &cancellables)
     }
