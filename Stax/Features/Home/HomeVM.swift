@@ -89,7 +89,7 @@ final class HomeVM {
                 return domainModels.map { workout in
                     HomeWorkoutPresentationItem(
                         id: workout.id,
-                        title: workout.name,
+                        title: workout.displayName,
                         dateString: DateFormatter.localizedString(from: workout.date, dateStyle: .medium, timeStyle: .none),
                         time: workout.duration.formatDuration(),
                         volume: workout.volume.formatWeight(),
@@ -130,11 +130,11 @@ final class HomeVM {
     
     private func deleteWorkout(withId id: String){
         
-        syncService.deleteWorkoutFromCloud(workoutId: id){ result in
-            switch result {
-            case .success:
-                print("workout deleted: \(id)")
-            case .failure(let error):
+        Task{[weak self] in
+            
+            do {
+                try await self?.syncService.deleteWorkoutFromCloud(workoutId: id)
+            }catch{
                 print(error.localizedDescription)
             }
         }
