@@ -87,30 +87,17 @@ final class SplashVM{
             return
         }
         
-        await withCheckedContinuation { continuation in
-            firebaseSyncService.fetchInitialWorkoutsFromCloud { [weak self] result in
-                guard let self else {
-                    continuation.resume()
-                    return
-                }
-                
-                switch result{
-                case .success(let cloudWorkouts):
-                    for workout in cloudWorkouts{
-                        self.syncManager.saveCloudWorkoutToLocal(cloudWorkout: workout)
-                    }
-                    
-                    userDefaults.set(true, forKey: UserDefaultsKeys.isSeededFromFirebase)
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-                
-                continuation.resume()
+        do {
+            let cloudWorkouts = try await firebaseSyncService.fetchInitialWorkoutsFromCloud()
+            
+            for workout in cloudWorkouts {
+                syncManager.saveCloudWorkoutToLocal(cloudWorkout: workout)
             }
+            
+            userDefaults.set(true, forKey: UserDefaultsKeys.isSeededFromFirebase)
+        } catch {
+            print(error.localizedDescription)
         }
-        
-        
-        
     }
     
 }
