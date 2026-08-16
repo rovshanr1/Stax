@@ -75,11 +75,11 @@ class ProfileVC: UIViewController {
             let isLoading = self?.viewModel.output.isLoading.value ?? false
             
             let stats = self?.viewModel.output.userStats.value
-            let totalWokrouts = stats?.workouts ?? 0
+            let totalWorkouts = stats?.workouts ?? 0
             let volumeText = stats?.volume ?? 0
             let durationText = stats?.duration ?? 0
             
-            cell.configurationCell(with: userModel, isLoading: isLoading, totalWorkouts: totalWokrouts, totalVolumes: volumeText, totalWorkoutTime: durationText)
+            cell.configurationCell(with: userModel, isLoading: isLoading, totalWorkouts: totalWorkouts, totalVolumes: volumeText, totalWorkoutTime: durationText)
             cell.configImage(with: userModel, imageIsLoading: isLoading)
             
             cell.profileImageTapped = {[weak self] in
