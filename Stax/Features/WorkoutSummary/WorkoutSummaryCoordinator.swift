@@ -6,8 +6,6 @@
 //
 
 import UIKit
-import Combine
-
 
 enum WorkoutSummaryEvent{
     case workoutSaved

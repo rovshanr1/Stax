@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import Combine
 
 protocol SettingsCoordinatorDelegate: CoordinatorFinishDelegate {
     func settingsCoordinatorDidLogout()
@@ -39,10 +38,7 @@ final class SettingsCoordinator: Coordinator{
     let dependency: AppDependencies
     //Factory
     private let factory: SettingsCoordinatorFactory
-    
-    private var cancellables: Set<AnyCancellable> = []
 
-    
     init(_ navigationController: UINavigationController, factory: SettingsCoordinatorFactory, dependency: AppDependencies) {
         self.navigationController = navigationController
         self.factory = factory

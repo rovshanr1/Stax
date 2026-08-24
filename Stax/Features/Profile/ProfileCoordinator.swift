@@ -6,8 +6,6 @@
 //
 
 import UIKit
-import CoreData
-import Combine
 
 enum ProfileEvent{
     case presentShareSheet(text: String)
@@ -23,11 +21,8 @@ final class ProfileCoordinator: Coordinator{
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
     
-    
     //Services
     private let factory: ProfileCoordinatorFactory
-    
-   
     
     init(_ navigationController: UINavigationController, factory: ProfileCoordinatorFactory) {
         self.navigationController = navigationController
