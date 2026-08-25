@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-final class WorkoutSessionExerciseListCell: UITableViewCell {
+final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     static let reuseIdentifier = "WorkoutSessionExerciseListCell"
     
     var exerciseMenuOnTapped: (() -> Void)?
@@ -128,13 +128,11 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     }()
     
     //MARK: - Initialization
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         setupUI()
         
         exerciseMenuButton.imageView?.removeAllSymbolEffects()
-        
-        selectionStyle = .none
         contentView.isUserInteractionEnabled = true
     }
     
@@ -144,7 +142,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        //        currentExerciseID = nil
+        currentExerciseID = nil
         setsView.onUpdateSet = nil
         setsView.addSetButtonTapped = nil
     }
@@ -152,6 +150,10 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     //MARK: - Setup UI
     private func setupUI(){
         constraints()
+        
+        var background = UIBackgroundConfiguration.listCell()
+        background.cornerRadius = 12
+        self.backgroundConfiguration = background
         
         
         exerciseName.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -172,9 +174,9 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         contentView.addSubview(mainStack)
         
         mainStack.snp.makeConstraints { (make) in
-            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 0,
+            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 12,
                                                                left: 12,
-                                                               bottom: 0,
+                                                               bottom: 12,
                                                                right: 12)
             ).priority(999)
         }
@@ -198,7 +200,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         currentExerciseID = exercise.id
         
         
-        setsView.configuartionSets(with: exercise.workoutSets)
+        setsView.configureSets(with: exercise.workoutSets)
         
         
         setsView.addSetButtonTapped = { [weak self] in

@@ -8,9 +8,9 @@
 import Foundation
 
 nonisolated struct WorkoutSummaryPresentation {
-        let duration: String
-        let volume: String
-        let sets: Int
-        let date: Date
+    let duration: String
+    let volume: String
+    let sets: Int
+    let date: Date
 }
 
