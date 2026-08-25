@@ -104,6 +104,11 @@ final class WorkoutSessionViewModel{
             .store(in: &cancellables)
         
         sessionService.exercisesPublisher
+            .removeDuplicates {[weak self] oldExercise, newExercise in
+                guard let self else{ return false }
+                
+                return self.isStructureEqual(oldExercise, newExercise)
+            }
             .sink { [weak self] exercises in
                 self?.output.exercises.send(exercises)
             }
@@ -250,6 +255,24 @@ final class WorkoutSessionViewModel{
             }
         }
         return nil
+    }
+    
+    private func isStructureEqual(_ old: [WorkoutExerciseDomainModel], _ new: [WorkoutExerciseDomainModel]) -> Bool {
+        guard old.count == new.count else { return false }
+        
+        for (oldExercise, newExercise) in zip(old, new) {
+            guard oldExercise.id == newExercise.id else { return false }
+            
+            guard oldExercise.workoutSets.count == newExercise.workoutSets.count else { return false }
+            
+            for (oldSet, newSet) in zip(oldExercise.workoutSets, newExercise.workoutSets){
+                guard oldSet.id == newSet.id else { return false }
+                
+                guard oldSet.isCompleted == newSet.isCompleted else { return false }
+            }
+        }
+        
+        return true
     }
 }
 
