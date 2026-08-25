@@ -47,9 +47,6 @@ final class AuthCoordinator: AuthCoordinatorProtocol {
         self.navigationController = navigationController
     }
     
-    
-    
-    
     func start() {
         navigate(to: .welcome)
     }

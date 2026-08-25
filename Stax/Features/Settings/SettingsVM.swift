@@ -209,26 +209,21 @@ final class SettingsVM {
     }
     
     private func healthKitSyncStatus(_ isEnabled: Bool) {
-        if isEnabled{
-            self.healthKitManager.requestAuthorization { [weak self] success, error in
-                guard let self else {return}
-                
-                if success {
-                    self.preferencesService.isHealthKitSyncEnabled = true
-                    Task { @MainActor in
-                        self.buildSettingsData()
-                    }
-                }else{
-                    output.errorMessage.send(error?.localizedDescription ?? "HealthKit authorization failed")
-                    self.preferencesService.isHealthKitSyncEnabled = false
-                    Task { @MainActor in
-                        self.buildSettingsData()
-                    }
-                }
-            }
-        }else{
-            self.preferencesService.isHealthKitSyncEnabled = false
+        guard isEnabled else {
+            preferencesService.isHealthKitSyncEnabled = false
+            return
+        }
+        
+        Task{ [weak self] in
+            guard let self else { return }
             
+            let granted = await self.healthKitManager.requestAuthorization()
+            
+            if !granted{
+                self.output.errorMessage.send("HealthKit access denied")
+            }
+            
+            self.buildSettingsData()
         }
     }
 }

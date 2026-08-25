@@ -57,7 +57,6 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         return currentWorkout?.id?.uuidString
     }
     
-    private var workoutId: String?
     private var isEditMode: Bool = false
     
     //Combine
@@ -394,15 +393,8 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
             }
             
             var baseExerciseDomain: ExerciseDomainModel?
-            if let cdDef = cdExercise.exercise{
-                let muscleGroupEnum = MuscleGroup(rawValue: cdDef.targetMuscle ?? "")
-                
-                baseExerciseDomain = ExerciseDomainModel(id: cdDef.id?.uuidString ?? UUID().uuidString,
-                                                         name: cdDef.name ?? "Unknown Name",
-                                                         targetMuscleGroups: muscleGroupEnum ,
-                                                         videoURL: cdDef.videoURL,
-                                                         exerciseImage: cdDef.exerciseImage
-                )
+            if let cdDef = cdExercise.exercise {
+                baseExerciseDomain = cdDef.toDomain()
             }
             
             return WorkoutExerciseDomainModel(

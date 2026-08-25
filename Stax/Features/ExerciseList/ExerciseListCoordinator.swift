@@ -7,7 +7,6 @@
 
 import UIKit
 
-
 enum ExerciseListEvent{
     case cancel
     case exerciseSelected(ExerciseDomainModel)

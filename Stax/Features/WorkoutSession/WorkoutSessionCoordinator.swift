@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import Combine
 
 enum WorkoutSessionEvent{
     case addExercise(onSelected: (ExerciseDomainModel) -> Void)
@@ -23,11 +22,8 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     
     private let factory: WorkoutSessionCoordinatorFactory
-    private weak var sessionVC: WorkoutSessionVC?
     
-    var cancellables: Set<AnyCancellable> = []
-    
-    var workoutId: String?
+    private let workoutId: String?
     
     init(_ navigationController: UINavigationController, factory: WorkoutSessionCoordinatorFactory, workoutId: String? = nil) {
         self.navigationController = navigationController
@@ -49,8 +45,6 @@ final class WorkoutSessionCoordinator: Coordinator{
     
     func finish() {
         navigationController.dismiss(animated: true)
-        
-        cancellables.removeAll()
         
         childCoordinators.forEach { $0.finish() }
         childCoordinators.removeAll()

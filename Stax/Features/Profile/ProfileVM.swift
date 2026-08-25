@@ -162,12 +162,11 @@ final class ProfileVM{
     
     
     private func deleteWorkout(withId id: String){
-        
-        syncService.deleteWorkoutFromCloud(workoutId: id){ result in
-            switch result {
-            case .success:
-                print("workout deleted: \(id)")
-            case .failure(let error):
+        Task{[weak self] in
+            
+            do {
+                try await self?.syncService.deleteWorkoutFromCloud(workoutId: id)
+            }catch{
                 print(error.localizedDescription)
             }
         }

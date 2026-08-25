@@ -8,7 +8,8 @@
 import UIKit
 import SnapKit
 
-final class WorkoutSessionFooterView: UIView {
+final class WorkoutSessionFooterView: UICollectionReusableView {
+    static let elementKind = UICollectionView.elementKindSectionFooter
     
     var onTapAddExerciseButton: (() -> Void)?
     

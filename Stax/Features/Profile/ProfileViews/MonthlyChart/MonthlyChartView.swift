@@ -44,7 +44,7 @@ struct MonthlyChartView: View {
             .padding(.bottom, 4)
             
             
-            if data.isEmpty{
+            if filteredData.isEmpty{
                 
                 VStack(spacing: 8){
                     Image(systemName: "chart.bar.xaxis")
@@ -74,7 +74,7 @@ struct MonthlyChartView: View {
     //MARK: - Chart View
     @ViewBuilder
     fileprivate var chartView: some View{
-        Chart(data) {item in
+        Chart(filteredData) {item in
             BarMark(
                 x:.value("Date", item.date, unit: .day),
                 y: .value("Value", calculator.value(for: item, metric: selectedMetric))

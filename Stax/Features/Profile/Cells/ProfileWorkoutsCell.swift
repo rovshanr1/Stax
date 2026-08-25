@@ -86,8 +86,9 @@ class ProfileWorkoutsCell: UICollectionViewCell {
     func configureProfileWorkoutCell(with workout: WorkoutDomainModel){
         let volumeStr = workout.volume.formatWeight()
         let timeStr = workout.duration.formatDuration()
+        let workoutName = workout.displayName
         
-        headerView.configureHomeHeaderView(name: workout.name, time: timeStr, volume: volumeStr)
+        headerView.configureHomeHeaderView(name: workoutName, time: timeStr, volume: volumeStr)
         
         exerciseStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         

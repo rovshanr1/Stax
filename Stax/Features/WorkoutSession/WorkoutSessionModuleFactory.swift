@@ -20,7 +20,7 @@ struct DefaultWorkoutSessionFactory: WorkoutSessionCoordinatorFactory {
     let dependency: AppDependencies
     
     func makeWorkoutSessionVC(workoutID: String?) -> WorkoutSessionVC {
-        let viewModel = WorkoutSessionViewModel(sessionService: dependency.sharedSessionService, workoutRepository: dependency.sharedWorkoutRepo, workoutId: workoutID)
+        let viewModel = WorkoutSessionViewModel(sessionService: dependency.sharedSessionService, workoutId: workoutID)
         
         let viewController = WorkoutSessionVC(viewModel: viewModel)
         
@@ -33,6 +33,7 @@ struct DefaultWorkoutSessionFactory: WorkoutSessionCoordinatorFactory {
     }
     
     func makeWorkoutSummaryCoordinator(navigationController: UINavigationController, workoutID: String, stats: WorkoutStats) -> WorkoutSummaryCoordinator {
-        WorkoutSummaryCoordinator(navigationController: navigationController, dependency: dependency, workoutID: workoutID, stats: stats)
+        let summaryFactory = DefaultWorkoutSummaryFactory(dependency: dependency)
+        return WorkoutSummaryCoordinator(navigationController: navigationController, factory: summaryFactory, workoutID: workoutID, stats: stats)
     }
 }

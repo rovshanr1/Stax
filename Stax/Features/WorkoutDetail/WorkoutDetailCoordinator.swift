@@ -6,8 +6,6 @@
 //
 
 import UIKit
-import CoreData
-import Combine
 
 enum WorkoutDetailEvent{
     case dismiss

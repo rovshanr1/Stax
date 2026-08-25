@@ -8,11 +8,9 @@
 import Foundation
 import Combine
 
-
-final class WorkoutSummaryViewModel{
+final class WorkoutSummaryViewModel {
     //MARK: - I/O Structs
-    ///Input: "Orders" fromd the VC (Orders)
-    struct Input{
+    struct Input {
         let viewDidLoad: PassthroughSubject<Void, Never>
         let updateTitle: PassthroughSubject<String, Never>
         let updateDescription: PassthroughSubject<String, Never>
@@ -21,54 +19,52 @@ final class WorkoutSummaryViewModel{
         let discardWorkout: PassthroughSubject<Void, Never>
     }
     
-    ///Output: "Data" to VC (Data Streams)
-    struct Output{
+    struct Output {
         let defaultTitle: CurrentValueSubject<String, Never>
         let finished: PassthroughSubject<Void, Never>
         let workoutStats: PassthroughSubject<WorkoutSummaryPresentation, Never>
         let isHealthKitSyncEnabled: CurrentValueSubject<Bool, Never>
+        let syncWarning: PassthroughSubject<String, Never>
     }
     
     //MARK: - Properties
     let input: Input
     let output: Output
     
-    
-    //Repositorys
-    public private(set) var workout: Workout?
-    private let workoutRepository: DataRepository<Workout>
-    
-    //Stats
+    private let workoutRepository: WorkoutRepositoryProtocol
     private let stats: WorkoutStats
     private let workoutID: String
+    private let workoutDate: Date
     
-    //Preferance Service
+    private var pendingTitle: String
+    private var pendingDescription: String = ""
+    
+    //Preference/External Services
     private var preferencesService: AppPreferencesServiceInterface
-    private let healthKitService: HealthKitServiceInterface?
+    private let healthKitService: HealthKitServiceInterface
     private let syncService: FirebaseSyncServiceInterface
-    private let dependency: AppDependencies
     
     private var cancellables: Set<AnyCancellable> = []
     
     let emojis = ["🔥", "💪", "🏋️‍♂️", "🏃‍♂️", "🦍", "⚡️"]
     
     init(workoutID: String,
-         workoutRepository: DataRepository<Workout>,
+         workoutRepository: WorkoutRepositoryProtocol,
          stats: WorkoutStats,
          preferancesService: AppPreferencesServiceInterface = AppPreferencesService(),
          healthKitService: HealthKitServiceInterface = HealthKitService(),
-         syncService: FirebaseSyncServiceInterface = FirebaseSyncService(),
-         dependency: AppDependencies
-    ){
+         syncService: FirebaseSyncServiceInterface = FirebaseSyncService()
+    ) {
         self.workoutID = workoutID
         self.workoutRepository = workoutRepository
-        self.dependency = dependency
         self.stats = stats
         self.preferencesService = preferancesService
         self.healthKitService = healthKitService
         self.syncService = syncService
         
-        self.workout = workoutRepository.fetch(by: workoutID)
+        let existingWorkout = workoutRepository.fetchWorkoutDetails(by: workoutID)
+        self.workoutDate = existingWorkout?.date ?? Date()
+        self.pendingTitle = existingWorkout?.name ?? ""
         
         self.input = Input(
             viewDidLoad: .init(),
@@ -83,13 +79,14 @@ final class WorkoutSummaryViewModel{
             defaultTitle: .init(""),
             finished: .init(),
             workoutStats: .init(),
-            isHealthKitSyncEnabled: .init(preferencesService.isHealthKitSyncEnabled)
+            isHealthKitSyncEnabled: .init(preferencesService.isHealthKitSyncEnabled),
+            syncWarning: .init()
         )
         
         transform()
     }
     
-    private func transform(){
+    private func transform() {
         input.viewDidLoad
             .sink { [weak self] in
                 self?.setupInitialData()
@@ -97,163 +94,118 @@ final class WorkoutSummaryViewModel{
             .store(in: &cancellables)
         
         input.saveWorkout
-            .flatMap{ [weak self] _ -> AnyPublisher<Void, Error> in
-                guard let self, let workout = self.workout else {return Empty().eraseToAnyPublisher()}
-                
-                if (workout.name == nil || workout.name?.isEmpty == true) {
-                    workout.name = self.output.defaultTitle.value
-                }
-                
-                if let calculatedCalories = self.stats.caloriesBurned {
-                    workout.calories = Int16(calculatedCalories)
-                }
-                
-                workout.sets = Int16(self.stats.totalSets)
-                workout.volume = self.stats.volume
-                workout.duration = self.stats.duration
-                
-                
-                return self.workoutRepository.save()
+            .sink { [weak self] in
+                self?.performSave()
             }
-            .sink(receiveCompletion: { completion in
-                if case .failure(let failure) = completion {
-                    print(failure)
-                }
-            }, receiveValue: { [weak self] _ in
-                guard let self else { return }
-                
-                self.syncToFirebase()
-                self.updateHelathKit()
-                
-            })
-            .store(in: &self.cancellables)
+            .store(in: &cancellables)
         
         input.updateTitle
             .sink { [weak self] newTitle in
-                guard let self else { return }
-                self.updateWorkoutName(newTitle)
+                self?.pendingTitle = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
             }
             .store(in: &cancellables)
         
         input.updateDescription
             .sink { [weak self] newDescription in
-                guard let self else { return }
-                self.updateWorkoutDescription(newDescription)
+                self?.pendingDescription = newDescription.trimmingCharacters(in: .whitespacesAndNewlines)
             }
             .store(in: &cancellables)
         
         input.toggleHealthKitSync
             .sink { [weak self] isEnabled in
-                guard let self else{ return }
-                
-                if isEnabled {
-                    self.healthKitService?.requestAuthorization { [weak self] success, error in
-                        guard let self else { return }
-                        if success {
-                            self.preferencesService.isHealthKitSyncEnabled = true
-                            self.output.isHealthKitSyncEnabled.send(true)
-                        }else{
-                            print("HealhKit Authorization Failed: \(error?.localizedDescription ?? "Unknown Error")")
-                            self.preferencesService.isHealthKitSyncEnabled = false
-                            self.output.isHealthKitSyncEnabled.send(false)
-                        }
-                    }
-                }else{
-                    self.preferencesService.isHealthKitSyncEnabled = false
-                    self.output.isHealthKitSyncEnabled.send(false)
-                }
-                
+                self?.handleHealthKitToggle(isEnabled)
             }
             .store(in: &cancellables)
         
         input.discardWorkout
-            .sink { [weak self] _ in
-                guard let self, let workoutToDelete = self.workout, let id = workoutToDelete.id?.uuidString else { return }
-                
-                self.workoutRepository.delete(by: id)
-                    .sink { _ in } receiveValue: { _ in }
-                    .store(in: &cancellables)
-                
+            .sink { [weak self] in
+                guard let self else { return }
+                self.workoutRepository.deleteWorkout(by: self.workoutID)
             }
             .store(in: &cancellables)
     }
     
-    
-    //Helper Methods
-    private func setupInitialData(){
-        guard let workout = self.workout else { return }
-        
+    //MARK: - Initial Data
+    private func setupInitialData() {
         let randomEmoji = emojis.randomElement() ?? "💪"
+        let defaultName = "\(workoutDate.dayName()) Workout\(randomEmoji)"
+        let currentTitle = pendingTitle.isEmpty ? defaultName : pendingTitle
         
-        let dateToUse = workout.date ?? Date()
-        let defaultName = "\(dateToUse.dayName()) Workout\(randomEmoji)"
-        let currentTitle = (workout.name?.isEmpty == false) ? workout.name! : defaultName
+        output.defaultTitle.send(currentTitle)
         
-        self.output.defaultTitle.send(currentTitle)
-        
-        let presentation = WorkoutSummaryPresentation(duration: stats.duration.formatDuration(),
-                                                      volume: stats.volume.formatWeight(),
-                                                      sets: stats.totalSets,
-                                                      date: dateToUse
+        let presentation = WorkoutSummaryPresentation(
+            duration: stats.duration.formatDuration(),
+            volume: stats.volume.formatWeight(),
+            sets: stats.totalSets,
+            date: workoutDate
         )
         
-        self.output.workoutStats.send(presentation)
+        output.workoutStats.send(presentation)
     }
     
-    private func updateWorkoutName(_ newTitle: String){
-        guard let workout = self.workout else { return }
-        
-        let cleanTitle = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if cleanTitle.isEmpty {
-            workout.name = nil
-        }else{
-            workout.name = cleanTitle
+    //MARK: - Save Flow
+    private func performSave() {
+        Task { [weak self] in
+            await self?.saveWorkoutSequentially()
         }
     }
     
-    private func updateWorkoutDescription(_ newDescription: String){
-        guard let workout = self.workout else { return }
+    private func saveWorkoutSequentially() async {
+        let finalTitle = pendingTitle.isEmpty ? output.defaultTitle.value : pendingTitle
         
-        let cleanDescription = newDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        let savedWorkout: WorkoutDomainModel
+        do {
+            savedWorkout = try await workoutRepository.finalizeWorkout(
+                id: workoutID, title: finalTitle, description: pendingDescription, stats: stats
+            )
+        } catch {
+            print("Failed to save workout: \(error)")
+            output.syncWarning.send("Workout could not be saved. Please try again.")
+            return
+        }
         
-        if cleanDescription.isEmpty{
-            workout.workoutDescription = ""
-        }else{
-            workout.workoutDescription = cleanDescription
+        await syncToCloudIfPossible(workout: savedWorkout)
+        await syncToHealthKitIfEnabled()
+        
+        output.finished.send()
+    }
+    
+    private func syncToCloudIfPossible(workout: WorkoutDomainModel) async {
+        do {
+            try await syncService.syncWorkoutToCloud(workout: workout)
+        } catch {
+            print("Firebase sync failed: \(error)")
+            output.syncWarning.send("Workout saved locally, but cloud sync failed.")
         }
     }
     
-    private func updateHelathKit(){
-        guard let workout = self.workout else { return }
+    private func syncToHealthKitIfEnabled() async {
+        guard preferencesService.isHealthKitSyncEnabled else { return }
         
-        if self.preferencesService.isHealthKitSyncEnabled {
-            self.healthKitService?.saveWorkout(
-                duration: self.stats.duration,
-                volume: self.stats.volume,
-                sets: self.stats.totalSets,
-                calories: Double(workout.calories),
-                date: workout.date ?? Date()) { success, error in
-                    DispatchQueue.main.async {
-                        self.output.finished.send()
-                    }
-                }}else{
-                    self.output.finished.send()
-                }
+        do {
+            try await healthKitService.saveWorkout(
+                duration: stats.duration, volume: stats.volume, sets: stats.totalSets,
+                calories: stats.caloriesBurned ?? 0, date: workoutDate
+            )
+        } catch {
+            print("HealthKit sync failed: \(error)")
+            output.syncWarning.send("Workout saved, but Apple Health sync failed.")
+        }
     }
     
-    private func syncToFirebase(){
-        guard let workout = self.workout else { return }
+    //MARK: - HealthKit Toggle
+    private func handleHealthKitToggle(_ isEnabled: Bool) {
+        guard isEnabled else {
+            preferencesService.isHealthKitSyncEnabled = false
+            output.isHealthKitSyncEnabled.send(false)
+            return
+        }
         
-        let domainModel = workout.toDomain()
-        
-        self.syncService.syncWorkoutToCloud(workout: domainModel) { result in
-            switch result{
-            case .success:
-                print("Workout save to Firebase")
-            case .failure(let error):
-                print(error.localizedDescription)
-            }
+        Task { [weak self] in
+            guard let self else { return }
+            let granted = await self.healthKitService.requestAuthorization()
+            self.preferencesService.isHealthKitSyncEnabled = granted
+            self.output.isHealthKitSyncEnabled.send(granted)
         }
     }
 }

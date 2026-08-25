@@ -268,4 +268,31 @@ extension DataRepository{
                 .store(in: &self.cancellables)
         }
     }
+    
+    func saveAsync() async throws {
+        try await withCheckedThrowingContinuation { [weak self] (continuation: CheckedContinuation<Void, Error>) in
+            guard let self else {
+                continuation.resume()
+                return
+            }
+            
+            var isResumed = false
+            
+            self.save()
+                .first()
+                .sink { completion in
+                    guard !isResumed else { return }
+                    isResumed = true
+                    if case .failure(let error) = completion {
+                        continuation.resume(throwing: error)
+                    }
+                } receiveValue: { _ in
+                    guard !isResumed else { return }
+                    isResumed = true
+                    continuation.resume()
+                }
+                .store(in: &cancellables)
+
+        }
+    }
 }

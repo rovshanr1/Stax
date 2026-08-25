@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import Combine
+
 
 //MARK: - Delegation
 protocol EditAccountCoordinatorDelegate: AnyObject {
@@ -31,8 +31,6 @@ final class EditAccountCoordinator: Coordinator{
     
     //Factory
     private let factory: EditAccountCoordinatorFactory
-    
-    private var cancellables: Set<AnyCancellable> = []
     
     init(navigationController: UINavigationController, factory: EditAccountCoordinatorFactory){
         self.navigationController = navigationController

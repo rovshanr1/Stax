@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 
 
-class WorkoutSetsView: UIView {
+final class WorkoutSetsView: UIView {
     
     var addSetButtonTapped: (() -> Void)?
     
@@ -60,42 +60,44 @@ class WorkoutSetsView: UIView {
     
     //MARK: - Configuration
     
-    func configuartionSets(with sets: [WorkoutSetDomainModel]) {
+    func configureSets(with sets: [WorkoutSetDomainModel]) {
         
-        let existingRows = setsContainerStackView.arrangedSubviews.compactMap { $0 as? SetRowView}
+        var existingRowsByID: [String: SetRowView] = [:]
         
-            for (index, set) in sets.enumerated() {
-                let rowView: SetRowView
-                
-                if index < existingRows.count {
-                    rowView = existingRows[index]
-                }else{
-                    rowView = SetRowView()
-                    setsContainerStackView.addArrangedSubview(rowView)
-                    rowView.snp.makeConstraints { make in
-                        make.height.equalTo(34)
-                    }
-                }
-                
-                rowView.currentSetID = set.id
-                
-                rowView.configureSetRow(
-                    setNumber: index + 1,
-                    previous: set.previous,
-                    weight: set.weight,
-                    reps: Int(set.reps),
-                    isDone: set.isCompleted
-                )
-                
-                bindRowClosures(rowView, set: set)
+        for view in setsContainerStackView.arrangedSubviews {
+            if let row = view as? SetRowView, let id = row.currentSetID {
+                existingRowsByID[id] = row
+            }
         }
         
-        if existingRows.count > sets.count {
-            for i in sets.count..<existingRows.count {
-                let viewToRemove = existingRows[i]
-                setsContainerStackView.removeArrangedSubview(viewToRemove)
-                viewToRemove.removeFromSuperview()
+        let newIDs = Set(sets.map {$0.id})
+        for (id, row) in existingRowsByID where !newIDs.contains(id) {
+            setsContainerStackView.removeArrangedSubview(row)
+            row.removeFromSuperview()
+        }
+        
+        
+        for (index, set) in sets.enumerated() {
+            let rowView = existingRowsByID[set.id] ?? SetRowView()
+            
+            if existingRowsByID[set.id] == nil {
+                rowView.snp.makeConstraints { make in
+                    make.height.equalTo(34)
+                }
             }
+            
+            rowView.currentSetID = set.id
+            setsContainerStackView.insertArrangedSubview(rowView, at: index)
+            
+            rowView.configureSetRow(
+                setNumber: index + 1,
+                previous: set.previous,
+                weight: set.weight,
+                reps: Int(set.reps),
+                isDone: set.isCompleted
+            )
+            
+            bindRowClosures(rowView, set: set)
         }
     }
     

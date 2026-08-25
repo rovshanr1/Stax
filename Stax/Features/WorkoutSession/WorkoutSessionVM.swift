@@ -43,7 +43,6 @@ final class WorkoutSessionViewModel{
     //Services
     public private(set) var timerService: WorkoutTimerServiceProtocol
     private let sessionService: SessionServiceProtocol
-    private let workoutRepository: WorkoutRepositoryProtocol
     
     //State
     
@@ -52,19 +51,14 @@ final class WorkoutSessionViewModel{
     private let workoutId: String?
     
     private var cancellables = Set<AnyCancellable>()
-    private var timer: Timer?
-    private var secondsElapsed: Int = 0
-    
-    
     
     //MARK: - Initializer
     init( sessionService: SessionServiceProtocol,
-          workoutRepository: WorkoutRepositoryProtocol,
           timerService: WorkoutTimerServiceProtocol = WorkoutTimerService(),
           workoutId: String? = nil
     ){
         self.sessionService = sessionService
-        self.workoutRepository = workoutRepository
+        
         self.timerService = timerService
         self.workoutId = workoutId
         
@@ -97,6 +91,12 @@ final class WorkoutSessionViewModel{
     
     //MARK: - Transform method
     private func transform() {
+        setupServiceBindings()
+        setupLifecycleBindings()
+        setupExerciseBindings()
+    }
+    
+    private func setupServiceBindings() {
         timerService.timerPublisher
             .sink { [weak self] time in
                 self?.output.timerSubject.send(time)
@@ -104,6 +104,11 @@ final class WorkoutSessionViewModel{
             .store(in: &cancellables)
         
         sessionService.exercisesPublisher
+            .removeDuplicates {[weak self] oldExercise, newExercise in
+                guard let self else{ return false }
+                
+                return self.isStructureEqual(oldExercise, newExercise)
+            }
             .sink { [weak self] exercises in
                 self?.output.exercises.send(exercises)
             }
@@ -116,62 +121,36 @@ final class WorkoutSessionViewModel{
                 self.output.sessionStats.send(stats)
             }
             .store(in: &cancellables)
-        
+    }
+    
+    private func setupLifecycleBindings() {
         input.viewDidLoad
             .sink { [weak self] in
                 guard let self else { return }
-                
                 let sessionData = self.sessionService.setupSession(workoutID: self.workoutId)
-                
                 self.timerService.setInitialTime(sessionData.initialDuration)
-                
             }
             .store(in: &cancellables)
         
         input.viewDidAppear
             .sink { [weak self] in
-                guard let self else {return}
-                
-                self.timerService.start()
+                self?.timerService.start()
             }
             .store(in: &cancellables)
         
         input.didTapFinish
             .sink { [weak self] _ in
-                guard let self else {return}
-                
-                self.timerService.stop()
-                
-                let finalDuration = Double(self.timerService.seconsElapsed)
-                
-                guard let workoutID = self.sessionService.currentWorkoutID else { return }
-                
-                let stats = self.output.sessionStats.value
-                let estimatedCalories = (finalDuration / 60.0) * 6.0
-                
-                let summaryStats = WorkoutStats(
-                    duration: finalDuration,
-                    volume: stats.volume,
-                    totalSets: stats.sets,
-                    caloriesBurned: estimatedCalories)
-                
-                self.sessionService.finishWorkout(duration: finalDuration)
-                
-                self.output.finishWorkoutEvent.send((workoutID, summaryStats))
+                self?.finishSession()
             }
             .store(in: &cancellables)
         
         input.didTapCancel
             .sink { [weak self] in
-                guard let self else {return}
-                
+                guard let self else { return }
                 self.sessionService.cancelWorkoutSession()
                 self.output.cancelWorkoutEvent.send()
             }
             .store(in: &cancellables)
-        
-        
-        setupExerciseBindings()
     }
     
     private func setupExerciseBindings(){
@@ -224,39 +203,76 @@ final class WorkoutSessionViewModel{
     }
     
     //MARK: - Helpers
-    private func findSetDomainModel(by setID: String) -> WorkoutSetDomainModel? {
-        let allExercises = self.output.exercises.value
+    
+    private func finishSession(){
+        timerService.stop()
         
-        for exercise in allExercises {
-            if let targetSet = exercise.workoutSets.first(where: {$0.id == setID}) {
-                return targetSet
+        let finalDuration = timerService.secondsElapsed
+        
+        guard let workoutID = self.sessionService.currentWorkoutID else { return }
+        
+        let stats = self.output.sessionStats.value
+        let estimatedCalories =  WorkoutCalorieCalculator.estimateCalories(forDuration: finalDuration)
+        
+        let summaryStats = WorkoutStats(
+            duration: finalDuration,
+            volume: stats.volume,
+            totalSets: stats.sets,
+            caloriesBurned: estimatedCalories
+        )
+        
+        self.sessionService.finishWorkout(duration: finalDuration)
+        self.output.finishWorkoutEvent.send((workoutID, summaryStats))
+    }
+    
+    private func updateSets(with setID: String, weight: Double, reps: Int, isDone: Bool) {
+        guard let (parentExercise, targetSet) = findExerciseAndSet(by: setID) else {
+            sessionService.updateSet(setID: setID, weight: weight, reps: reps, isDone: isDone)
+            return
+        }
+        
+        let exerciseType = parentExercise.exercise?.type ?? .weighted
+        
+        guard let resolved = WorkoutSetCompletionResolver.resolve(
+            weight: weight,
+            reps: reps,
+            isDone: isDone,
+            exerciseType: exerciseType,
+            previousWeight: targetSet.previousWeight,
+            previousReps: targetSet.previousReps
+        ) else {
+            output.setValidationError.send(setID)
+            return
+        }
+        
+        sessionService.updateSet(setID: setID, weight: resolved.weight, reps: resolved.reps, isDone: isDone)
+    }
+
+    private func findExerciseAndSet(by setID: String) -> (WorkoutExerciseDomainModel, WorkoutSetDomainModel)? {
+        for exercise in output.exercises.value {
+            if let targetSet = exercise.workoutSets.first(where: { $0.id == setID }) {
+                return (exercise, targetSet)
             }
         }
         return nil
     }
     
-    private func updateSets(with setID: String, weight: Double, reps: Int, isDone: Bool){
-        var finalWeight = weight
-        var finalReps = reps
+    private func isStructureEqual(_ old: [WorkoutExerciseDomainModel], _ new: [WorkoutExerciseDomainModel]) -> Bool {
+        guard old.count == new.count else { return false }
         
-        if let targetSet = self.findSetDomainModel(by: setID){
-            if isDone{
-                if finalWeight == 0, let pW = targetSet.previousWeight {
-                    finalWeight = pW
-                }
+        for (oldExercise, newExercise) in zip(old, new) {
+            guard oldExercise.id == newExercise.id else { return false }
+            
+            guard oldExercise.workoutSets.count == newExercise.workoutSets.count else { return false }
+            
+            for (oldSet, newSet) in zip(oldExercise.workoutSets, newExercise.workoutSets){
+                guard oldSet.id == newSet.id else { return false }
                 
-                if finalReps == 0, let pR = targetSet.previousReps {
-                    finalReps = Int(pR)
-                }
-                
-                if finalWeight == 0 || finalReps == 0 {
-                    self.output.setValidationError.send(setID)
-                    return
-                }
+                guard oldSet.isCompleted == newSet.isCompleted else { return false }
             }
         }
         
-        self.sessionService.updateSet(setID: setID, weight: finalWeight, reps: finalReps, isDone: isDone)
+        return true
     }
 }
 

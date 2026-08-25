@@ -8,9 +8,7 @@
 import UIKit
 import SnapKit
 
-final class EmptyWorkoutTableViewCell: UITableViewCell {
-
-    static let reuseIdentifier: String = "EmptyWorkoutTableViewCell"
+final class EmptyWorkoutCollectionViewCell: UICollectionViewCell {
     
     private let dumbbellImageView: UIImageView = {
         let imageView = UIImageView()
@@ -56,8 +54,8 @@ final class EmptyWorkoutTableViewCell: UITableViewCell {
     }()
     
     
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         setupUI()
     }
     
@@ -72,11 +70,10 @@ final class EmptyWorkoutTableViewCell: UITableViewCell {
         
         dumbbellImageView.snp.makeConstraints { (make) in
             make.height.equalTo(50)
-            make.height.equalTo(50)
         }
         
         mainStackView.snp.makeConstraints { (make) in
-            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 24, left: 16, bottom: 12, right: 16)).priority(999)
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 24, left: 16, bottom: 12, right: 16))
         }
         
     }

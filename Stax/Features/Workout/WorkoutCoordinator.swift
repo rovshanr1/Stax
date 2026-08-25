@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import CoreData
 
 enum WorkoutEvent{
     case startEmptyWorkout
