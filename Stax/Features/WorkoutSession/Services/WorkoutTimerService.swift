@@ -18,28 +18,48 @@ protocol WorkoutTimerServiceProtocol {
 
 final class WorkoutTimerService: WorkoutTimerServiceProtocol{
     let timerPublisher = PassthroughSubject<String, Never>()
-    var secondsElapsed: Double = 0.0
+    private(set) var secondsElapsed: Double = 0.0
     private var timer: Timer?
+    
+    private var startTime: Date?
+    private var initialTimeOffset: Double = 0.0
     
     func start() {
         guard timer == nil else {return}
         
+        startTime = Date()
+        
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [weak self] _ in
             guard let self else {return}
             
-            self.secondsElapsed += 1
-            self.timerPublisher.send(self.secondsElapsed.formatDuration())
+            self.tick()
         })
         
+        if let timer = timer {
+            RunLoop.current.add(timer, forMode: .common)
+        }
+    }
+    
+    private func tick(){
+        guard let startTime else { return }
+        
+        let elapsed = Date().timeIntervalSince(startTime) + initialTimeOffset
+        
+        self.secondsElapsed = elapsed
+        self.timerPublisher.send(elapsed.formatDuration())
     }
     
     func stop() {
         timer?.invalidate()
         timer = nil
+        
+        initialTimeOffset = secondsElapsed
+        startTime = nil
     }
     
     
     func setInitialTime(_ seconds: Double) {
+        self.initialTimeOffset = seconds
         self.secondsElapsed = seconds
         timerPublisher.send(seconds.formatDuration())
     }
