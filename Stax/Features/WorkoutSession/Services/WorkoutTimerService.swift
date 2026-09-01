@@ -29,15 +29,15 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
         
         startTime = Date()
         
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [weak self] _ in
-            guard let self else {return}
+        let newTimer = Timer(timeInterval: 1.0, repeats: true){[weak self] _ in
             
-            self.tick()
-        })
-        
-        if let timer = timer {
-            RunLoop.current.add(timer, forMode: .common)
+            self?.tick()
         }
+        
+        timer = newTimer
+        
+        RunLoop.current.add(newTimer, forMode: .common)
+        
     }
     
     private func tick(){
@@ -57,6 +57,9 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
         startTime = nil
     }
     
+    deinit{
+        timer?.invalidate()
+    }
     
     func setInitialTime(_ seconds: Double) {
         self.initialTimeOffset = seconds
