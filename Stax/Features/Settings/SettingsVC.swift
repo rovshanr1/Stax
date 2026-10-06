@@ -125,7 +125,7 @@ class SettingsVC: UIViewController {
     private func configureDataSource() {
         contentView.collectionView.delegate = self
         
-        let cellRegistration = UICollectionView.CellRegistration<GlobalListCell, SettingsItem>{ cell, _, itemIdentifier in
+        let cellRegistration = UICollectionView.CellRegistration<GlobalListCell, SettingsItem>{ [weak self]  cell, _, itemIdentifier in
             
             switch itemIdentifier{
             case .navigation(id: _, icon: let icon, title: let title, color: let color):
@@ -138,7 +138,7 @@ class SettingsVC: UIViewController {
                 
                 cell.configureiconListCell(title: title, icon: icon, iconColor: iconColor, showChevron: false, showSwitch: true, isSwitchOn: isOn)
                 
-                cell.toggleValueChanged = { [weak self] newValue in
+                cell.toggleValueChanged = { newValue in
                     if id == .healthKit{
                         self?.vm.input.toggleHealthKit.send(newValue)
                     }

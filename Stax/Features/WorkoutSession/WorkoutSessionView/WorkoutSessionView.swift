@@ -12,16 +12,6 @@ final class WorkoutSessionView: UIView {
     
     var addExerciseButtonTapped: (() -> Void)?
     
-    private lazy var footerView: WorkoutSessionFooterView = {
-        let view = WorkoutSessionFooterView()
-        
-        view.onTapAddExerciseButton = { [weak self] in
-            self?.addExerciseButtonTapped?()
-        }
-        
-        return view
-    }()
-    
     let collectionView: UICollectionView = {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
         
@@ -31,8 +21,6 @@ final class WorkoutSessionView: UIView {
         
         return collectionView
     }()
-    
-    private var currentTimerString: String = "0h 0m 00s"
 
     override init(frame: CGRect) {
         super.init(frame: frame)
