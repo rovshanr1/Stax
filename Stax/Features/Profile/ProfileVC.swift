@@ -97,10 +97,11 @@ class ProfileVC: UIViewController {
             cell.backgroundConfiguration = background
         }
         
-        let profileWorkoutsRegistration = UICollectionView.CellRegistration<ProfileWorkoutsCell, WorkoutDomainModel>  { (cell, _, workoutsData) in
+        let profileWorkoutsRegistration = UICollectionView.CellRegistration<ProfileWorkoutsCell, WorkoutDomainModel>  {[weak self] (cell, _, workoutsData) in
             cell.configureProfileWorkoutCell(with: workoutsData)
-            cell.menuButtonTapped = { [weak self] in
-                self?.workoutMenuPresent(for: workoutsData.id)
+            cell.menuButtonTapped = {
+                guard let self else {return}
+                self.workoutMenuPresent(for: workoutsData.id)
             }
         }
         

@@ -12,7 +12,7 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     static let reuseIdentifier = "WorkoutSessionExerciseListCell"
     
     var exerciseMenuOnTapped: (() -> Void)?
-    var restTimeOnTapped: (() -> Void)?
+    var restTimeOnTapped: ((String) -> Void)?
     
     var onNoteChange: ((String) -> Void)?
     var onNotesHeightChange: (() -> Void)?
@@ -24,7 +24,6 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     var onInputFieldFocusChange: ((UIView) -> Void)?
     
     private var currentExerciseID: String?
-    private var currentExercise: WorkoutExerciseDomainModel?
     
     //MARK: - UI Elements
     private var addNotesTextView = TextView()
@@ -72,13 +71,14 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .regular)
         label.textColor = .label
+        label.text = "Rest Timer"
         return label
     }()
     
     private var restTimeNumber: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .regular)
-        label.textColor = .label
+        label.textColor = .secondaryLabel
         label.numberOfLines = 1
         return label
     }()
@@ -150,6 +150,7 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     //MARK: - Setup UI
     private func setupUI(){
         constraints()
+        restStackGesture()
         
         var background = UIBackgroundConfiguration.listCell()
         background.cornerRadius = 12
@@ -195,7 +196,7 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     }
     
     //MARK: - Public method for configure cell
-    func configureExerciseCell(with exercise: WorkoutExerciseDomainModel){
+    func configureExerciseCell(with exercise: WorkoutExerciseDomainModel, restDuration: Double?){
         exerciseName.text = exercise.exercise?.name
         currentExerciseID = exercise.id
         
@@ -221,11 +222,13 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
             self?.deleteSetTapped?(setID)
         }
         
-        
-        
-        restTimeLabel.text = "Rest Time:"
-        restTimeNumber.text = "0:00"
-        
+        restTimeNumber.text = restDuration?.formatDuration() ?? "Off"
+    }
+    
+    func restStackGesture(){
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(restTimeTapped))
+        restTimeStack.addGestureRecognizer(tapGesture)
+        restTimeStack.isUserInteractionEnabled = true
     }
     
     func configureTextView(with exercise: String?){
@@ -254,6 +257,12 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
         exerciseMenuButton.imageView?.addSymbolEffect(.bounce, options: .nonRepeating, animated: true)
         
         exerciseMenuOnTapped?()
+    }
+    
+    @objc private func restTimeTapped(){
+        guard let currentExerciseID else { return }
+        
+        restTimeOnTapped?(currentExerciseID)
     }
 }
 

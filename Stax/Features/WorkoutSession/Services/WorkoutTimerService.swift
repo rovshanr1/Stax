@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 protocol WorkoutTimerServiceProtocol {
-    var timerPublisher: PassthroughSubject<String, Never> {get}
+    var timerPublisher: AnyPublisher<String, Never> {get}
     var secondsElapsed: Double {get}
     func start()
     func stop()
@@ -17,7 +17,12 @@ protocol WorkoutTimerServiceProtocol {
 }
 
 final class WorkoutTimerService: WorkoutTimerServiceProtocol{
-    let timerPublisher = PassthroughSubject<String, Never>()
+    private let timerSubject = CurrentValueSubject<String, Never>("00")
+    
+    var timerPublisher: AnyPublisher<String, Never>{
+        timerSubject.eraseToAnyPublisher()
+    }
+    
     private(set) var secondsElapsed: Double = 0.0
     private var timer: Timer?
     
@@ -36,8 +41,7 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
         
         timer = newTimer
         
-        RunLoop.current.add(newTimer, forMode: .common)
-        
+        RunLoop.main.add(newTimer, forMode: .common)
     }
     
     private func tick(){
@@ -46,7 +50,7 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
         let elapsed = Date().timeIntervalSince(startTime) + initialTimeOffset
         
         self.secondsElapsed = elapsed
-        self.timerPublisher.send(elapsed.formatDuration())
+        self.timerSubject.send(elapsed.formatDuration())
     }
     
     func stop() {
@@ -64,6 +68,6 @@ final class WorkoutTimerService: WorkoutTimerServiceProtocol{
     func setInitialTime(_ seconds: Double) {
         self.initialTimeOffset = seconds
         self.secondsElapsed = seconds
-        timerPublisher.send(seconds.formatDuration())
+        timerSubject.send(seconds.formatDuration())
     }
 }

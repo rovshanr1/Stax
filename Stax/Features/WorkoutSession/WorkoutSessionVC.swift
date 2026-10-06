@@ -113,7 +113,7 @@ class WorkoutSessionVC: UIViewController {
         let exerciseRegistration = UICollectionView.CellRegistration<WorkoutSessionExerciseListCell, WorkoutExerciseDomainModel>{ [weak self] cell, _, exerciseItem in
             guard let self else { return}
             
-            cell.configureExerciseCell(with: exerciseItem)
+            cell.configureExerciseCell(with: exerciseItem, restDuration: self.viewModel.restDuration(for: exerciseItem.id))
             cell.configureTextView(with: exerciseItem.notes)
             
             cell.onNoteChange = { [weak self] newNote in
@@ -138,6 +138,10 @@ class WorkoutSessionVC: UIViewController {
             
             cell.deleteSetTapped = { [weak self] setID in
                 self?.viewModel.input.deleteSet.send(setID)
+            }
+            
+            cell.restTimeOnTapped = {[weak self] setID in
+                self?.showRestTime(for: setID)
             }
         }
 
@@ -211,6 +215,17 @@ class WorkoutSessionVC: UIViewController {
             }
             .store(in: &cancellables)
         
+        viewModel.output.restTimerState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                guard let self else { return }
+                
+                if case .finished = state{
+                    FinishSound.playRestFinishedFeedback()
+                }
+            }
+            .store(in: &cancellables)
+        
         DispatchQueue.main.async { [weak self] in
             self?.viewModel.input.viewDidLoad.send()
         }
@@ -263,11 +278,19 @@ class WorkoutSessionVC: UIViewController {
                 }
             }
             .store(in: &cancellables)
+        
+        viewModel.output.restDurations
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.updateSnapshot(with: self.sessionExercise)
+            }
+            .store(in: &cancellables)
     }
     
     private func updateDurationCell(timerString: String? = nil, stats: (volume: Double, sets: Int)? = nil) {
-        guard view.window != nil,
-              let indexPath = dataSource.indexPath(for: .duration),
+        guard let indexPath = dataSource.indexPath(for: .duration),
               let cell = contentView.collectionView.cellForItem(at: indexPath) as? WorkoutSessionDurationCell
         else { return }
         
@@ -320,8 +343,8 @@ class WorkoutSessionVC: UIViewController {
             sheetNav.dismiss(animated: true) {
                 switch action {
                 case .replaceExercise:
-                    self.didSendEventClosure?(.replaceExercise(exercise, onSelected: { [weak self] newExercise in
-                        self?.viewModel.input.replaceExercise.send((exercise, newExercise))
+                    self.didSendEventClosure?(.replaceExercise(exercise, onSelected: {  newExercise in
+                        self.viewModel.input.replaceExercise.send((exercise, newExercise))
                     }))
                 case .deleteExercise:
                     self.viewModel.input.deleteExercise.send(exercise)
@@ -330,6 +353,26 @@ class WorkoutSessionVC: UIViewController {
         }
         
         present(sheetNav, animated: true)
+    }
+    
+    //MARK: - Show Rest Sheet
+    private func showRestTime(for exerciseID: String) {
+        let name = sessionExercise.first { $0.id == exerciseID }?.exercise?.name ?? "Exercise"
+        let current = viewModel.restDuration(for: exerciseID) 
+        
+        let sheet = RestTimePickerSheet(exerciseName: name, initialDuration: current)
+        sheet.modalPresentationStyle = .pageSheet
+        
+        if let sheetController = sheet.sheetPresentationController {
+            sheetController.detents = [.medium()]
+            sheetController.prefersGrabberVisible = true
+        }
+        
+        sheet.onDurationSelected = { [weak self] duration in
+            self?.viewModel.input.setRestDuration.send((exerciseID, duration))
+        }
+        
+        present(sheet, animated: true)
     }
     
     

@@ -69,7 +69,7 @@ class HomeVC: UIViewController {
     private func configureDataSource(){
         contentView.collectionView.delegate = self
         
-        dataSource = DataSource(collectionView: contentView.collectionView, cellProvider: {collectionView, indexPath, itemIdentifier in
+        dataSource = DataSource(collectionView: contentView.collectionView, cellProvider: { [weak self] collectionView, indexPath, itemIdentifier in
             
             switch itemIdentifier {
             case .workout(let presentationItem):
@@ -77,7 +77,7 @@ class HomeVC: UIViewController {
                     return UICollectionViewCell()
                 }
                 cell.headerView.configureHomeHeaderView(name: presentationItem.title, time: presentationItem.time, volume: presentationItem.volume )
-                cell.headerMoreButtonTapped = { [weak self] in
+                cell.headerMoreButtonTapped = {
                     self?.workoutMenuPresent(for: presentationItem.id)
                 }
                 
