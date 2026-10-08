@@ -117,7 +117,7 @@ final class WorkoutSessionViewModel{
             .store(in: &cancellables)
         
         restTimerService.statePublisher
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
                 self?.output.restTimerState.send(state)
             }
