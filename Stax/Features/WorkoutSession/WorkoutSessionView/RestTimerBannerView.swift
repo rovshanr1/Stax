@@ -14,7 +14,7 @@ private final class RestProgressBar: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .label.withAlphaComponent(0.12)
-        fillView.backgroundColor = .label
+        fillView.backgroundColor = .activeItems
         clipsToBounds = true
         addSubview(fillView)
     }
@@ -39,6 +39,7 @@ final class RestTimerBannerView: UIView {
     var onSkipTapped: (() -> Void)?
     
     private var isShown = false
+    private var areControlsVisible = true
     private static let hiddenTransform = CGAffineTransform(translationX: 0, y: 40)
     
     //MARK: - UI Elements
@@ -54,10 +55,10 @@ final class RestTimerBannerView: UIView {
     
     private let skipButton: UIButton = {
         var config = UIButton.Configuration.filled()
-        config.baseBackgroundColor = .label
-        config.baseForegroundColor = .systemBackground
+        config.baseBackgroundColor = .activeItems
+        config.baseForegroundColor = .label
         config.title = "Skip"
-        config.cornerStyle = .capsule
+        config.cornerStyle = .medium
         config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24)
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
@@ -136,9 +137,25 @@ final class RestTimerBannerView: UIView {
     
     //MARK: - Private Methods
     private func setControlsVisible(_ visible: Bool) {
-        progressBar.alpha = visible ? 1 : 0
-        skipButton.alpha = visible ? 1 : 0
-        skipButton.isUserInteractionEnabled = visible
+        guard visible != areControlsVisible else { return }
+        areControlsVisible = visible
+        
+        let changes = {
+            self.progressBar.isHidden = !visible
+            self.skipButton.isHidden = !visible
+            self.progressBar.alpha = visible ? 1 : 0
+            self.skipButton.alpha = visible ? 1 : 0
+            self.superview?.layoutIfNeeded()
+        }
+        
+        if isShown {
+            UIView.animate(withDuration: 0.25,
+                           delay: 0,
+                           options: [.beginFromCurrentState, .allowUserInteraction],
+                           animations: changes)
+        } else {
+            changes()
+        }
     }
     
     private func setVisible(_ visible: Bool) {
