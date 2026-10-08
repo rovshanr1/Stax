@@ -57,6 +57,7 @@ class WorkoutSessionVC: UIViewController {
         super.viewDidLoad()
         setupNavbar()
         configureDataSource()
+        bindContentView()
         bindVM()
         
         keyboardManager = KeyboardManager(scrollView: contentView.collectionView)
@@ -92,6 +93,13 @@ class WorkoutSessionVC: UIViewController {
             }
             
             return WorkoutSessionLayoutFactory.createSection(for: section)
+        }
+    }
+    
+    //MARK: - Bind Content View
+    private func bindContentView(){
+        contentView.restTimerBanner.onSkipTapped = { [weak self] in
+            self?.viewModel.input.skipRestTimer.send()
         }
     }
     
@@ -219,6 +227,8 @@ class WorkoutSessionVC: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
                 guard let self else { return }
+                
+                self.contentView.restTimerBanner.apply(state)
                 
                 if case .finished = state{
                     FinishSound.playRestFinishedFeedback()

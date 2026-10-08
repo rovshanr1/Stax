@@ -22,6 +22,8 @@ final class WorkoutSessionView: UIView {
         return collectionView
     }()
 
+    let restTimerBanner = RestTimerBannerView()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -34,11 +36,17 @@ final class WorkoutSessionView: UIView {
 
     private func setupUI(){
         backgroundColor = .systemBackground
+        
         addSubview(collectionView)
+        addSubview(restTimerBanner)
 
         collectionView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
         
+        restTimerBanner.snp.makeConstraints { make in
+            make.leading.trailing.equalToSuperview().inset(16)
+            make.bottom.equalTo(keyboardLayoutGuide.snp.top).offset(-8)
+        }
     }
 }

@@ -55,6 +55,8 @@ final class WorkoutSessionViewModel{
     public private(set) var currentStats: (volume: Double, sets: Int) = (0, 0)
     
     private let workoutId: String?
+    private var activeRestExerciseID: String?
+    private var activeRestSetID: String?
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -117,7 +119,7 @@ final class WorkoutSessionViewModel{
             .store(in: &cancellables)
         
         restTimerService.statePublisher
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
                 self?.output.restTimerState.send(state)
             }
@@ -175,7 +177,7 @@ final class WorkoutSessionViewModel{
         
         input.skipRestTimer
             .sink { [weak self] in
-                self?.restTimerService.stop()
+                self?.stopRestTimer()
             }
             .store(in: &cancellables)
     }
@@ -236,10 +238,12 @@ final class WorkoutSessionViewModel{
                 
                 if duration > 0 {
                     durations[exerciseID] = duration
-                    self.restTimerService.start(for: duration)
                 } else {
                     durations.removeValue(forKey: exerciseID)
-                    self.restTimerService.stop()
+                    
+                    if self.activeRestExerciseID == exerciseID {
+                        self.stopRestTimer()
+                    }
                 }
                 
                 self.output.restDurations.send(durations)
@@ -321,15 +325,35 @@ final class WorkoutSessionViewModel{
                                  wasDone: Bool,
                                  isDone: Bool) {
         
+        if wasDone, !isDone {
+            if activeRestSetID == setID {
+                stopRestTimer()
+            }
+            return
+        }
+        
         guard isDone, !wasDone else { return }
         
         if exercise.workoutSets.last?.id == setID {
-            restTimerService.stop()
+            if activeRestExerciseID == exercise.id {
+                stopRestTimer()
+            }
             return
         }
         
         guard let duration = restDuration(for: exercise.id) else { return }
+        
+        activeRestExerciseID = exercise.id
+        activeRestSetID = setID
         restTimerService.start(for: duration)
+
+    }
+    
+    
+    private func stopRestTimer() {
+        restTimerService.stop()
+        activeRestExerciseID = nil
+        activeRestSetID = nil
     }
 }
 

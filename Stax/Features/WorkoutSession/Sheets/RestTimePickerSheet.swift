@@ -58,7 +58,7 @@ final class RestTimePickerSheet: UIViewController {
     
     private let startButton: UIButton = {
         var config = UIButton.Configuration.filled()
-        config.title = "Start Rest Timer"
+        config.title = "Set Rest Timer"
         config.baseBackgroundColor = .activeItems
         config.baseForegroundColor = .label
         config.cornerStyle = .large
@@ -124,13 +124,13 @@ final class RestTimePickerSheet: UIViewController {
         var config = startButton.configuration
         
         if selectedDuration > 0 {
-            config?.title = "Start Rest Timer"
+            config?.title = "Set Rest Timer"
             startButton.isEnabled = true
         } else if hadDuration {
             config?.title = "Turn Off Rest Timer"
             startButton.isEnabled = true
         } else {
-            config?.title = "Start Rest Timer"
+            config?.title = "Set Rest Timer"
             startButton.isEnabled = false
         }
         
