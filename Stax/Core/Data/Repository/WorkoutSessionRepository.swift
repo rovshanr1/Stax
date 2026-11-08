@@ -151,12 +151,12 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
             return
         }
         
+        let currentCount = currentWorkout.workoutExercises?.count ?? 0
+        
         let newWorkoutExercise = exerciseRepo.create()
         newWorkoutExercise.id = UUID()
         newWorkoutExercise.exercise = baseExercise
         newWorkoutExercise.workout = currentWorkout
-        
-        let currentCount = currentWorkout.workoutExercises?.count ?? 0
         newWorkoutExercise.orderIndex = Int16(currentCount)
         
         let initialSet = workoutSets.create()
@@ -279,14 +279,14 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     func addNewSet(to workoutExerciseID: String) {
         guard let currentExercise = exerciseRepo.fetch(by: workoutExerciseID) else { return }
         
+        let currentSetsCount = currentExercise.workoutSets?.count ?? 0
+        
         let newSet = workoutSets.create()
         newSet.id = UUID()
         newSet.isCompleted = false
         newSet.weight = 0
         newSet.reps = 0
         newSet.workoutExercise = currentExercise
-        
-        let currentSetsCount = currentExercise.workoutSets?.count ?? 0
         newSet.orderIndex = Int16(currentSetsCount)
         
         workoutSets.save()
