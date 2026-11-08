@@ -27,3 +27,11 @@ extension WorkoutExercise{
     }
     
 }
+
+@MainActor
+extension WorkoutExercise {
+    public override func awakeFromInsert() {
+        super.awakeFromInsert()
+        if id == nil { id = UUID() }
+    }
+}
