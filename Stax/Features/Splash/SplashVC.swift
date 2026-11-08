@@ -8,7 +8,12 @@
 import UIKit
 import Combine
 
+enum SplashEvent{
+    case syncComplated
+}
+
 class SplashVC: UIViewController {
+    var didSentEventClosure: ((SplashEvent) -> Void)?
 
     var vm: SplashVM
     
@@ -28,6 +33,8 @@ class SplashVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         contentView.loadingIndicator.startAnimating()
+        
+        bindViewModel()
 
     }
     
@@ -38,7 +45,9 @@ class SplashVC: UIViewController {
     private func bindViewModel() {
         vm.output.syncCompleted
             .receive(on: DispatchQueue.main)
-            .sink(receiveValue: {  _ in})
+            .sink { [weak self] in
+                self?.didSentEventClosure?(.syncComplated)
+            }
             .store(in: &cancellables)
     }
 

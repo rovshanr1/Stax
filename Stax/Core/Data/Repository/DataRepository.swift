@@ -19,6 +19,8 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     private var entityName: String {
         T.entity().name ?? String(describing: T.self)
     }
+
+    private var cancellables: Set<AnyCancellable> = []
     
     init(context: NSManagedObjectContext) {
         self.context = context
@@ -206,3 +208,88 @@ extension DataRepository where T == WorkoutExercise {
     }
 }
 
+extension DataRepository{
+    func fetchAllAsync() async -> [T] {
+        return await withCheckedContinuation {[weak self] continuation in
+            var isResumed: Bool = false
+            
+            guard let self else {
+                continuation.resume(returning: [])
+                return
+            }
+            
+            
+            self.fetchAll()
+                .first()
+                .sink(receiveCompletion: {completion in
+                    if case .failure(_) = completion, !isResumed {
+                        isResumed = true
+                        continuation.resume(returning: [])
+                    }
+                }) { result in
+                    if !isResumed{
+                       isResumed = true
+                       continuation.resume(returning: result)
+                        print("\(result)")
+                    }
+                }
+                .store(in: &self.cancellables)
+        }
+    }
+    
+    func deleteAsync(_ id: String) async {
+        return await withCheckedContinuation {[weak self] continuation in
+            var isResumed: Bool = false
+            
+            guard let self else {
+                continuation.resume()
+                return
+            }
+            
+            self.delete(by: id)
+                .first()
+                .sink(receiveCompletion: {_ in
+                    if !isResumed{
+                        isResumed = true
+                        continuation.resume()
+                    }
+                }) { _ in
+                    
+                    if !isResumed{
+                        isResumed = true
+                        continuation.resume()
+                        
+                        print("deletion success")
+                    }
+                }
+                .store(in: &self.cancellables)
+        }
+    }
+    
+    func saveAsync() async throws {
+        try await withCheckedThrowingContinuation { [weak self] (continuation: CheckedContinuation<Void, Error>) in
+            guard let self else {
+                continuation.resume()
+                return
+            }
+            
+            var isResumed = false
+            
+            self.save()
+                .first()
+                .sink { completion in
+                    guard !isResumed else { return }
+                    isResumed = true
+                    if case .failure(let error) = completion {
+                        continuation.resume(throwing: error)
+                    }
+                } receiveValue: { _ in
+                    guard !isResumed else { return }
+                    isResumed = true
+                    continuation.resume()
+                }
+                .store(in: &cancellables)
+
+        }
+    }
+}

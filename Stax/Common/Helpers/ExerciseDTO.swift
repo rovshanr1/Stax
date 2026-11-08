@@ -7,10 +7,10 @@
 
 import Foundation
 
-
 struct ExerciseDTO: Codable{
     let id: String
     let name: String
     let targetMuscle: String
     let exerciseImage: String
+    let type: String?  
 }

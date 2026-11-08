@@ -81,7 +81,7 @@ final class WorkoutDetailVM {
     
     private func createSummaryItem(from workout: WorkoutDomainModel) -> DetailSummaryItems {
         return  DetailSummaryItems(
-            workoutName: workout.name,
+            workoutName: workout.name ?? "Unknown Workout",
             durationString: workout.duration.formatDuration(),
             volumeString: workout.volume.formatWeight(),
             setsLabel: "\(workout.sets)",

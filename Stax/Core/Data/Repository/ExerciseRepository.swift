@@ -21,41 +21,24 @@ final class ExerciseRepository: ExerciseRepositoryProtocol {
         self.genericRepository = genericRepository
     }
     
+    
     func fetchAll() -> AnyPublisher<[ExerciseDomainModel], Error> {
-        return genericRepository.fetchAll()
+        genericRepository.fetchAll()
             .map { coreDataExercises in
-                coreDataExercises.map { exercise in
-                    let muscleGroupEnum = MuscleGroup(rawValue: exercise.targetMuscle ?? "")
-                    return ExerciseDomainModel(
-                        id: exercise.id?.uuidString ?? UUID().uuidString,
-                        name: exercise.name ?? "Unkwnown Exercise",
-                        targetMuscleGroups: muscleGroupEnum,
-                        videoURL: exercise.videoURL,
-                        exerciseImage: exercise.exerciseImage
-                    )
-                }
+                coreDataExercises.map { $0.toDomain() }
             }
             .eraseToAnyPublisher()
     }
+    
+    
     
     func search(byName query: String) -> AnyPublisher<[ExerciseDomainModel], Error> {
         let predicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
-        
         return genericRepository.search(by: predicate)
             .map { coreDataExercises in
-                coreDataExercises.map { exercise in
-                    let muscleGroupEnum = MuscleGroup(rawValue: exercise.targetMuscle ?? "")
-                    return ExerciseDomainModel(
-                        id: exercise.id?.uuidString ?? UUID().uuidString,
-                        name: exercise.name ?? "Unkwnown Exercise",
-                        targetMuscleGroups: muscleGroupEnum,
-                        videoURL: exercise.videoURL,
-                        exerciseImage: exercise.exerciseImage
-                    )
-                }
+                coreDataExercises.map { $0.toDomain() }
             }
             .eraseToAnyPublisher()
     }
-    
     
 }

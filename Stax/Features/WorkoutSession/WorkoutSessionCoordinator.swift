@@ -6,50 +6,39 @@
 //
 
 import UIKit
-import Combine
 
 enum WorkoutSessionEvent{
-    case addExercise
-    case finishWorkout
+    case addExercise(onSelected: (ExerciseDomainModel) -> Void)
+    case replaceExercise(WorkoutExerciseDomainModel, onSelected: (ExerciseDomainModel) -> Void)
+    case finishWorkout(workoutID: String, stats: WorkoutStats)
     case cancelWorkout
-    case exerciseMenuButtonTapped(WorkoutExerciseDomainModel)
 }
 
 final class WorkoutSessionCoordinator: Coordinator{
-    //StandartDelegate
+    //Standart Delegate
     weak var finishDelegate: CoordinatorFinishDelegate?
-    
     var childCoordinators: [Coordinator] = []
-    
     var navigationController: UINavigationController
     
     
-    //Container
-    let appDIContainer: AppDIContainer
+    private let factory: WorkoutSessionCoordinatorFactory
     
-    var cancellables: Set<AnyCancellable> = []
+    private let workoutId: String?
     
-    var vm: WorkoutSessionViewModel?
-    var workoutId: String?
-    
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer, workoutId: String? = nil) {
+    init(_ navigationController: UINavigationController, factory: WorkoutSessionCoordinatorFactory, workoutId: String? = nil) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
         self.workoutId = workoutId
-        
-        self.vm = WorkoutSessionViewModel(sessionService: appDIContainer.sharedSessionService,
-                                          workoutRepository: appDIContainer.sharedWorkoutRepo, workoutId: workoutId)
+        self.factory = factory
     }
     
     
     func start() {
-        let sessionVC = WorkoutSessionVC()
+        let sessionVC = factory.makeWorkoutSessionVC(workoutID: workoutId)
         
         sessionVC.didSendEventClosure = { [weak self] event in
             self?.handle(event)
         }
         
-        sessionVC.viewModel = self.vm
         
         navigationController.setViewControllers([sessionVC], animated: false)
     }
@@ -57,46 +46,35 @@ final class WorkoutSessionCoordinator: Coordinator{
     func finish() {
         navigationController.dismiss(animated: true)
         
-        cancellables.removeAll()
-        vm = nil
-        
         childCoordinators.forEach { $0.finish() }
         childCoordinators.removeAll()
         
         finishDelegate?.coordinatorDidFinish(childCoordinator: self)
     }
     
-    private func handle (_ event: WorkoutSessionEvent){
+    private func handle(_ event: WorkoutSessionEvent) {
         switch event {
-        case .addExercise:
-            self.showExerciseList()
+        case .addExercise(let onSelected):
+            showExerciseList(onExerciseSelected: onSelected)
+        case .replaceExercise(_, let onSelected):
+            showExerciseList(onExerciseSelected: onSelected)
         case .cancelWorkout:
-            self.finish()
-        case .finishWorkout:
-            self.showWorkoutSummary()
-        case .exerciseMenuButtonTapped(let exerciseToEdit):
-            self.showExerciseMenu(for: exerciseToEdit)
+            finish()
+        case .finishWorkout(let workoutID, let stats):
+            showWorkoutSummary(workoutID: workoutID, stats: stats)
         }
     }
     
     
-    private func showExerciseList(onExerciseSelected: ((ExerciseDomainModel) -> Void)? = nil) {
+    private func showExerciseList(onExerciseSelected: @escaping (ExerciseDomainModel) -> Void) {
         let listNav = UINavigationController()
         listNav.modalPresentationStyle = .fullScreen
         
-        let exerciseCoordinator = ExerciseListCoordinator(listNav, appDIContainer: appDIContainer)
+        let exerciseCoordinator = factory.makeExerciseListCoordinator(navigationController: listNav)
         exerciseCoordinator.finishDelegate = self
         
-        exerciseCoordinator.didFinishWithSelection = {[weak self] selectedExercise in
-            guard let self else {return}
-            
-            if let customAction = onExerciseSelected {
-                customAction(selectedExercise)
-            }else{
-                self.vm?.input.addExercise.send(selectedExercise)
-            }
-            
-            
+        exerciseCoordinator.didFinishWithSelection = { selectedExercise in
+            onExerciseSelected(selectedExercise)
         }
         
         childCoordinators.append(exerciseCoordinator)
@@ -105,74 +83,18 @@ final class WorkoutSessionCoordinator: Coordinator{
         navigationController.present(listNav, animated: true)
     }
     
-    private func showWorkoutSummary(){
-        
-        guard let workoutID = appDIContainer.sharedSessionService.currentWorkoutID,
-              let duration = vm?.timerService.seconsElapsed
-        else {return}
-        
-        let stats = vm?.output.sessionStats.value ?? (0.0, 0)
-        let estimatedCalories = (Double(duration) / 60.0) * 6.0
-
-        let summaryStats = WorkoutStats(
-            duration: TimeInterval(duration),
-            volume: stats.0,
-            totalSets: stats.1,
-            caloriesBurned: estimatedCalories
+    private func showWorkoutSummary(workoutID: String, stats: WorkoutStats) {
+        let summaryCoordinator = factory.makeWorkoutSummaryCoordinator(
+            navigationController: navigationController,
+            workoutID: workoutID,
+            stats: stats
         )
-        
-        let summaryCoordinator = WorkoutSummaryCoordinator(navigationController: navigationController, appDIContaioner: appDIContainer, workoutID: workoutID, stats: summaryStats)
         summaryCoordinator.finishDelegate = self
-        
-        summaryCoordinator.onWorkoutSaved = {[weak self] in
-            self?.finish()
-        }
-        
-        summaryCoordinator.onWorkoutDiscarded = {[weak self] in
-            self?.finish()
-        }
+        summaryCoordinator.onWorkoutSaved = { [weak self] in self?.finish() }
+        summaryCoordinator.onWorkoutDiscarded = { [weak self] in self?.finish() }
         
         childCoordinators.append(summaryCoordinator)
         summaryCoordinator.start()
-    }
-    
-    private func showExerciseMenu(for exercise: WorkoutExerciseDomainModel){
-        let sheetNav = ExerciseMenuSheet()
-        sheetNav.modalPresentationStyle = .pageSheet
-        
-        if let sheet = sheetNav.sheetPresentationController {
-            sheet.detents = [
-                .custom(identifier: .init("small")) { context in
-                    return 120
-                }
-            ]
-            sheet.prefersGrabberVisible = true
-        }
-        
-        sheetNav.onActionSelected = { [weak self] action in
-            self?.handleExerciseMenuAction(action, for: exercise)
-        }
-        
-        navigationController.present(sheetNav, animated: true)
-    }
-    
-    
-    private func handleExerciseMenuAction(_ action: ExerciseMenuSheet.Action, for exercise: WorkoutExerciseDomainModel){
-        
-        navigationController.dismiss(animated: true) { [weak self]  in
-            guard let self else { return }
-            
-            switch action{
-            case .replaceExercise:
-                self.showExerciseList {[weak self] newExerciseDef in
-                    self?.vm?.input.replaceExercise.send((exercise, newExerciseDef))
-                }
-        
-            case .deleteExercise:
-                self.vm?.input.deleteExercise.send(exercise)
-            }
-        }
-        
     }
 }
 

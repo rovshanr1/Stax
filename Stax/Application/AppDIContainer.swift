@@ -8,10 +8,24 @@
 import Foundation
 import CoreData
 
-final class AppDIContainer{
+protocol AppDependencies{
+    var userManager: UserManager { get }
+    var context: NSManagedObjectContext { get }
+    var sharedWorkoutRepo: WorkoutRepositoryProtocol { get }
+    var sharedFirebaseService: FirebaseSyncService { get }
+    
+    var dataSeeder: DataSeederProtocol { get }
+    var genericWorkoutRepo: DataRepository<Workout> { get }
+    var sharedExerciseDefRepo: ExerciseRepositoryProtocol { get }
+    var sharedSessionService: SessionServiceProtocol { get }
+    var sharedSyncManager: SyncManager {get}
+    var shareService: WorkoutShareServiceProtocol { get }
+}
+
+final class AppDIContainer: AppDependencies{
     let userManager: UserManager
     
-    private let persistenceController: PersistenceControllerProtocol
+    let persistenceController: PersistenceControllerProtocol
     
     init(userManager: UserManager, persistenceController: PersistenceControllerProtocol) {
         self.userManager = userManager
@@ -24,6 +38,10 @@ final class AppDIContainer{
     
     lazy var genericWorkoutRepo: DataRepository<Workout> = {
         return DataRepository<Workout>(context: context)
+    }()
+    
+    lazy var dataSeeder: DataSeederProtocol = {
+        return DataSeeder(context: context)
     }()
     
     lazy var sharedWorkoutRepo: WorkoutRepositoryProtocol = {
@@ -65,6 +83,4 @@ final class AppDIContainer{
     lazy var shareService: WorkoutShareServiceProtocol = {
         return WorkoutTextShareService()
     }()
-    
-    
 }

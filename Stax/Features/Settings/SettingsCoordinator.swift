@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import Combine
 
 protocol SettingsCoordinatorDelegate: CoordinatorFinishDelegate {
     func settingsCoordinatorDidLogout()
@@ -16,6 +15,7 @@ protocol SettingsCoordinatorDelegate: CoordinatorFinishDelegate {
 enum SettingsEvent {
     case logout
     case dismiss
+    case preferencesOnTapped(event: AccountEvent)
 }
 
 enum AccountEvent{
@@ -34,25 +34,19 @@ final class SettingsCoordinator: Coordinator{
     //Delegate
     weak var settingsDelegate: SettingsCoordinatorDelegate?
     
-    //ViewModel
-    private let settingsVM: SettingsVM
-    
     //Container
-    let appDIContainer: AppDIContainer
-    
-    private var cancellables: Set<AnyCancellable> = []
+    let dependency: AppDependencies
+    //Factory
+    private let factory: SettingsCoordinatorFactory
 
-    
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
+    init(_ navigationController: UINavigationController, factory: SettingsCoordinatorFactory, dependency: AppDependencies) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
-        
-        self.settingsVM = SettingsVM(userManager: appDIContainer.userManager)
+        self.factory = factory
+        self.dependency = dependency
     }
     
     func start() {
-        let settingsVC = SettingsVC(vm: settingsVM)
-        
+        let settingsVC = factory.makeSettingViewController()
         
         settingsVC.didSentEventClosure = { [weak self] event in
             guard let self = self else { return }
@@ -60,32 +54,21 @@ final class SettingsCoordinator: Coordinator{
         }
         
         settingsVC.hidesBottomBarWhenPushed = true
-        
-        handleNavigation()
 
         navigationController.pushViewController(settingsVC, animated: true)
     }
     
     private func handle(_ event: SettingsEvent) {
         switch event{
- 
         case .dismiss:
             navigationController.popViewController(animated: true)
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
         case .logout:
             settingsDelegate?.settingsCoordinatorDidLogout()
             finishDelegate?.coordinatorDidFinish(childCoordinator: self)
-      
+        case .preferencesOnTapped(let accountEvent):
+            handlePreferencies(accountEvent)
         }
-    }
-    
-    private func handleNavigation(){
-        settingsVM.output.preferencesOnTapped
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] serviceEvent in
-                self?.handlePreferencies(serviceEvent)
-            }
-            .store(in: &cancellables)
     }
     
     private func handlePreferencies(_ event: AccountEvent) {
@@ -101,7 +84,7 @@ final class SettingsCoordinator: Coordinator{
     //MARK: - Profile Screen
     
     private func profileScreen() {
-        let coordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
+        let coordinator = factory.makeEditProfileCoordinator(navigationController: navigationController)
        
         coordinator.finishDelegate = self
         childCoordinators.append(coordinator)
@@ -110,9 +93,10 @@ final class SettingsCoordinator: Coordinator{
     
     //MARK: - EdditAccount Scrren
     private func editAccountScreen() {
-        let coordinator = EditAccountCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
+        let coordinator = factory.makeEditAccountCoordinator(navigationConroller: navigationController)
         
         coordinator.finishDelegate = self
+        coordinator.editDelegate = self
         childCoordinators.append(coordinator)
         coordinator.start()
     }
@@ -123,6 +107,14 @@ final class SettingsCoordinator: Coordinator{
 extension SettingsCoordinator: CoordinatorFinishDelegate {
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({$0 !== childCoordinator})
+    }
+}
+
+extension SettingsCoordinator: EditAccountCoordinatorDelegate {
+    func editAccountCoordinatorDidDeleteAccount() {
+        settingsDelegate?.settingsCoordinatorDidLogout()
+        
+        finishDelegate?.coordinatorDidFinish(childCoordinator: self)
     }
 }
 

@@ -9,7 +9,7 @@ import Foundation
 
 nonisolated struct WorkoutDomainModel: Hashable, Codable, Sendable {
     let id: String
-    let name: String
+    let name: String?
     let duration: Double
     let volume: Double
     let workoutDescription: String?
@@ -21,3 +21,8 @@ nonisolated struct WorkoutDomainModel: Hashable, Codable, Sendable {
     let workoutExercises: [WorkoutExerciseDomainModel]
 }
 
+extension WorkoutDomainModel {
+    var displayName: String {
+        name ?? "Unknown Workout"
+    }
+}

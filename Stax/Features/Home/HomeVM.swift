@@ -19,7 +19,7 @@ final class HomeVM {
     
     ///Output: "Data" to VC (Data Streams)
     struct Output{
-        let workouts: CurrentValueSubject<[HomeWorkoutPresentationItem], Never>
+        let workouts: CurrentValueSubject<[HomeWorkoutPresentationItem]?, Never>
         let showShareSheet: PassthroughSubject<String, Never>
     }
     
@@ -45,7 +45,7 @@ final class HomeVM {
                            deleteWorkout: .init(),
                            shareWorkout: .init()
         )
-        self.output = .init(workouts: .init([]),
+        self.output = .init(workouts: .init(nil),
                             showShareSheet: .init()
             
         )
@@ -83,12 +83,13 @@ final class HomeVM {
     
     private func bindRepository(){
         workoutRepo.workoutPublisher
+            .compactMap {$0}
             .map {domainModels in
                 
                 return domainModels.map { workout in
                     HomeWorkoutPresentationItem(
                         id: workout.id,
-                        title: workout.name,
+                        title: workout.displayName,
                         dateString: DateFormatter.localizedString(from: workout.date, dateStyle: .medium, timeStyle: .none),
                         time: workout.duration.formatDuration(),
                         volume: workout.volume.formatWeight(),
@@ -129,11 +130,11 @@ final class HomeVM {
     
     private func deleteWorkout(withId id: String){
         
-        syncService.deleteWorkoutFromCloud(workoutId: id){ result in
-            switch result {
-            case .success:
-                print("workout deleted: \(id)")
-            case .failure(let error):
+        Task{[weak self] in
+            
+            do {
+                try await self?.syncService.deleteWorkoutFromCloud(workoutId: id)
+            }catch{
                 print(error.localizedDescription)
             }
         }

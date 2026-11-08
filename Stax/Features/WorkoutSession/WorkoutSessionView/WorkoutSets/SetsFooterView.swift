@@ -7,7 +7,8 @@
 
 import UIKit
 import SnapKit
-class SetsFooterView: UIView {
+
+final class SetsFooterView: UIView {
 
     var onTapAddSetButton: (() -> Void)?
     

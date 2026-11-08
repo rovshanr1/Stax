@@ -24,7 +24,7 @@ class MainCoordinator: MainCoordinatorProtocol{
     
    
     //Container
-    let appDIContainer: AppDIContainer
+    var appDIContainer: AppDIContainer
    
     var cancellables: Set<AnyCancellable> = []
     
@@ -45,19 +45,17 @@ class MainCoordinator: MainCoordinatorProtocol{
     }
     
     func showSplashView(){
-        let (splashVC, splashVM) = SplashModuleBuilder.build(container: appDIContainer)
-    
+        let factory = SplashModuleFactory(appDIContainer: appDIContainer)
+        let splashVC = factory.makeSplashModule()
+        
+        splashVC.didSentEventClosure = { [weak self] event in
+            self?.handle(event)
+        }
         
         navigationController.setNavigationBarHidden(true, animated: false)
         navigationController.setViewControllers([splashVC], animated: false)
         
-        splashVM.output.syncCompleted
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                guard let self = self else { return }
-                self.showMainFlow()
-            }
-            .store(in: &cancellables)
+        
     }
     
     func authFlow() {
@@ -79,11 +77,19 @@ class MainCoordinator: MainCoordinatorProtocol{
     func handleIsFirstLaunchCompleted() {
         let defaults = UserDefaults.standard
         
-        if defaults.bool(forKey: "isFirshLaunchCompleted") == false{
+        if defaults.bool(forKey: UserDefaultsKeys.isFirstLaunchCompleted) == false{
             
             try? Auth.auth().signOut()
             
-            defaults.set(true, forKey: "isFirshLaunchCompleted")
+            defaults.set(true, forKey: UserDefaultsKeys.isFirstLaunchCompleted)
+        }
+    }
+    
+    
+    private func handle(_ event: SplashEvent){
+        switch event{
+        case .syncComplated:
+            showMainFlow()
         }
     }
 }
@@ -94,12 +100,52 @@ extension MainCoordinator: CoordinatorFinishDelegate{
     func coordinatorDidFinish(childCoordinator: Coordinator) {
         childCoordinators = childCoordinators.filter({ $0 !== childCoordinator})
         
-        if childCoordinator is TabCoordinator {
-            navigationController.viewControllers.removeAll()
-            authFlow()
+        
+        if childCoordinator is TabCoordinator{
+            animatedAndResetAppFlow()
         }else if childCoordinator is AuthCoordinator{
             navigationController.viewControllers.removeAll()
             showSplashView()
         }
+    }
+    
+    
+    private func animatedAndResetAppFlow(){
+     
+        guard let window = navigationController.view.window,
+              let snapshot = window.snapshotView(afterScreenUpdates: false) else {
+            
+            performDataResetAndGoToAuth()
+            return
+        }
+        
+        window.addSubview(snapshot)
+        
+        performDataResetAndGoToAuth()
+        
+        UIView.animate(withDuration: 0.4, delay:0, options: .curveEaseInOut ,animations: {
+            snapshot.alpha = 0.0
+            snapshot.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+        }) { _ in
+            snapshot.removeFromSuperview()
+        }
+    }
+    
+    
+    private func performDataResetAndGoToAuth() {
+        navigationController.viewControllers.removeAll()
+        
+        try? appDIContainer.persistenceController.resetStack()
+        
+        UserDefaults.standard.set(false, forKey: UserDefaultsKeys.isSeededFromFirebase)
+        
+        let newUserManager = UserManager()
+        let newPersistenceController = PersistenceController()
+        
+        let newDIContainer = AppDIContainer(userManager: newUserManager, persistenceController: newPersistenceController)
+        
+        self.appDIContainer = newDIContainer
+        
+        authFlow()
     }
 }

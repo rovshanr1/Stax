@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import CoreData
 
 protocol SessionServiceProtocol{
     var currentWorkoutID: String? { get }
@@ -52,13 +53,9 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     
     //State
     private var currentWorkout: Workout?
-    
-    var currentWorkoutID: String? {
-        return currentWorkout?.id?.uuidString
-    }
-    
-    private var workoutId: String?
     private var isEditMode: Bool = false
+    
+    var currentWorkoutID: String? { return currentWorkout?.id?.uuidString }
     
     //Combine
     private var cancellables: Set<AnyCancellable> = []
@@ -72,6 +69,8 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         self.workoutSets = workoutSets
         self.workoutRepo = workoutRepo
     }
+    
+    //MARK: - Session
     
     func setupSession(workoutID: String?) -> (id: String, initialDuration: Double) {
         if let id = workoutID, let existingWorkout = workoutRepo.fetch(by: id) {
@@ -93,40 +92,30 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         self.currentWorkout = newWorkout
         
         self.notifyUI()
-        
         return (newWorkout.id?.uuidString ?? "" , 0)
     }
     
     func cancelWorkoutSession() {
-        guard let workout = self.currentWorkout,
-              let workoutID = workout.id?.uuidString else{
-            return
-        }
+        guard let workout = currentWorkout,
+              let workoutID = workout.id?.uuidString else { return }
         
         if isEditMode {
-            self.currentWorkout = nil
-            self.cachedPreviousSets.removeAll()
-            self.exercisesSubject.send([])
-            self.sessionStatsSubject.send((volume: 0, sets: 0))
-            self.isEditMode = false
+            resetState()
+            isEditMode = false
             return
         }
         
         workoutRepo.delete(by: workoutID)
-            .sink { completion  in
-                if case .failure(let error) = completion{
+            .sink { completion in
+                if case .failure(let error) = completion {
                     print("Error canceling workout: \(error)")
                 }
             } receiveValue: { [weak self] _ in
-                self?.currentWorkout = nil
-                self?.cachedPreviousSets.removeAll()
-                self?.exercisesSubject.send([])
-                self?.sessionStatsSubject.send((volume: 0, sets: 0))
-            
-                print("workout session cacnelled and draft deleted from Core Data")
+                self?.resetState()
             }
             .store(in: &cancellables)
     }
+
     
     func finishWorkout(duration: Double) {
         guard let workout = self.currentWorkout else { return }
@@ -143,6 +132,14 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         
     }
     
+    private func resetState(){
+        currentWorkout = nil
+        cachedPreviousSets.removeAll()
+        exercisesSubject.send([])
+        sessionStatsSubject.send((volume: 0, sets: 0))
+    }
+    
+    //MARK: - Exercises
     func addExercise(exerciseID: String) {
         guard let currentWorkout = self.currentWorkout else { return }
         
@@ -167,39 +164,8 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         initialSet.reps = 0
         initialSet.workoutExercise = newWorkoutExercise
         
-        if let exerciseID = baseExercise.id?.uuidString,
-           cachedPreviousSets[exerciseID] == nil {
-            if let pastSession = exerciseRepo.fetchPreviousSession(for: baseExercise, currentWorkout: currentWorkout){
-                let sortedPastSets = (pastSession.workoutSets as? Set<WorkoutSet> ?? [])
-                    .sorted { $0.orderIndex < $1.orderIndex }
-                
-                let mappedPastSets: [WorkoutSetDomainModel] = sortedPastSets.map { cdSet in
-                    return WorkoutSetDomainModel(
-                        id: cdSet.id?.uuidString ?? UUID().uuidString,
-                        isCompleted: cdSet.isCompleted,
-                        orderIndex: cdSet.orderIndex,
-                        previous: "-",
-                        reps: cdSet.reps,
-                        restTime: cdSet.restTime,
-                        weight: cdSet.weight,
-                        previousWeight: nil,
-                        previousReps: nil
-                    )
-                }
-                
-                cachedPreviousSets[exerciseID] = mappedPastSets
-            }
-        }
-        
-        exerciseRepo.save()
-            .sink(receiveCompletion: { completion in
-                if case .failure(let failure) = completion {
-                    print("Error: \(failure.localizedDescription)")
-                }
-            }, receiveValue: { [weak self] _ in
-                self?.notifyUI()
-            })
-            .store(in: &cancellables)
+        loadPreviousSetsIfNeeded(for: baseExercise, in: currentWorkout)
+        persist("addExercise")
     }
     
     func deleteExercise(workoutExerciseID: String) {
@@ -216,66 +182,25 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
     }
     
     func replaceExercise(workoutExerciseID: String, with newExerciseID: String) {
-        guard let workoutExercise = exerciseRepo.fetch(by: workoutExerciseID) else { return }
-        
-        guard let newBaseExercise = baseExerciseRepo.fetch(by: newExerciseID) else { return }
+        guard let workoutExercise = exerciseRepo.fetch(by: workoutExerciseID),
+              let newBaseExercise = baseExerciseRepo.fetch(by: newExerciseID) else { return }
         
         workoutExercise.exercise = newBaseExercise
         
-        //Replecing set stats
-        if cachedPreviousSets[newExerciseID] == nil, let currentWorkout = self.currentWorkout {
-            if let pastSession = exerciseRepo.fetchPreviousSession(for: newBaseExercise, currentWorkout: currentWorkout){
-                let sortedPastSets = (pastSession.workoutSets as? Set<WorkoutSet> ?? [])
-                    .sorted { $0.orderIndex < $1.orderIndex }
-                
-                let mappedPastSets: [WorkoutSetDomainModel] = sortedPastSets.map { cdSet in
-                    return WorkoutSetDomainModel(
-                        id: cdSet.id?.uuidString ?? UUID().uuidString,
-                        isCompleted: cdSet.isCompleted,
-                        orderIndex: cdSet.orderIndex,
-                        previous: "-",
-                        reps: cdSet.reps,
-                        restTime: cdSet.restTime,
-                        weight: cdSet.weight,
-                        previousWeight: nil,
-                        previousReps: nil
-                    )
-                    
-                }
-                cachedPreviousSets[newExerciseID] = mappedPastSets
-            }
+        if let currentWorkout {
+            loadPreviousSetsIfNeeded(for: newBaseExercise, in: currentWorkout)
         }
-        
-        exerciseRepo.save()
-            .sink { completion in
-                if case .failure(let failure) = completion {
-                    print("Error replacing exercise: \(failure.localizedDescription)")
-                }
-            } receiveValue: { [weak self] _ in
-                self?.notifyUI()
-            }
-            .store(in: &cancellables)
+        persist("replaceExercise")
     }
+      
     
     func updateExerciseNote(workoutExerciseID: String, note: String) {
         guard let exercise = exerciseRepo.fetch(by: workoutExerciseID) else { return }
-        
         exercise.note = note
-        
-        exerciseRepo.save()
-            .sink { completion in
-                if case .failure(let failure) = completion {
-                    print("Note update error: \(failure.localizedDescription)")
-                }
-                
-            } receiveValue: { [weak self] _ in
-                self?.notifyUI()
-            }
-            .store(in: &cancellables)
-        
+        persist("updateExerciseNote")
     }
     
-    
+    //MARK: - Sets
     func addNewSet(to workoutExerciseID: String) {
         guard let currentExercise = exerciseRepo.fetch(by: workoutExerciseID) else { return }
         
@@ -289,17 +214,10 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         newSet.workoutExercise = currentExercise
         newSet.orderIndex = Int16(currentSetsCount)
         
-        workoutSets.save()
-            .sink { completion in
-                if case .failure(let failure) = completion {
-                    print("Error saving new set: \(failure.localizedDescription)")
-                }
-            } receiveValue: { [weak self] _ in
-                self?.notifyUI()
-            }
-            .store(in: &cancellables)
-        
+        persist("addNewSet")
     }
+    
+ 
     
     func updateSet(setID: String, weight: Double, reps: Int, isDone: Bool) {
         guard let setToUpdate = workoutSets.fetch(by: setID) else { return }
@@ -308,15 +226,7 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         setToUpdate.reps = Int16(reps)
         setToUpdate.isCompleted = isDone
         
-        workoutSets.save()
-            .sink { completion in
-                if case .failure(let failure) = completion {
-                    print("Error saving new set: \(failure.localizedDescription)")
-                }
-            } receiveValue: { [weak self] _ in
-                self?.notifyUI()
-            }
-            .store(in: &cancellables)
+        persist("updateSet")
     }
     
     func deleteSet(setID: String) {
@@ -336,89 +246,53 @@ final class WorkoutSessionRepository: SessionServiceProtocol{
         
     }
     
-    //MARK: - NotifyUI
-    private func notifyUI(){
-        guard let id = currentWorkout?.id?.uuidString,
-              let freshWorkout = workoutRepo.fetch(by: id) else { return }
-        
-        let coreDataExercise = (freshWorkout.workoutExercises as? Set<WorkoutExercise> ?? [])
-            .sorted {$0.orderIndex < $1.orderIndex}
-        
-        var totalVolume: Double = 0
-        var totalSets: Int = 0
-        
-        let domainWorkoutExercises: [WorkoutExerciseDomainModel] = coreDataExercise.map { cdExercise in
-            
-            var previousSetsSorted: [WorkoutSetDomainModel] = []
-            if let baseDefID = cdExercise.exercise?.id?.uuidString {
-                previousSetsSorted = cachedPreviousSets[baseDefID] ?? []
+    //MARK: - Helpers
+    private func persist(_ label: String) {
+        workoutRepo.save()
+            .sink { completion in
+                if case .failure(let error) = completion {
+                    print("\(label) failed: \(error)")
+                }
+            } receiveValue: { [weak self] _ in
+                self?.notifyUI()
             }
-            
-            let coreDataSets = (cdExercise.workoutSets as? Set<WorkoutSet> ?? [])
-                .sorted { $0.orderIndex < $1.orderIndex }
-            
-            let domainSets: [WorkoutSetDomainModel] = coreDataSets.enumerated().map { index, cdSet in
-                if cdSet.isCompleted {
-                    totalVolume += (cdSet.weight * Double(cdSet.reps))
-                    totalSets += 1
-                }
-                
-                var previousString = "-"
-                
-                var fetchedPrevWeight: Double? = nil
-                var fetchedPrevReps: Int16? = nil
-                
-                if index < previousSetsSorted.count {
-                    let pastSet = previousSetsSorted[index]
-                    
-                    fetchedPrevWeight = pastSet.weight
-                    fetchedPrevReps = pastSet.reps
-                    
-                    let weightStr = floor(pastSet.weight) == pastSet.weight ? "\(Int(pastSet.weight))" : String(format: "%.1f", pastSet.weight)
-                    previousString = "\(weightStr)kg x \(pastSet.reps)"
-                }
-                
-                return WorkoutSetDomainModel(
+            .store(in: &cancellables)
+    }
+    
+    private func loadPreviousSetsIfNeeded(for baseExercise: Exercise, in workout: Workout) {
+        guard let key = baseExercise.id?.uuidString, cachedPreviousSets[key] == nil else { return }
+        
+        let pastSession = exerciseRepo.fetchPreviousSession(for: baseExercise, currentWorkout: workout)
+        
+        let pastSets = (pastSession?.workoutSets as? Set<WorkoutSet> ?? [])
+            .sorted { $0.orderIndex < $1.orderIndex }
+            .map { cdSet in
+                WorkoutSetDomainModel(
                     id: cdSet.id?.uuidString ?? UUID().uuidString,
                     isCompleted: cdSet.isCompleted,
                     orderIndex: cdSet.orderIndex,
-                    previous: previousString,
+                    previous: "-",
                     reps: cdSet.reps,
                     restTime: cdSet.restTime,
                     weight: cdSet.weight,
-                    previousWeight: fetchedPrevWeight,
-                    previousReps: fetchedPrevReps
-                    
-                )
-                
-            }
-            
-            var baseExerciseDomain: ExerciseDomainModel?
-            if let cdDef = cdExercise.exercise{
-                let muscleGroupEnum = MuscleGroup(rawValue: cdDef.targetMuscle ?? "")
-                
-                baseExerciseDomain = ExerciseDomainModel(id: cdDef.id?.uuidString ?? UUID().uuidString,
-                                                         name: cdDef.name ?? "Unknown Name",
-                                                         targetMuscleGroups: muscleGroupEnum ,
-                                                         videoURL: cdDef.videoURL,
-                                                         exerciseImage: cdDef.exerciseImage
+                    previousWeight: nil,
+                    previousReps: nil
                 )
             }
-            
-            return WorkoutExerciseDomainModel(
-                id: cdExercise.id?.uuidString ?? UUID().uuidString,
-                notes: cdExercise.note,
-                orderIndex: cdExercise.orderIndex,
-                exercise: baseExerciseDomain,
-                workoutSets: domainSets
-            )
-            
-        }
-        
-        self.exercisesSubject.send(domainWorkoutExercises)
-        self.sessionStatsSubject.send((volume: totalVolume, sets: totalSets))
+
+        cachedPreviousSets[key] = pastSets
     }
     
+    //MARK: - NotifyUI
+    private func notifyUI() {
+        guard let workout = currentWorkout, !workout.isDeleted else { return }
+        
+        let result = WorkoutSessionMapper.map(workout, previousSets: cachedPreviousSets)
+        exercisesSubject.send(result.exercises)
+        sessionStatsSubject.send((volume: result.volume, sets: result.completedSets))
+    }
+    
+  
     
     
     //MARK: - Reindexing

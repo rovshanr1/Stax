@@ -8,11 +8,11 @@
 import UIKit
 import SnapKit
 
-final class WorkoutSessionExerciseListCell: UITableViewCell {
+final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     static let reuseIdentifier = "WorkoutSessionExerciseListCell"
     
     var exerciseMenuOnTapped: (() -> Void)?
-    var restTimeOnTapped: (() -> Void)?
+    var restTimeOnTapped: ((String) -> Void)?
     
     var onNoteChange: ((String) -> Void)?
     var onNotesHeightChange: (() -> Void)?
@@ -24,7 +24,6 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     var onInputFieldFocusChange: ((UIView) -> Void)?
     
     private var currentExerciseID: String?
-    private var currentExercise: WorkoutExerciseDomainModel?
     
     //MARK: - UI Elements
     private var addNotesTextView = TextView()
@@ -72,13 +71,14 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .regular)
         label.textColor = .label
+        label.text = "Rest Timer"
         return label
     }()
     
     private var restTimeNumber: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .regular)
-        label.textColor = .label
+        label.textColor = .secondaryLabel
         label.numberOfLines = 1
         return label
     }()
@@ -128,13 +128,11 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     }()
     
     //MARK: - Initialization
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         setupUI()
         
         exerciseMenuButton.imageView?.removeAllSymbolEffects()
-        
-        selectionStyle = .none
         contentView.isUserInteractionEnabled = true
     }
     
@@ -144,7 +142,7 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        //        currentExerciseID = nil
+        currentExerciseID = nil
         setsView.onUpdateSet = nil
         setsView.addSetButtonTapped = nil
     }
@@ -152,6 +150,11 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     //MARK: - Setup UI
     private func setupUI(){
         constraints()
+        restStackGesture()
+        
+        var background = UIBackgroundConfiguration.listCell()
+        background.cornerRadius = 12
+        self.backgroundConfiguration = background
         
         
         exerciseName.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -172,9 +175,9 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         contentView.addSubview(mainStack)
         
         mainStack.snp.makeConstraints { (make) in
-            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 0,
+            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 12,
                                                                left: 12,
-                                                               bottom: 0,
+                                                               bottom: 12,
                                                                right: 12)
             ).priority(999)
         }
@@ -193,12 +196,12 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
     }
     
     //MARK: - Public method for configure cell
-    func configureExerciseCell(with exercise: WorkoutExerciseDomainModel){
+    func configureExerciseCell(with exercise: WorkoutExerciseDomainModel, restDuration: Double?){
         exerciseName.text = exercise.exercise?.name
         currentExerciseID = exercise.id
         
         
-        setsView.configuartionSets(with: exercise.workoutSets)
+        setsView.configureSets(with: exercise.workoutSets)
         
         
         setsView.addSetButtonTapped = { [weak self] in
@@ -219,11 +222,13 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
             self?.deleteSetTapped?(setID)
         }
         
-        
-        
-        restTimeLabel.text = "Rest Time:"
-        restTimeNumber.text = "0:00"
-        
+        restTimeNumber.text = restDuration?.formatDuration() ?? "Off"
+    }
+    
+    func restStackGesture(){
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(restTimeTapped))
+        restTimeStack.addGestureRecognizer(tapGesture)
+        restTimeStack.isUserInteractionEnabled = true
     }
     
     func configureTextView(with exercise: String?){
@@ -252,6 +257,12 @@ final class WorkoutSessionExerciseListCell: UITableViewCell {
         exerciseMenuButton.imageView?.addSymbolEffect(.bounce, options: .nonRepeating, animated: true)
         
         exerciseMenuOnTapped?()
+    }
+    
+    @objc private func restTimeTapped(){
+        guard let currentExerciseID else { return }
+        
+        restTimeOnTapped?(currentExerciseID)
     }
 }
 

@@ -6,7 +6,12 @@
 //
 
 import UIKit
-import Combine
+
+
+//MARK: - Delegation
+protocol EditAccountCoordinatorDelegate: AnyObject {
+    func editAccountCoordinatorDidDeleteAccount()
+}
 
 enum EditAccountEvent{
     case changeUsername
@@ -21,39 +26,26 @@ final class EditAccountCoordinator: Coordinator{
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
     
-    private var vm: EditAccountVM
-    private var appDIContainer: AppDIContainer
+    //Delegate
+    weak var editDelegate: EditAccountCoordinatorDelegate?
     
-    private var cancellables: Set<AnyCancellable> = []
+    //Factory
+    private let factory: EditAccountCoordinatorFactory
     
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer){
+    init(navigationController: UINavigationController, factory: EditAccountCoordinatorFactory){
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
-        
-        self.vm = EditAccountVM(userManager: appDIContainer.userManager)
+        self.factory = factory
     }
     
     func start() {
-        let editAccountVC = EditAccountVC(viewModel: vm)
+        let editAccountVC = factory.makeEditAccountViewController()
         
-        editAccountVC.didSentEventClosure = { [weak self] event in
+        editAccountVC.coordinatorEventClosure = { [weak self] event in
             self?.handle(event)
         }
         
-        handleNavigation()
-        
         navigationController.pushViewController(editAccountVC, animated: true)
     }
-    
-    private func handleNavigation(){
-        vm.output.itemsOnTapped
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] editAccountEvent in
-                self?.handle(editAccountEvent)
-            }
-            .store(in: &cancellables)
-    }
-    
     
     private func handle(_ event: EditAccountEvent) {
         switch event{
@@ -75,8 +67,7 @@ final class EditAccountCoordinator: Coordinator{
     //MARK: - Views Handling
     
     private func handleChangeEmail(){
-        let chnageEmailVM = ChangeEmailVM(userManager: appDIContainer.userManager)
-        let changeEmailVC = ChangeEmailVC(viewModel: chnageEmailVM)
+        let changeEmailVC = factory.makeChangeEmail()
         
         changeEmailVC.navigationItem.largeTitleDisplayMode = .never
         
@@ -88,9 +79,7 @@ final class EditAccountCoordinator: Coordinator{
     }
     
     private func handleChangeUsername(){
-        let chnageUserNameVM = ChangeUserNameVM(userManager: appDIContainer.userManager)
-        
-        let chnageUserNameVC = ChangeUserNameVC(viewModel: chnageUserNameVM)
+        let chnageUserNameVC = factory.makeChangeUserName()
         
         chnageUserNameVC.navigationItem.largeTitleDisplayMode = .never
         
@@ -103,8 +92,7 @@ final class EditAccountCoordinator: Coordinator{
     }
     
     private func handleUserPassword(){
-        let changePasswordVM = ChangePasswordVM()
-        let chnagePasswordVC = ChangePasswordVC(viewModel: changePasswordVM)
+        let chnagePasswordVC = factory.makeChangePassword()
         
         chnagePasswordVC.navigationItem.largeTitleDisplayMode = .never
         
@@ -116,14 +104,29 @@ final class EditAccountCoordinator: Coordinator{
     }
     
     private func handleDeleteAccount(){
-        let deleteAccountVM = DeleteAccountVM()
-        let deleteAccountVC = DeleteAccountVC(viewModel: deleteAccountVM)
+        let deleteAccountVC = factory.makeDeleteAccount()
         
         deleteAccountVC.navigationItem.largeTitleDisplayMode = .never
         
+        let modalNavController = UINavigationController(rootViewController: deleteAccountVC)
         
-        navigationController.pushViewController(deleteAccountVC, animated: true)
+        modalNavController.modalPresentationStyle = .fullScreen
+        modalNavController.modalTransitionStyle = .coverVertical
+        
+        deleteAccountVC.onDismiss = { [weak self] in
+            self?.navigationController.presentedViewController?.dismiss(animated: true)
+        }
+        
+        deleteAccountVC.onDeletionSuccess = {[weak self] in
+            self?.navigationController.presentedViewController?.dismiss(animated: true){
+                self?.editDelegate?.editAccountCoordinatorDidDeleteAccount()
+            }
+        }
+        
+        navigationController.present(modalNavController, animated: true)
     }
+    
+    
 }
 
 extension EditAccountCoordinator: CoordinatorFinishDelegate{

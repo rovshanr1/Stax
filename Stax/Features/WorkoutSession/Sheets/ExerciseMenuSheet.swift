@@ -14,7 +14,7 @@ final class ExerciseMenuSheet: UIViewController {
         case replaceExercise
     }
     
-    let contentView = SheetView()
+    let contentView = MenuSheetView()
     
     //ContentView
     private let deleteExercise = CustomSheetButton()

@@ -6,8 +6,6 @@
 //
 
 import UIKit
-import CoreData
-import Combine
 
 enum WorkoutDetailEvent{
     case dismiss
@@ -24,33 +22,28 @@ final class WorkoutDetailCoordinator: Coordinator{
     //Injection
     var vm: WorkoutDetailVM?
     
+    //Container
+    private let factory: DefaultWorkoutDetailFactory
+    
     //States
     private let workoutID: String
     
-    //Container
-    private let appDIContainer: AppDIContainer
-    
-    
-    init(navigationController: UINavigationController, appDIContainer: AppDIContainer, workoutID: String) {
+    init(navigationController: UINavigationController, factory: DefaultWorkoutDetailFactory, workoutID: String) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.factory = factory
         self.workoutID = workoutID
     }
     
     func start() {
-        let workoutDetailVC = WorkoutDetailVC()
+        let viewController = factory.makeWorkoutDetailVC(workoutID: workoutID)
         
-        //VM injection
-        self.vm = WorkoutDetailVM(workoutID: workoutID, workoutRepo: appDIContainer.sharedWorkoutRepo)
-        workoutDetailVC.vm = self.vm
+        viewController.hidesBottomBarWhenPushed = true
         
-        workoutDetailVC.hidesBottomBarWhenPushed = true
-        
-        workoutDetailVC.didSendEventClosure = {[weak self] event in
+        viewController.didSendEventClosure = {[weak self] event in
             self?.handle(event)
         }
         
-        navigationController.pushViewController(workoutDetailVC, animated: true)
+        navigationController.pushViewController(viewController, animated: true)
     }
     
     

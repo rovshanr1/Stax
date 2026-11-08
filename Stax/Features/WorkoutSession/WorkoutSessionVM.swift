@@ -23,16 +23,21 @@ final class WorkoutSessionViewModel{
         let deleteExercise: PassthroughSubject<WorkoutExerciseDomainModel, Never>
         let updateSet: PassthroughSubject<(String, Double, Int, Bool), Never>
         let deleteSet: PassthroughSubject<String, Never>
+        let startRestTimer: PassthroughSubject<Double, Never>
+        let skipRestTimer: PassthroughSubject<Void, Never>
+        let setRestDuration: PassthroughSubject<(String, Double), Never>
     }
     
     ///Output: "Data" to VC (Data Streams)
     struct Output{
         let timerSubject: CurrentValueSubject<String, Never>
-        let finishWorkoutEvent: PassthroughSubject<Void, Never>
+        let restTimerState: CurrentValueSubject<RestTimerState, Never>
+        let finishWorkoutEvent: PassthroughSubject<(String, WorkoutStats), Never>
         let cancelWorkoutEvent: PassthroughSubject<Void, Never>
         let exercises: CurrentValueSubject<[WorkoutExerciseDomainModel], Never>
         let sessionStats: CurrentValueSubject<(volume: Double, sets: Int), Never>
         let setValidationError: PassthroughSubject<String, Never>
+        let restDurations: CurrentValueSubject<[String: Double], Never>
     }
     
     //MARK: - Properties
@@ -42,30 +47,29 @@ final class WorkoutSessionViewModel{
     
     //Services
     public private(set) var timerService: WorkoutTimerServiceProtocol
+    public private(set) var restTimerService: RestTimerServiceProtocol
     private let sessionService: SessionServiceProtocol
-    private let workoutRepository: WorkoutRepositoryProtocol
     
     //State
     
     public private(set) var currentStats: (volume: Double, sets: Int) = (0, 0)
     
     private let workoutId: String?
+    private var activeRestExerciseID: String?
+    private var activeRestSetID: String?
     
     private var cancellables = Set<AnyCancellable>()
-    private var timer: Timer?
-    private var secondsElapsed: Int = 0
-    
-    
     
     //MARK: - Initializer
     init( sessionService: SessionServiceProtocol,
-          workoutRepository: WorkoutRepositoryProtocol,
           timerService: WorkoutTimerServiceProtocol = WorkoutTimerService(),
+          restTimerService: RestTimerServiceProtocol = RestTimerService(),
           workoutId: String? = nil
     ){
         self.sessionService = sessionService
-        self.workoutRepository = workoutRepository
+        
         self.timerService = timerService
+        self.restTimerService = restTimerService
         self.workoutId = workoutId
         
         self.input = .init(viewDidLoad: .init(),
@@ -78,15 +82,20 @@ final class WorkoutSessionViewModel{
                            replaceExercise: .init(),
                            deleteExercise: .init(),
                            updateSet: .init(),
-                           deleteSet: .init()
+                           deleteSet: .init(),
+                           startRestTimer: .init(),
+                           skipRestTimer: .init(),
+                           setRestDuration: .init()
         )
         
         self.output = .init(timerSubject: .init("0s"),
+                            restTimerState: .init(.idle),
                             finishWorkoutEvent: .init(),
                             cancelWorkoutEvent: .init(),
                             exercises: .init([]),
                             sessionStats: .init((volume: 0.0, sets: 0)),
-                            setValidationError: .init()
+                            setValidationError: .init(),
+                            restDurations: .init([:])
                             
         )
         
@@ -97,9 +106,22 @@ final class WorkoutSessionViewModel{
     
     //MARK: - Transform method
     private func transform() {
+        setupServiceBindings()
+        setupLifecycleBindings()
+        setupExerciseBindings()
+    }
+    
+    private func setupServiceBindings() {
         timerService.timerPublisher
             .sink { [weak self] time in
                 self?.output.timerSubject.send(time)
+            }
+            .store(in: &cancellables)
+        
+        restTimerService.statePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                self?.output.restTimerState.send(state)
             }
             .store(in: &cancellables)
         
@@ -111,54 +133,53 @@ final class WorkoutSessionViewModel{
         
         sessionService.sessionStatsPublisher
             .sink { [weak self] stats in
-                self?.output.sessionStats.send(stats)
+                guard let self else { return }
+                self.currentStats = stats
+                self.output.sessionStats.send(stats)
             }
             .store(in: &cancellables)
-        
+    }
+    
+    private func setupLifecycleBindings() {
         input.viewDidLoad
             .sink { [weak self] in
                 guard let self else { return }
-                
                 let sessionData = self.sessionService.setupSession(workoutID: self.workoutId)
-                
                 self.timerService.setInitialTime(sessionData.initialDuration)
-                
             }
             .store(in: &cancellables)
         
         input.viewDidAppear
             .sink { [weak self] in
-                guard let self else {return}
-                
-                self.timerService.start()
+                self?.timerService.start()
             }
             .store(in: &cancellables)
         
         input.didTapFinish
             .sink { [weak self] _ in
-                guard let self else {return}
-                
-                self.timerService.stop()
-                
-                let finalDuration = Double(self.timerService.seconsElapsed)
-                
-                self.sessionService.finishWorkout(duration: finalDuration)
-                
-                self.output.finishWorkoutEvent.send()
+                self?.finishSession()
             }
             .store(in: &cancellables)
         
         input.didTapCancel
             .sink { [weak self] in
-                guard let self else {return}
-                
+                guard let self else { return }
                 self.sessionService.cancelWorkoutSession()
                 self.output.cancelWorkoutEvent.send()
             }
             .store(in: &cancellables)
         
+        input.startRestTimer
+            .sink { [weak self] duration in
+                self?.restTimerService.start(for: duration)
+            }
+            .store(in: &cancellables)
         
-        setupExerciseBindings()
+        input.skipRestTimer
+            .sink { [weak self] in
+                self?.stopRestTimer()
+            }
+            .store(in: &cancellables)
     }
     
     private func setupExerciseBindings(){
@@ -208,42 +229,131 @@ final class WorkoutSessionViewModel{
                 self?.sessionService.deleteSet(setID: setID)
             })
             .store(in: &cancellables)
+        
+        input.setRestDuration
+            .sink { [weak self] exerciseID, duration in
+                guard let self else { return }
+                
+                var durations = self.output.restDurations.value
+                
+                if duration > 0 {
+                    durations[exerciseID] = duration
+                } else {
+                    durations.removeValue(forKey: exerciseID)
+                    
+                    if self.activeRestExerciseID == exerciseID {
+                        self.stopRestTimer()
+                    }
+                }
+                
+                self.output.restDurations.send(durations)
+            }
+            .store(in: &cancellables)
     }
     
     //MARK: - Helpers
-    private func findSetDomainModel(by setID: String) -> WorkoutSetDomainModel? {
-        let allExercises = self.output.exercises.value
+    
+    private func finishSession(){
+        timerService.stop()
         
-        for exercise in allExercises {
-            if let targetSet = exercise.workoutSets.first(where: {$0.id == setID}) {
-                return targetSet
+        let finalDuration = timerService.secondsElapsed
+        
+        guard let workoutID = self.sessionService.currentWorkoutID else { return }
+        
+        let stats = self.output.sessionStats.value
+        let estimatedCalories =  WorkoutCalorieCalculator.estimateCalories(forDuration: finalDuration)
+        
+        let summaryStats = WorkoutStats(
+            duration: finalDuration,
+            volume: stats.volume,
+            totalSets: stats.sets,
+            caloriesBurned: estimatedCalories
+        )
+        
+        self.sessionService.finishWorkout(duration: finalDuration)
+        self.output.finishWorkoutEvent.send((workoutID, summaryStats))
+    }
+    
+    private func updateSets(with setID: String, weight: Double, reps: Int, isDone: Bool) {
+        guard let (parentExercise, targetSet) = findExerciseAndSet(by: setID) else {
+            sessionService.updateSet(setID: setID, weight: weight, reps: reps, isDone: isDone)
+            return
+        }
+        
+        let exerciseType = parentExercise.exercise?.type ?? .weighted
+        
+        guard let resolved = WorkoutSetCompletionResolver.resolve(
+            weight: weight,
+            reps: reps,
+            isDone: isDone,
+            exerciseType: exerciseType,
+            previousWeight: targetSet.previousWeight,
+            previousReps: targetSet.previousReps
+        ) else {
+            output.setValidationError.send(setID)
+            return
+        }
+        
+        sessionService.updateSet(setID: setID,
+                                 weight: resolved.weight,
+                                 reps: resolved.reps,
+                                 isDone: isDone
+        )
+        
+        handleRestTimer(for: parentExercise,
+                        setID: setID,
+                        wasDone: targetSet.isCompleted,
+                        isDone: isDone
+        )
+    }
+    
+    private func findExerciseAndSet(by setID: String) -> (WorkoutExerciseDomainModel, WorkoutSetDomainModel)? {
+        for exercise in output.exercises.value {
+            if let targetSet = exercise.workoutSets.first(where: { $0.id == setID }) {
+                return (exercise, targetSet)
             }
         }
         return nil
     }
     
-    private func updateSets(with setID: String, weight: Double, reps: Int, isDone: Bool){
-        var finalWeight = weight
-        var finalReps = reps
+    func restDuration(for exerciseID: String) -> Double? {
+        output.restDurations.value[exerciseID]
+    }
+    
+    private func handleRestTimer(for exercise: WorkoutExerciseDomainModel,
+                                 setID: String,
+                                 wasDone: Bool,
+                                 isDone: Bool) {
         
-        if let targetSet = self.findSetDomainModel(by: setID){
-            if isDone{
-                if finalWeight == 0, let pW = targetSet.previousWeight {
-                    finalWeight = pW
-                }
-                
-                if finalReps == 0, let pR = targetSet.previousReps {
-                    finalReps = Int(pR)
-                }
-                
-                if finalWeight == 0 || finalReps == 0 {
-                    self.output.setValidationError.send(setID)
-                    return
-                }
+        if wasDone, !isDone {
+            if activeRestSetID == setID {
+                stopRestTimer()
             }
+            return
         }
         
-        self.sessionService.updateSet(setID: setID, weight: finalWeight, reps: finalReps, isDone: isDone)
+        guard isDone, !wasDone else { return }
+        
+        if exercise.workoutSets.last?.id == setID {
+            if activeRestExerciseID == exercise.id {
+                stopRestTimer()
+            }
+            return
+        }
+        
+        guard let duration = restDuration(for: exercise.id) else { return }
+        
+        activeRestExerciseID = exercise.id
+        activeRestSetID = setID
+        restTimerService.start(for: duration)
+
+    }
+    
+    
+    private func stopRestTimer() {
+        restTimerService.stop()
+        activeRestExerciseID = nil
+        activeRestSetID = nil
     }
 }
 

@@ -8,47 +8,60 @@
 import UIKit
 import Combine
 
+//MARK: - Diffable DataSource Types
+nonisolated enum WorkoutSessionSection: CaseIterable, Sendable{
+    case duration
+    case exercises
+}
+
+nonisolated enum WorkoutSessionRowItems: Sendable{
+    case duration
+    case exercise(WorkoutExerciseDomainModel)
+    case empty
+}
+
 class WorkoutSessionVC: UIViewController {
-    //MARK: - Diffable DataSource Types
-    nonisolated enum Section: CaseIterable, Sendable{
-        case duration
-        case exercises
-    }
-    
-    nonisolated enum RowItem: Hashable, Sendable{
-        case duration
-        case exercise(String)
-        case empty
-    }
-    
+ 
     //Typealiases
-    typealias DataSource = UITableViewDiffableDataSource<Section, RowItem>
-    typealias Snapshot = NSDiffableDataSourceSnapshot<Section, RowItem>
+    typealias DataSource = UICollectionViewDiffableDataSource<WorkoutSessionSection, WorkoutSessionRowItems>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<WorkoutSessionSection, WorkoutSessionRowItems>
     
     //Internal Properties
     var didSendEventClosure: ((WorkoutSessionEvent) -> Void)?
-    var viewModel: WorkoutSessionViewModel!
+    private let viewModel: WorkoutSessionViewModel
+    
+    init(viewModel: WorkoutSessionViewModel){
+        self.viewModel = viewModel
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     //Private Properties
     private var cancellables = Set<AnyCancellable>()
+    private var scrollTask: Task<Void, Never>?
+    
+    private var isViewAppeared: Bool = false
+    
     private let contentView = WorkoutSessionView()
-    private var dataSource: DataSource!
-    private var sessionExercise: [WorkoutExerciseDomainModel] = []
-    private var isViewApeared: Bool = false
     private var keyboardManager: KeyboardManager?
     
+    private var dataSource: DataSource!
     
+    private var sessionExercise: [WorkoutExerciseDomainModel] = []
+  
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavbar()
         configureDataSource()
+        bindContentView()
         bindVM()
-        bindEvents()
         
-       
-        
-        keyboardManager = KeyboardManager(scrollView: contentView.tableView)
-        contentView.tableView.keyboardDismissMode = .onDrag
+        keyboardManager = KeyboardManager(scrollView: contentView.collectionView)
+        contentView.collectionView.keyboardDismissMode = .onDrag
     }
     
     override func loadView() {
@@ -58,120 +71,168 @@ class WorkoutSessionVC: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        isViewApeared = true
-        viewModel?.input.viewDidAppear.send()
+        isViewAppeared = true
+        viewModel.input.viewDidAppear.send()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        isViewApeared = false
+        isViewAppeared = false
     }
     
     deinit{
         print("deinited WorkoutSessionVC")
+        scrollTask?.cancel()
     }
     
-    //MARK: - Event Binding
-    private func bindEvents(){
-        contentView.addExerciseButtonTapped = { [weak self] in
-            self?.didSendEventClosure?(.addExercise)
+    //MARK: - Layout
+    private func createLayout() -> UICollectionViewCompositionalLayout{
+        UICollectionViewCompositionalLayout { [weak self] sectionIndex, _ in
+            guard let section = self?.dataSource.snapshot().sectionIdentifiers[sectionIndex] else {
+                return nil
+            }
+            
+            return WorkoutSessionLayoutFactory.createSection(for: section)
+        }
+    }
+    
+    //MARK: - Bind Content View
+    private func bindContentView(){
+        contentView.restTimerBanner.onSkipTapped = { [weak self] in
+            self?.viewModel.input.skipRestTimer.send()
         }
     }
     
     //MARK: - Diffable DataSource Configuration
     private func configureDataSource(){
-        contentView.tableView.delegate = self
+        contentView.collectionView.collectionViewLayout = createLayout()
+        contentView.collectionView.delegate = self
+       
         
-        dataSource = DataSource(tableView: contentView.tableView, cellProvider: { [weak self] tableView, indexPath, itemIdentifier in
+        let durationRegistration = UICollectionView.CellRegistration<WorkoutSessionDurationCell, Void>{ [weak self] cell, _, _ in
+            guard let self else { return }
             
-            guard let self else {return nil}
+            let currentStats = self.viewModel.currentStats
+            cell.updateStats(volume: currentStats.volume, sets: currentStats.sets)
+        }
+        
+        let emptyRegistration = UICollectionView.CellRegistration<EmptyWorkoutCollectionViewCell, Void> { _, _, _ in }
             
+        let exerciseRegistration = UICollectionView.CellRegistration<WorkoutSessionExerciseListCell, WorkoutExerciseDomainModel>{ [weak self] cell, _, exerciseItem in
+            guard let self else { return}
+            
+            cell.configureExerciseCell(with: exerciseItem, restDuration: self.viewModel.restDuration(for: exerciseItem.id))
+            cell.configureTextView(with: exerciseItem.notes)
+            
+            cell.onNoteChange = { [weak self] newNote in
+                self?.viewModel.input.updateExerciseNote.send((exerciseItem.id, newNote))
+            }
+            
+            cell.exerciseMenuOnTapped = { [weak self] in
+                self?.showExerciseMenu(for: exerciseItem)
+            }
+            
+            cell.addSetTapped = { [weak self] exercise in
+                self?.viewModel.input.addSet.send(exercise)
+            }
+            
+            cell.onToggleSetDone = { [weak self] setID, weight, reps, isDone in
+                self?.viewModel.input.updateSet.send((setID, weight, reps, isDone))
+            }
+            
+            cell.onInputFieldFocusChange = { [weak self] inputView in
+                self?.scrollToVisible(inputView)
+            }
+            
+            cell.deleteSetTapped = { [weak self] setID in
+                self?.viewModel.input.deleteSet.send(setID)
+            }
+            
+            cell.restTimeOnTapped = {[weak self] setID in
+                self?.showRestTime(for: setID)
+            }
+        }
+
+        let separatorRegistration = UICollectionView.SupplementaryRegistration<SectionSeparatorView>(
+            elementKind: SectionSeparatorView.elementKind
+        ) { _, _, _ in }
+        
+        let footerRegistration = UICollectionView.SupplementaryRegistration<WorkoutSessionFooterView>(
+            elementKind: UICollectionView.elementKindSectionFooter
+        ) { [weak self] footerView, elementKind, indexPath in
+            footerView.onTapAddExerciseButton = { [weak self] in
+                guard let self else { return }
+                
+                self.didSendEventClosure?(.addExercise(onSelected: { [weak self] exercise in
+                    self?.viewModel.input.addExercise.send(exercise)
+                }))
+            }
+        }
+        
+        dataSource = DataSource(collectionView: contentView.collectionView) { collectionView, indexPath, itemIdentifier in
             switch itemIdentifier {
             case .duration:
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionTableViewCell.reuseIdentifier, for: indexPath) as? WorkoutSessionTableViewCell else {
-                    return UITableViewCell()
-                }
-                let currentStats = self.viewModel.currentStats
-                cell.updateStats(volume: currentStats.volume, sets: currentStats.sets)
-                
-                
-                return cell
+                return collectionView.dequeueConfiguredReusableCell(using: durationRegistration, for: indexPath, item: ())
             case .empty:
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: EmptyWorkoutTableViewCell.reuseIdentifier, for: indexPath) as? EmptyWorkoutTableViewCell else{
-                    return UITableViewCell()
-                }
-                return cell
-            case .exercise(let id):
-                guard let cell = tableView.dequeueReusableCell(withIdentifier: WorkoutSessionExerciseListCell.reuseIdentifier, for: indexPath) as? WorkoutSessionExerciseListCell else {
-                    return UITableViewCell()
-                }
-                
-                if let exerciseItem = self.sessionExercise.first(where: { $0.id == id}){
-                    cell.configureExerciseCell(with: exerciseItem)
-                    
-                    
-                    cell.configureTextView(with: exerciseItem.notes)
-                    
-                    cell.onNoteChange = { [weak self] newNote in
-                        self?.viewModel.input.updateExerciseNote.send((id, newNote))
-                    }
-                    
-                    cell.onNotesHeightChange = { [weak self]  in
-                        self?.contentView.tableView.beginUpdates()
-                        self?.contentView.tableView.endUpdates()
-                    }
-                    
-                    cell.exerciseMenuOnTapped = { [weak self] in
-                        self?.didSendEventClosure?(.exerciseMenuButtonTapped(exerciseItem))
-                    }
-                    
-                    cell.addSetTapped = { [weak self] exercise in
-                        self?.viewModel.input.addSet.send(exercise)
-                    }
-                    
-                    cell.onToggleSetDone = { [weak self] setID, weight, reps, isDone in
-                        guard let self else {return}
-                        self.viewModel.input.updateSet.send((setID, weight, reps, isDone))
-                    }
-                    
-                    cell.onInputFieldFocusChange = {[weak self] inputView in
-                        guard let self else {return}
-                        
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            let tableView = self.contentView.tableView
-                            
-                            let inputFrame = inputView.convert(inputView.bounds, to: tableView)
-                            
-                            let visibleHeight = tableView.bounds.height - tableView.contentInset.bottom
-                            let targetY = inputFrame.origin.y - (visibleHeight / 2) + (inputFrame.height / 2)
-                            
-                            let maxScrollY = tableView.contentSize.height - visibleHeight + tableView.contentInset.bottom
-                            
-                            let clampedY = max(0, min(targetY, maxScrollY))
-                            
-                            tableView.setContentOffset(CGPoint(x: 0, y: clampedY), animated: true)
-                        }
-                    }
-                    
-                    cell.deleteSetTapped = { [weak self] setID in
-                        self?.viewModel.input.deleteSet.send(setID)
-                    }
-                    
-                    
-                }
-                return cell
+                return collectionView.dequeueConfiguredReusableCell(using: emptyRegistration, for: indexPath, item: ())
+            case .exercise(let exerciseModel):
+                return collectionView.dequeueConfiguredReusableCell(using: exerciseRegistration, for: indexPath, item: exerciseModel)
             }
-        })
+        }
+        
+        dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in
+            
+            if kind == UICollectionView.elementKindSectionFooter{
+                return collectionView.dequeueConfiguredReusableSupplementary(
+                    using: footerRegistration,
+                    for: indexPath
+                )
+            }else {
+               return collectionView.dequeueConfiguredReusableSupplementary(using: separatorRegistration, for: indexPath)
+            }
+        }
     }
-    
+        
+    private func scrollToVisible(_ inputView: UIView){
+        scrollTask?.cancel()
+        
+        scrollTask = Task{ @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(0.1))
+            
+            guard !Task.isCancelled, let self else { return }
+            
+            let collectionView = self.contentView.collectionView
+            let inputFrame = inputView.convert(inputView.bounds, to: collectionView)
+            
+            let visibleHeight = collectionView.bounds.height - collectionView.contentInset.bottom
+            let targetY = inputFrame.origin.y - (visibleHeight / 2) + (inputFrame.height / 2)
+            let maxScrollY = collectionView.contentSize.height - visibleHeight + collectionView.contentInset.bottom
+            let clampedY = max(0, min(targetY, maxScrollY))
+            
+            collectionView.setContentOffset(CGPoint(x: 0, y: clampedY), animated: true)
+        }
+    }
     
     //MARK: - ViewModel Binding
     private func bindVM(){
         viewModel.output.timerSubject
             .receive(on: DispatchQueue.main)
             .sink { [weak self] timerString in
-                self?.contentView.updateTimer(timerString)
+                self?.updateDurationCell(timerString: timerString)
                 
+            }
+            .store(in: &cancellables)
+        
+        viewModel.output.restTimerState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                guard let self else { return }
+                
+                self.contentView.restTimerBanner.apply(state)
+                
+                if case .finished = state{
+                    FinishSound.playRestFinishedFeedback()
+                }
             }
             .store(in: &cancellables)
         
@@ -207,8 +268,8 @@ class WorkoutSessionVC: UIViewController {
         
         viewModel.output.finishWorkoutEvent
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                self?.didSendEventClosure?(.finishWorkout)
+            .sink { [weak self] (workout, stats) in
+                self?.didSendEventClosure?(.finishWorkout(workoutID: workout, stats: stats))
             }
             .store(in: &cancellables)
         
@@ -220,70 +281,125 @@ class WorkoutSessionVC: UIViewController {
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.error)
                 
-                for cell in self.contentView.tableView.visibleCells{
+                for cell in self.contentView.collectionView.visibleCells{
                     if let exerciseCell = cell as? WorkoutSessionExerciseListCell{
                         exerciseCell.shakeSetRow(with: setId)
                     }
                 }
             }
             .store(in: &cancellables)
+        
+        viewModel.output.restDurations
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.updateSnapshot(with: self.sessionExercise)
+            }
+            .store(in: &cancellables)
     }
     
-    private func updateDurationCell(stats: (volume: Double, sets: Int)? = nil){
-        guard self.view.window != nil else {return}
+    private func updateDurationCell(timerString: String? = nil, stats: (volume: Double, sets: Int)? = nil) {
+        guard let indexPath = dataSource.indexPath(for: .duration),
+              let cell = contentView.collectionView.cellForItem(at: indexPath) as? WorkoutSessionDurationCell
+        else { return }
         
-        guard let indexPath = dataSource.indexPath(for: .duration) else {return}
-        guard let cell = contentView.tableView.cellForRow(at: indexPath) as? WorkoutSessionTableViewCell else {return}
-        
-        if let stats{
+        if let timerString {
+            cell.configureTime(with: timerString)
+        }
+        if let stats {
             cell.updateStats(volume: stats.volume, sets: stats.sets)
         }
     }
+       
     
     //MARK: - Update Snapshot
     private func updateSnapshot(with exercises: [WorkoutExerciseDomainModel]){
         var snapshot = Snapshot()
-        
-        snapshot.appendSections(Section.allCases)
-        
+        snapshot.appendSections(WorkoutSessionSection.allCases)
         snapshot.appendItems([.duration], toSection: .duration)
         
-        
-        if exercises.isEmpty{
+        if exercises.isEmpty {
             snapshot.appendItems([.empty], toSection: .exercises)
-        }else{
-            let items = exercises.map {RowItem.exercise($0.id)}
-            snapshot.appendItems(items, toSection: .exercises)
-        }
-        
-        guard isViewApeared else {
-            dataSource.apply(snapshot, animatingDifferences: false)
-            return
+        } else {
+            let exerciseItems = exercises.map { WorkoutSessionRowItems.exercise($0) }
+            
+            snapshot.appendItems(exerciseItems, toSection: .exercises)
+            
+            if #available(iOS 15.0, *) {
+                snapshot.reconfigureItems(exerciseItems)
+            } else {
+                snapshot.reloadItems(exerciseItems)
+            }
+            
         }
         
         dataSource.apply(snapshot, animatingDifferences: false)
+    }
+    
+    //MARK: - Exercise Menu Navigation
+    private func showExerciseMenu(for exercise: WorkoutExerciseDomainModel) {
+        let sheetNav = ExerciseMenuSheet()
+        sheetNav.modalPresentationStyle = .pageSheet
         
-        for cell in contentView.tableView.visibleCells {
-            if let exerciseCell = cell as? WorkoutSessionExerciseListCell,
-               let indexPath = contentView.tableView.indexPath(for: exerciseCell),
-               case .exercise(let id) = dataSource.itemIdentifier(for: indexPath),
-               let updateExercise = exercises.first(where: { $0.id == id }) {
-                exerciseCell.configureExerciseCell(with: updateExercise)
+        if let sheet = sheetNav.sheetPresentationController {
+            sheet.detents = [.custom(identifier: .init("small")) { _ in 120 }]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        sheetNav.onActionSelected = { [weak self, weak sheetNav] action in
+            guard let self, let sheetNav else { return }
+            
+            sheetNav.dismiss(animated: true) {
+                switch action {
+                case .replaceExercise:
+                    self.didSendEventClosure?(.replaceExercise(exercise, onSelected: {  newExercise in
+                        self.viewModel.input.replaceExercise.send((exercise, newExercise))
+                    }))
+                case .deleteExercise:
+                    self.viewModel.input.deleteExercise.send(exercise)
+                }
             }
         }
         
-        UIView.performWithoutAnimation  {
-            self.contentView.tableView.beginUpdates()
-            self.contentView.tableView.endUpdates()
+        present(sheetNav, animated: true)
+    }
+    
+    //MARK: - Show Rest Sheet
+    private func showRestTime(for exerciseID: String) {
+        let name = sessionExercise.first { $0.id == exerciseID }?.exercise?.name ?? "Exercise"
+        let current = viewModel.restDuration(for: exerciseID) 
+        
+        let sheet = RestTimePickerSheet(exerciseName: name, initialDuration: current)
+        sheet.modalPresentationStyle = .pageSheet
+        
+        if let sheetController = sheet.sheetPresentationController {
+            sheetController.detents = [.medium()]
+            sheetController.prefersGrabberVisible = true
         }
-       
+        
+        sheet.onDurationSelected = { [weak self] duration in
+            self?.viewModel.input.setRestDuration.send((exerciseID, duration))
+        }
+        
+        present(sheet, animated: true)
+    }
+    
+    
+    //MARK: - Public Methods
+    func addExercise(_ exercise: ExerciseDomainModel){
+        viewModel.input.addExercise.send(exercise)
+    }
+    
+    func replaceExercise(_ old: WorkoutExerciseDomainModel, with new: ExerciseDomainModel){
+        viewModel.input.replaceExercise.send((old, new))
     }
 }
 
 
 
 //MARK: - TableViewDelegate
-extension WorkoutSessionVC: UITableViewDelegate{ }
+extension WorkoutSessionVC: UICollectionViewDelegate{ }
 
 //MARK: - NavigationBarItems
 extension WorkoutSessionVC{

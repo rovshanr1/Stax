@@ -14,7 +14,7 @@ protocol AppPreferencesServiceInterface{
 class AppPreferencesService: AppPreferencesServiceInterface{
     
     private let defaults: UserDefaults
-    private let healthKitKey = "com.stax.healthkit.enabled"
+    private let healthKitKey = UserDefaultsKeys.healthKitEnabled
     
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults

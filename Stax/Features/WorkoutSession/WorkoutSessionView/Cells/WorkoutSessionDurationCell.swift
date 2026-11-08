@@ -8,8 +8,7 @@
 import UIKit
 import SnapKit
 
-final class WorkoutSessionTableViewCell: UITableViewCell {
-    static let reuseIdentifier: String = "WorkoutSessionTableViewCell"
+final class WorkoutSessionDurationCell: UICollectionViewCell {
     
     private let duration: UILabel = {
         let label = UILabel()
@@ -84,14 +83,8 @@ final class WorkoutSessionTableViewCell: UITableViewCell {
         return stackView
     }()
     
-    private let separatorView: UIView = {
-        let view  = UIView()
-        view.backgroundColor = .separator
-        return view
-    }()
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         
         setupUI()
     }
@@ -101,33 +94,24 @@ final class WorkoutSessionTableViewCell: UITableViewCell {
     }
     
     private func setupUI(){
+        var background = UIBackgroundConfiguration.listCell()
+        background.cornerRadius = 12
+        self.backgroundConfiguration = background
+        
         contentView.addSubview(mainStackView)
-        
-        contentView.addSubview(separatorView)
-        
-        mainStackView.snp.makeConstraints { (make) in
-            make.edges.equalTo(contentView).inset(16).priority(999)
+        mainStackView.snp.makeConstraints{ make in
+            make.edges.equalToSuperview().inset(16)
         }
-        
-        separatorView.snp.makeConstraints { make in
-            make.leading.trailing.equalToSuperview().inset(16)
-            
-            make.bottom.equalToSuperview()
-            make.height.equalTo(1)
-        }
+       
     }
     
     func configureTime(with time: String) {
         timer.text = time
     }
     
-    //TODO: - volume and set lable changes is here
     func updateStats(volume: Double, sets: Int){
         volumeLabel.text = volume.formatWeight()
         setsLabel.text = "\(sets)"
     }
-    
-    
-    
 }
 

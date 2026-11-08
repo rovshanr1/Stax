@@ -1,5 +1,5 @@
 //
-//  HomeTableViewCell.swift
+//  HomeCollectionViewCell.swift
 //  Stax
 //
 //  Created by Rovshan Rasulov on 08.03.26.
@@ -8,15 +8,15 @@
 import UIKit
 import SnapKit
 
-class HomeTableViewCell: UITableViewCell {
+class HomeCollectionViewCell: UICollectionViewCell {
     //Identifier
-    static var identifier: String = "HomeTableViewCell"
+    static var identifier: String = "HomeCollectionViewCell"
     
     //Closures
     var headerMoreButtonTapped: (() -> Void)?
     var workoutDetailsTapped: ((String) -> Void)?
     
-    //ContentViews
+    //SubView
     let headerView = HomeHeaderView()
     
     private var separatorView: UIView = {
@@ -54,8 +54,8 @@ class HomeTableViewCell: UITableViewCell {
         return stackView
     }()
     
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         setupViews()
         setupEventHandlers()
     }
@@ -67,7 +67,8 @@ class HomeTableViewCell: UITableViewCell {
     private func setupViews(){
         contentView.addSubview(thickSeparatorView)
         contentView.addSubview(mainStackView)
-
+        contentView.backgroundColor = .systemBackground
+        
         thickSeparatorView.snp.makeConstraints { make in
             make.left.right.bottom.equalToSuperview()
             make.height.equalTo(15)
@@ -83,7 +84,7 @@ class HomeTableViewCell: UITableViewCell {
             make.height.equalTo(1)
         }
         
-        selectionStyle = .none
+        
     }
     
     private func setupEventHandlers(){

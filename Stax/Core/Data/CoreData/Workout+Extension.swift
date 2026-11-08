@@ -18,7 +18,7 @@ extension Workout{
         
         return WorkoutDomainModel(
             id: self.id?.uuidString ?? UUID().uuidString,
-            name: self.name ?? "Unknown Wokrout",
+            name: self.name,
             duration: self.duration,
             volume: self.volume,
             workoutDescription: self.workoutDescription,
@@ -26,5 +26,13 @@ extension Workout{
             caloriesBurned: self.calories,
             sets: self.sets,
             workoutExercises: sortedExerciseDomain)
+    }
+}
+
+@MainActor
+extension Workout {
+    public override func awakeFromInsert() {
+        super.awakeFromInsert()
+        if id == nil { id = UUID() }
     }
 }

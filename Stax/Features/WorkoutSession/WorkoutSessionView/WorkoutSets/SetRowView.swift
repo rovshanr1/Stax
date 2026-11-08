@@ -218,7 +218,7 @@ final class SetRowView: UIView {
     }
     
     private func setupGestures() {
-        panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleTapGesture(_:)))
+        panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         panGesture.delegate = self
         contentContainerView.addGestureRecognizer(panGesture)
     }
@@ -268,7 +268,7 @@ final class SetRowView: UIView {
     }
     
     
-    @objc private func handleTapGesture(_ gesture: UIPanGestureRecognizer){
+    @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer){
         let translation = gesture.translation(in: self)
         
         switch gesture.state {

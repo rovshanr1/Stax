@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import CoreData
 
 enum WorkoutEvent{
     case startEmptyWorkout
@@ -19,15 +18,14 @@ final class WorkoutCoordinator: Coordinator{
     var childCoordinators: [Coordinator] = []
     
     var navigationController: UINavigationController
-    
+    private let factory: WorkoutCoordinatorFactory
     
     
     //Container
-    let appDIContainer: AppDIContainer
     
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
+    init(_ navigationController: UINavigationController, factory: WorkoutCoordinatorFactory) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
+        self.factory = factory
     }
     
     
@@ -54,7 +52,7 @@ final class WorkoutCoordinator: Coordinator{
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordionator = WorkoutSessionCoordinator(modalNav, appDIContainer: appDIContainer)
+        let sessionCoordionator = factory.makeWorkoutSessionCoordinator(navigationController: modalNav, workoutId: nil)
         sessionCoordionator.finishDelegate = self
         
         childCoordinators.append(sessionCoordionator)

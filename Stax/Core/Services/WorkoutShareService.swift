@@ -13,7 +13,7 @@ protocol WorkoutShareServiceProtocol{
 
 final class WorkoutTextShareService: WorkoutShareServiceProtocol{
     func generateShareText(from workout: WorkoutDomainModel) -> String {
-        var text = "Stax Workout: \(workout.name)\n"
+        var text = "Stax Workout: \(workout.displayName)\n"
         text += "🏋️ Volume: \(workout.volume) kg\n"
         text += "\nTracked with #StaxApp"
         return text

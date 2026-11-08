@@ -9,38 +9,65 @@ import Foundation
 import Combine
 
 protocol WorkoutTimerServiceProtocol {
-    var timerPublisher: PassthroughSubject<String, Never> {get}
-    var seconsElapsed: Double {get}
+    var timerPublisher: AnyPublisher<String, Never> {get}
+    var secondsElapsed: Double {get}
     func start()
     func stop()
     func setInitialTime(_ seconds: Double)
 }
 
 final class WorkoutTimerService: WorkoutTimerServiceProtocol{
-    let timerPublisher = PassthroughSubject<String, Never>()
-    var seconsElapsed: Double = 0.0
+    private let timerSubject = CurrentValueSubject<String, Never>("00")
+    
+    var timerPublisher: AnyPublisher<String, Never>{
+        timerSubject.eraseToAnyPublisher()
+    }
+    
+    private(set) var secondsElapsed: Double = 0.0
     private var timer: Timer?
+    
+    private var startTime: Date?
+    private var initialTimeOffset: Double = 0.0
     
     func start() {
         guard timer == nil else {return}
         
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [weak self] _ in
-            guard let self else {return}
-            
-            self.seconsElapsed += 1
-            self.timerPublisher.send(self.seconsElapsed.formatDuration())
-        })
+        startTime = Date()
         
+        let newTimer = Timer(timeInterval: 1.0, repeats: true){[weak self] _ in
+            
+            self?.tick()
+        }
+        
+        timer = newTimer
+        
+        RunLoop.main.add(newTimer, forMode: .common)
+    }
+    
+    private func tick(){
+        guard let startTime else { return }
+        
+        let elapsed = Date().timeIntervalSince(startTime) + initialTimeOffset
+        
+        self.secondsElapsed = elapsed
+        self.timerSubject.send(elapsed.formatDuration())
     }
     
     func stop() {
         timer?.invalidate()
         timer = nil
+        
+        initialTimeOffset = secondsElapsed
+        startTime = nil
     }
     
+    deinit{
+        timer?.invalidate()
+    }
     
     func setInitialTime(_ seconds: Double) {
-        self.seconsElapsed = seconds
-        timerPublisher.send(seconds.formatDuration())
+        self.initialTimeOffset = seconds
+        self.secondsElapsed = seconds
+        timerSubject.send(seconds.formatDuration())
     }
 }

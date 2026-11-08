@@ -6,16 +6,14 @@
 //
 
 import UIKit
-import CoreData
-import Combine
 
 enum ProfileEvent{
-    case showWorkoutMenu(id: String)
     case presentShareSheet(text: String)
     case presentWorkoutDetails(id: String)
     case presentSettings
     case presentEditProfile
     case profilePhotoTapped
+    case editWorkout(id: String)
 }
 
 final class ProfileCoordinator: Coordinator{
@@ -23,25 +21,17 @@ final class ProfileCoordinator: Coordinator{
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
     
-    
     //Services
-    let appDIContainer: AppDIContainer
+    private let factory: ProfileCoordinatorFactory
     
-    private var vm: ProfileVM
-    
-   
-    
-    init(_ navigationController: UINavigationController, appDIContainer: AppDIContainer) {
+    init(_ navigationController: UINavigationController, factory: ProfileCoordinatorFactory) {
         self.navigationController = navigationController
-        self.appDIContainer = appDIContainer
-        
-        self.vm = ProfileVM(workoutRepo: appDIContainer.sharedWorkoutRepo,
-                            userManger: appDIContainer.userManager
-        )
+        self.factory = factory
+
     }
     
     func start() {
-        let profileVC = ProfileVC(viewModel: vm)
+        let profileVC = factory.makeProfileViewController()
         
         profileVC.didSendEventClosure = { [weak self] event in
             self?.handle(event)
@@ -53,8 +43,6 @@ final class ProfileCoordinator: Coordinator{
     
     private func handle(_ event: ProfileEvent) {
         switch event {
-        case .showWorkoutMenu(let id):
-            showWorkoutMenu(for: id)
         case .presentShareSheet(text: let text):
             handleShareSheet(with: text)
         case .presentWorkoutDetails(id: let id):
@@ -65,39 +53,8 @@ final class ProfileCoordinator: Coordinator{
             handleEditProfile()
         case .profilePhotoTapped:
             handleEditProfile()
-        }
-    }
-    
-    private func showWorkoutMenu(for id: String){
-        let sheetNav = WorkoutMenuViewController()
-        sheetNav.modalPresentationStyle = .pageSheet
-        
-        if let sheet = sheetNav.sheetPresentationController{
-            sheet.detents = [.custom(resolver: {_ in 190})]
-            sheet.prefersGrabberVisible = true
-        }
-        
-        sheetNav.onActionSelected = { [weak self] action in
-            self?.handleWorkoutMenuEvent(action, for: id)
-        }
-        
-        navigationController.present(sheetNav, animated: true)
-    }
-    
- 
-    //MARK: - Handle Menu Events
-    private func handleWorkoutMenuEvent(_ action: WorkoutMenuViewController.Action, for id: String) {
-        navigationController.dismiss(animated: true){ [weak self] in
-            guard let self else {return}
-            
-            switch action {
-            case .edit:
-                self.handleEditWorkout(for: id)
-            case .share:
-                self.vm.input.shareWorkout.send(id)
-            case .delete:
-                self.vm.input.deleteWokrout.send(id)
-            }
+        case .editWorkout(id: let id):
+            handleEditWorkout(for: id)
         }
     }
     
@@ -106,7 +63,7 @@ final class ProfileCoordinator: Coordinator{
         let modalNav = UINavigationController()
         modalNav.modalPresentationStyle = .fullScreen
         
-        let sessionCoordinator = WorkoutSessionCoordinator(modalNav, appDIContainer: appDIContainer, workoutId: id)
+        let sessionCoordinator = factory.makeWorkoutSessionCoordinator(navigationController: modalNav, workoutID: id)
         sessionCoordinator.finishDelegate = self
         
         self.childCoordinators.append(sessionCoordinator)
@@ -121,7 +78,7 @@ final class ProfileCoordinator: Coordinator{
     }
     
     private func handleWorkoutDetailView(for id: String){
-        let workoutDetailCoordinator = WorkoutDetailCoordinator(navigationController: navigationController, appDIContainer: appDIContainer, workoutID: id)
+        let workoutDetailCoordinator = factory.makeWorkoutDetailCoordinator(navigationController: navigationController, workoutID: id)
         
         workoutDetailCoordinator.finishDelegate = self
         childCoordinators.append(workoutDetailCoordinator)
@@ -130,7 +87,7 @@ final class ProfileCoordinator: Coordinator{
     
     private func handleEditProfile(){
    
-        let editProfileCoordinator = EditProfileCoordinator(navigationController: navigationController, appDIContainer: appDIContainer)
+        let editProfileCoordinator = factory.makeEditProfileCoordinator(navigationController: navigationController)
         
         editProfileCoordinator.finishDelegate = self
         childCoordinators.append(editProfileCoordinator)
@@ -138,7 +95,7 @@ final class ProfileCoordinator: Coordinator{
     }
     
     private func handleSettings(){
-        let settingsCoordinator = SettingsCoordinator(navigationController, appDIContainer: appDIContainer)
+        let settingsCoordinator = factory.makeSettingsCoordinator(navigationController: navigationController)
         
         settingsCoordinator.finishDelegate = self
         settingsCoordinator.settingsDelegate = self

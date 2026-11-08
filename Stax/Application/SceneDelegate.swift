@@ -27,10 +27,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             persistenceController: persistenceController
         )
  
-        persistenceController.performBackgroundTask { backgroundTask in
-            let seeder = DataSeeder(context: backgroundTask)
-            seeder.seedExercise()
-        }
         
         window = UIWindow(windowScene: windowScene)
         
