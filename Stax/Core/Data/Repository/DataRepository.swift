@@ -16,12 +16,15 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     //Properties
     private let context: NSManagedObjectContext
     
+    private var entityName: String {
+        T.entity().name ?? String(describing: T.self)
+    }
+    
     init(context: NSManagedObjectContext) {
         self.context = context
     }
     
     func fetch(predicate: NSPredicate? = nil, sortDescirptors: [NSSortDescriptor]? = nil, fetchLimit: Int? = nil) -> [T]{
-        guard let entityName = T.entity().name else { return []}
         
         let request = NSFetchRequest<T>(entityName: entityName)
         request.predicate = predicate
@@ -40,7 +43,6 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     }
     
     func fetch(by id: String) -> T? {
-        guard let entityName = T.entity().name else { return nil }
         let request = NSFetchRequest<T>(entityName: entityName)
         
         if let targetUUID = UUID(uuidString: id) {
@@ -91,9 +93,7 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     }
     
     func create() -> T {
-        let entityName = T.entity()
-        
-        let object = NSEntityDescription.insertNewObject(forEntityName: entityName.name!, into: context) as! T
+        let object = NSEntityDescription.insertNewObject(forEntityName: entityName, into: context) as! T
         return object
     }
     
@@ -140,7 +140,7 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
     }
     
     func makeFetchResultsController(sortDescriptors: [NSSortDescriptor], predicate: NSPredicate? = nil) -> NSFetchedResultsController<T>{
-        let request = NSFetchRequest<T>(entityName: T.entity().name!)
+        let request = NSFetchRequest<T>(entityName: entityName)
         request.sortDescriptors = sortDescriptors
         request.predicate = predicate
         
