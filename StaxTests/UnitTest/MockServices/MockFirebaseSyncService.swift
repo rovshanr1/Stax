@@ -10,18 +10,35 @@ import Foundation
 import Combine
 
 
-final class MockFirebaseSyncService: FirebaseSyncServiceInterface{
-    func syncWorkoutToCloud(workout: Stax.WorkoutDomainModel, completion: @escaping (Result<Void, any Error>) -> Void) {
-        
+final class MockFirebaseSyncService: FirebaseSyncServiceInterface {
+
+    func syncWorkoutToCloud(workout: WorkoutDomainModel) async throws {}
+
+    func deleteWorkoutFromCloud(workoutId: String) async throws {}
+
+    func fetchInitialWorkoutsFromCloud() async throws -> [WorkoutDomainModel] {
+        []
     }
-    
-    func deleteWorkoutFromCloud(workoutId: String, completion: @escaping (Result<Void, any Error>) -> Void) {
-        
+
+    func deleteDataBaseFromFirebase() async throws {}
+
+    func syncWorkoutToCloud(
+        workout: WorkoutDomainModel,
+        completion: @escaping (Result<Void, any Error>) -> Void
+    ) {
+        completion(.success(()))
     }
-    
-    func fetchInitialWorkoutsFromCloud(completion: @escaping (Result<[Stax.WorkoutDomainModel], any Error>) -> Void) {
-        
+
+    func deleteWorkoutFromCloud(
+        workoutId: String,
+        completion: @escaping (Result<Void, any Error>) -> Void
+    ) {
+        completion(.success(()))
     }
-    
-    
+
+    func fetchInitialWorkoutsFromCloud(
+        completion: @escaping (Result<[WorkoutDomainModel], any Error>) -> Void
+    ) {
+        completion(.success([]))
+    }
 }

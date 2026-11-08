@@ -260,7 +260,6 @@ final class WorkoutSessionRepositoryTests: XCTestCase {
         sut.updateSet(setID: setID, weight: 60, reps: 10, isDone: true)
         await waitUntil { self.stats.sets == 1 }
 
-        // Diffable data source və rest timer ID-lərin sabit qalmasına arxalanır
         XCTAssertEqual(exercises[0].id, exerciseID)
         XCTAssertEqual(exercises[0].workoutSets[0].id, setID)
     }
@@ -383,7 +382,7 @@ private extension WorkoutSessionRepositoryTests {
         }
     }
 
-    /// Əvvəlki (tarixçə) workout yaradır və saxlayır
+    
     @discardableResult
     func seedWorkout(base: Exercise,
                      daysAgo: Int = 1,
@@ -414,7 +413,7 @@ private extension WorkoutSessionRepositoryTests {
         return workout
     }
 
-    /// Repository save-i `context.perform` ilə asinxrondur, ona görə şərt ödənənə qədər gözləyirik
+
     func waitUntil(timeout: TimeInterval = 2,
                    file: StaticString = #filePath,
                    line: UInt = #line,
