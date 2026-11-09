@@ -90,10 +90,11 @@ final class HomeVM {
                     HomeWorkoutPresentationItem(
                         id: workout.id,
                         title: workout.displayName,
+                        note: workout.workoutDescription,
                         dateString: DateFormatter.localizedString(from: workout.date, dateStyle: .medium, timeStyle: .none),
                         time: workout.duration.formatDuration(),
                         volume: workout.volume.formatWeight(),
-                        exerciseSummar: self.generateExerciseSummary(for: workout.workoutExercises),
+                        exerciseSummary: Self.generateExerciseSummary(for: workout.workoutExercises),
                         moreText: workout.workoutExercises.count > 3 ? "+ \(workout.workoutExercises.count - 3) more exercises" : nil
                     )
                 }
@@ -104,7 +105,7 @@ final class HomeVM {
             .store(in: &cancellables)
     }
     
-    private func generateExerciseSummary(for exercises: [WorkoutExerciseDomainModel]) -> [ExerciseSummaryItem]{
+     private static func generateExerciseSummary(for exercises: [WorkoutExerciseDomainModel]) -> [ExerciseSummaryItem]{
         let topExercises = exercises.prefix(3)
         var summaryItems: [ExerciseSummaryItem] = []
         
@@ -114,20 +115,11 @@ final class HomeVM {
             let activeSetsCount = workoutExercise.workoutSets.count
             let title = "\(activeSetsCount) sets of \(exerciseName)"
             
-            let trimmedNote = workoutExercise.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
-
             let item = ExerciseSummaryItem(exerciseName: title, imageURl: exerciseImage)
             summaryItems.append(item)
         }
  
         return summaryItems
-    }
- 
-    
-    private func getShareText(for id: String) -> String{
-        guard let workout = workoutRepo.getWorkout(by: id) else { return "Workout not found"}
-        
-        return shareService.generateShareText(from: workout)
     }
     
     private func deleteWorkout(withId id: String){

@@ -12,13 +12,15 @@ nonisolated struct ExerciseSummaryItem: Hashable, Sendable{
     let imageURl: String?
 }
 
+
 nonisolated struct HomeWorkoutPresentationItem: Hashable, Sendable{
     let id: String
     let title: String
+    let note: String?
     let dateString: String
     let time: String
     let volume: String
-    let exerciseSummar: [ExerciseSummaryItem]
+    let exerciseSummary: [ExerciseSummaryItem]
     let moreText: String?
 }
 

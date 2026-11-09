@@ -49,7 +49,7 @@ class HomeVC: UIViewController {
         setupLeftAlignedNavigationTitle(with: "Home")
         
         configureDataSource()
-
+        
         createLayout()
         bindVM()
     }
@@ -69,24 +69,40 @@ class HomeVC: UIViewController {
     private func configureDataSource(){
         contentView.collectionView.delegate = self
         
-        dataSource = DataSource(collectionView: contentView.collectionView, cellProvider: { [weak self] collectionView, indexPath, itemIdentifier in
+        let workoutRegistration = UICollectionView.CellRegistration<HomeCollectionViewCell, HomeWorkoutPresentationItem>{[weak  self] cell, _, item in
+            guard let self else { return }
             
-            switch itemIdentifier {
-            case .workout(let presentationItem):
-                guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HomeCollectionViewCell.identifier, for: indexPath) as? HomeCollectionViewCell else {
-                    return UICollectionViewCell()
-                }
-                cell.headerView.configureHomeHeaderView(name: presentationItem.title, time: presentationItem.time, volume: presentationItem.volume )
-                cell.headerMoreButtonTapped = {
-                    self?.workoutMenuPresent(for: presentationItem.id)
-                }
-                
-                cell.configureExercise(exercise: presentationItem.exerciseSummar, moreText: presentationItem.moreText)
-                return cell
+            cell.headerView.configureHomeHeaderView(name: item.title,
+                                                    notes: item.note,
+                                                    time: item.time,
+                                                    volume: item.volume)
+            
+            cell.configureExercise(exercise: item.exerciseSummary,
+                                   moreText: item.moreText)
+            
+            cell.headerMoreButtonTapped = { [weak self] in
+                self?.workoutMenuPresent(for: item.id)
             }
-        })
+        }
         
+        dataSource = DataSource(collectionView: contentView.collectionView) { collectionView, indexPath, itemIdentifier in
+            switch itemIdentifier {
+            case .workout(let item):
+                return collectionView.dequeueConfiguredReusableCell(using: workoutRegistration,
+                                                                    for: indexPath,
+                                                                    item: item)
+            }
+        }
     }
+    
+    //MARK: - Empty State
+    private lazy var emptyStateView: HomeEmptyStateView = {
+        let view = HomeEmptyStateView()
+        view.startWorkoutButtonTapped = { [weak self] in
+            self?.didSendEventClosure?(.startEmptyWorkout)
+        }
+        return view
+    }()
     
     //MARK: - Combine Binding
     private func bindVM(){
@@ -100,10 +116,6 @@ class HomeVC: UIViewController {
             }
             .store(in: &cancellables)
         
-        
-        vm.input.viewDidLoad.send()
-        
-        
         vm.output.showShareSheet
             .receive(on: DispatchQueue.main)
             .sink { [weak self] text in
@@ -112,6 +124,7 @@ class HomeVC: UIViewController {
             }
             .store(in: &cancellables)
         
+        vm.input.viewDidLoad.send()
     }
     
     //MARK: - Workout Menu Presentation
@@ -144,29 +157,18 @@ class HomeVC: UIViewController {
     }
     
     //MARK: - Update Snapshot
-    private func updateSnapshot(with items: [HomeWorkoutPresentationItem]){
-        var snaphot = Snapshot()
-        snaphot.appendSections([.main])
+    private func updateSnapshot(with items: [HomeWorkoutPresentationItem]) {
+        var snapshot = Snapshot()
+        snapshot.appendSections([.main])
         
-        let isEnabled = items.isEmpty
+        contentView.collectionView.backgroundView = items.isEmpty ? emptyStateView : nil
         
-        if isEnabled {
-            let emptyView = HomeEmptyStateView()
-            contentView.collectionView.backgroundView = emptyView
-            
-            emptyView.startWorkoutButtonTapped = { [weak self] in
-                self?.didSendEventClosure?(.startEmptyWorkout)
-            }
-        }else{
-            contentView.collectionView.backgroundView = nil
-            let rowItems = items.map { RowItem.workout($0)}
-            snaphot.appendItems(rowItems, toSection: .main)
-        }
+        let rowItems = items.map(RowItem.workout)
+        snapshot.appendItems(rowItems, toSection: .main)
+        snapshot.reconfigureItems(rowItems)
         
+        dataSource.apply(snapshot, animatingDifferences: view.window != nil)
         
-        let isVisible = self.view.window != nil
-        
-        dataSource.apply(snaphot, animatingDifferences: isVisible)
     }
 }
 
