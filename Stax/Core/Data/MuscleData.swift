@@ -8,12 +8,12 @@
 import Foundation
 
 
-nonisolated struct MuscleData: Hashable, Sendable{
+nonisolated struct MuscleData: Identifiable, Hashable, Sendable{
+    var id: String { muscleName }
     let muscleName: String
     let percentage: Double
 }
 
 nonisolated struct MuscleSplitItem: Hashable, Sendable{
-    let id = UUID()
     let muscleData: [MuscleData]
 }

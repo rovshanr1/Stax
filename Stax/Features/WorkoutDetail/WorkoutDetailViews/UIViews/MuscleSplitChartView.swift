@@ -11,33 +11,52 @@ import Charts
 struct MuscleSplitChartView: View {
     let chartData: [MuscleData]
     
+    private let rowHeight: CGFloat = 56
+    private let barHeight: CGFloat = 20
+    
+    private var xDomain: ClosedRange<Double> {
+        let maxValue = chartData.map(\.percentage).max() ?? 100
+        return 0...max(maxValue * 1.2, 1)
+    }
+    
     var body: some View {
         VStack(alignment: .leading){
             Text("Muscle Split")
                 .font(.headline)
                 .fontWeight(.medium)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
             
-            Chart(chartData, id: \.muscleName){ item in
-                BarMark(x: .value("", item.percentage),y: .value("", item.muscleName))
-                    .foregroundStyle(.primary)
-                    .annotation(position: .trailing, alignment: .center){
-                        Text("\(Int(item.percentage))%")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fontWeight(.bold)
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-            }
-            .chartXAxis(.hidden)
-            .chartYAxis {
-                AxisMarks {
-                    AxisValueLabel()
+            Chart(chartData){ item in
+                BarMark(
+                    x: .value("", item.percentage),
+                    y: .value("", item.muscleName),
+                    height: .fixed(barHeight)
+                )
+                .foregroundStyle(.primary)
+                .cornerRadius(5)
+                .annotation(position: .top,
+                            alignment: .leading,
+                            spacing: 4,
+                            overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                    Text(item.muscleName)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
+                
+                            .annotation(position: .trailing, alignment: .center, spacing: 6) {
+                                Text("\(Int(item.percentage))%")
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.secondary)
+                            }
+                
             }
-            .frame(height: CGFloat(max(1, chartData.count) * 50))
+            .chartXScale(domain: xDomain)
+            .chartYScale(range: .plotDimension(padding: 8))
+            .chartXAxis(.hidden)
+            .chartYAxis(.hidden)
             .chartLegend(.hidden)
-            .listRowSeparator(.hidden)
+            .frame(height: CGFloat(max(1, chartData.count)) * rowHeight)
      
             Divider()
                 .background(Color(uiColor: .separator))
@@ -45,6 +64,4 @@ struct MuscleSplitChartView: View {
     }
 }
 
-#Preview {
-    MuscleSplitChartView(chartData: [MuscleData(muscleName: "Back", percentage: 10), MuscleData(muscleName: "Triceps", percentage: 20), MuscleData(muscleName: "Chest", percentage: 30)])
-}
+
