@@ -10,6 +10,7 @@ import Foundation
 nonisolated struct DetailSummaryItems: Hashable, Sendable {
     let id = UUID()
     let workoutName: String
+    let workoutDescription: String?
     let durationString: String
     let volumeString: String
     let setsLabel: String

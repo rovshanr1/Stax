@@ -15,72 +15,23 @@ class WorkoutDetailHeaderView: UIView {
         let label = UILabel()
         label.font = .preferredFont(forTextStyle: .title1)
         label.textColor = .label
+        label.numberOfLines = 0
+        return label
+    }()
+    
+    private let descriptionLabel: UILabel = {
+        let label = UILabel()
+        label.font = .preferredFont(forTextStyle: .subheadline)
+        label.textColor = .secondaryLabel
+        label.numberOfLines = 0
+        label.isHidden = true
         return label
     }()
 
-    private let timeLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textColor = .secondaryLabel
-        label.text = "Time"
-        return label
-    }()
-    
-    private let volumeLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textColor = .secondaryLabel
-        label.text = "Volume"
-        return label
-    }()
-    
-    private var setsLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textColor = .secondaryLabel
-        label.text = "Sets"
-        return label
-    }()
-    
-    private var caloriesLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textColor = .secondaryLabel
-        label.text = "Calories"
-        return label
-    }()
-    
-    private var timeValueLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .label
-        label.text = "00:00"
-        return label
-    }()
-    
-    private var volumeValueLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .label
-        label.text = "00"
-        return label
-    }()
-    
-    private var setsValueLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .label
-        label.text = "00"
-        return label
-    }()
-    
-    private var caloriesValueLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .label
-        label.text = "00"
-        return label
-    }()
+    private let timeValueLabel = WorkoutDetailHeaderView.makeValueLabel()
+    private let volumeValueLabel = WorkoutDetailHeaderView.makeValueLabel()
+    private let setsValueLabel = WorkoutDetailHeaderView.makeValueLabel()
+    private let caloriesValueLabel = WorkoutDetailHeaderView.makeValueLabel()
  
     private var separatorView: UIView = {
         let view = UIView()
@@ -90,47 +41,29 @@ class WorkoutDetailHeaderView: UIView {
     
     //Stack Views
     
-    private lazy var timeStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [timeLabel, timeValueLabel])
-        stackView.axis = .vertical
-        stackView.spacing = 4
-        return stackView
-    }()
-    private lazy var volumeStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [volumeLabel, volumeValueLabel])
-        stackView.axis = .vertical
-        stackView.spacing = 4
-        return stackView
-    }()
-    
-    private lazy var setsStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [setsLabel, setsValueLabel])
-        stackView.axis = .vertical
-        stackView.spacing = 4
-        return stackView
-    }()
-    
-    private lazy var caloriesStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [caloriesLabel, caloriesValueLabel])
-        stackView.axis = .vertical
-        stackView.spacing = 4
-        return stackView
-    }()
-    
     private lazy var informationStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [timeStackView, volumeStackView, setsStackView])
-        stackView.axis = .horizontal
-        stackView.distribution = .fillEqually
-        stackView.spacing = 4
-        return stackView
-    }()
+         let stackView = UIStackView(arrangedSubviews: [
+             Self.makeStat(title: "Time", valueLabel: timeValueLabel),
+             Self.makeStat(title: "Volume", valueLabel: volumeValueLabel),
+             Self.makeStat(title: "Sets", valueLabel: setsValueLabel),
+             Self.makeStat(title: "Calories", valueLabel: caloriesValueLabel)
+         ])
+         stackView.axis = .horizontal
+         stackView.distribution = .fillEqually
+         stackView.alignment = .top
+         stackView.spacing = 8
+         return stackView
+     }()
     
     private lazy var mainStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [workoutTitleLabel, informationStackView, caloriesStackView, separatorView])
-        stackView.axis = .vertical
-        stackView.spacing = 8
-        return stackView
-    }()
+          let stackView = UIStackView(arrangedSubviews: [workoutTitleLabel,
+                                                         descriptionLabel,
+                                                         informationStackView,
+                                                         separatorView])
+          stackView.axis = .vertical
+          stackView.spacing = 16
+          return stackView
+      }()
     
     
     override init(frame: CGRect) {
@@ -156,12 +89,43 @@ class WorkoutDetailHeaderView: UIView {
         }
     }
     
-    func configureDetailHeader(title: String, time: String, volume: String, sets: String, calories: String? ){
+    func configureDetailHeader(title: String, description: String? = nil, time: String, volume: String, sets: String, calories: String? ){
         workoutTitleLabel.text = title
         timeValueLabel.text = time
         volumeValueLabel.text = volume
         setsValueLabel.text = sets
-        caloriesValueLabel.text = calories
+        caloriesValueLabel.text = calories ?? "-"
+        
+        let trimmed = description?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let hasDescription = !trimmed.isEmpty
+
+        descriptionLabel.text = hasDescription ? trimmed : nil
+        descriptionLabel.isHidden = !hasDescription
+        
+        mainStackView.setCustomSpacing(hasDescription ? 4 : 16, after: workoutTitleLabel)
+    }
+    
+    //MARK: - Factory
+    private static func makeValueLabel() -> UILabel {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        label.numberOfLines = 1
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.7
+        return label
+    }
+    
+    private static func makeStat(title: String, valueLabel: UILabel) -> UIStackView {
+        let titleLabel = UILabel()
+        titleLabel.font = .systemFont(ofSize: 12, weight: .regular)
+        titleLabel.textColor = .secondaryLabel
+        titleLabel.text = title
+
+        let stackView = UIStackView(arrangedSubviews: [titleLabel, valueLabel])
+        stackView.axis = .vertical
+        stackView.spacing = 4
+        return stackView
     }
     
 }

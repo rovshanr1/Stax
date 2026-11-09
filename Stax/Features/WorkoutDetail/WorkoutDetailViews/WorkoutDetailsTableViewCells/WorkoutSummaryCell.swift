@@ -35,6 +35,7 @@ final class WorkoutSummaryCell: UICollectionViewCell {
     func configureWorkoutSummarCell(with item: DetailSummaryItems){
         summaryCell.configureDetailHeader(
             title: item.workoutName,
+            description: item.workoutDescription, 
             time: item.durationString,
             volume: item.volumeString,
             sets: item.setsLabel,
