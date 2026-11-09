@@ -114,6 +114,8 @@ final class HomeVM {
             let activeSetsCount = workoutExercise.workoutSets.count
             let title = "\(activeSetsCount) sets of \(exerciseName)"
             
+            let trimmedNote = workoutExercise.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+
             let item = ExerciseSummaryItem(exerciseName: title, imageURl: exerciseImage)
             summaryItems.append(item)
         }
