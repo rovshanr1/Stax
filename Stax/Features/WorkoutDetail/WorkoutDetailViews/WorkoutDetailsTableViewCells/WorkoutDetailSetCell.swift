@@ -10,28 +10,30 @@ import SnapKit
 
 final class WorkoutSetCell: UICollectionViewListCell {
     
-    private let setIndexLabel: UILabel = {
-        let l = UILabel()
-        l.font = .systemFont(ofSize: 18, weight: .semibold)
-        l.textColor = .label
-        l.textAlignment = .left
-        return l
+    private let indexLabel: UILabel = {
+        let label = UILabel()
+        label.font = .monospacedDigitSystemFont(ofSize: 14, weight: .semibold)
+        label.textColor = .label
+        label.textAlignment = .center
+        return label
     }()
     
-    private let detailsLabel: UILabel = {
-        let l = UILabel()
-        l.font = .systemFont(ofSize: 18, weight: .medium)
-        l.textColor = .secondaryLabel
-        return l
+    private let indexBadge: UIView = {
+        let view = UIView()
+        view.backgroundColor = .secondarySystemBackground
+        view.layer.cornerRadius = 8
+        return view
     }()
     
-    private lazy var mainStackView: UIStackView = {
-        let sv = UIStackView(arrangedSubviews: [setIndexLabel, detailsLabel, UIView()])
-        sv.axis = .horizontal
-        sv.spacing = 16
-        sv.alignment = .center
-        return sv
-    }()
+    private let indexColumn = UIView()
+    
+    private let weightLabel = WorkoutSetCell.makeValueLabel()
+    private let repsLabel = WorkoutSetCell.makeValueLabel()
+    
+    private lazy var rowStack = SetTableLayout.makeRow(index: indexColumn,
+                                                       weight: weightLabel,
+                                                       reps: repsLabel)
+
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -43,27 +45,43 @@ final class WorkoutSetCell: UICollectionViewListCell {
     }
     
     private func setupUI() {
-        contentView.addSubview(mainStackView)
+        contentView.addSubview(rowStack)
+        indexColumn.addSubview(indexBadge)
+        indexBadge.addSubview(indexLabel)
         
-        mainStackView.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 4,
-                                                             left: 24,
-                                                             bottom: 4,
-                                                             right: 16)
-            )
+        rowStack.snp.makeConstraints { make in
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 6,
+                                                             left: SetTableLayout.horizontalInset,
+                                                             bottom: 6,
+                                                             right: SetTableLayout.horizontalInset))
+        }
+
+        indexBadge.snp.makeConstraints { make in
+            make.verticalEdges.leading.equalToSuperview()
+            make.size.equalTo(28)
         }
         
-        setIndexLabel.snp.makeConstraints { make in
-            make.width.equalTo(30)
+        indexLabel.snp.makeConstraints { make in
+            make.center.equalToSuperview()
         }
     }
     
     // MARK: - Configuration
     func configureWorkoutDetailSetCell(with item: DetailSetRowItem) {
-        
-        setIndexLabel.text = "\(item.setIndex)"
-        detailsLabel.text = "\(item.weightString) x \(item.repsString)"
-        
-        
+        indexLabel.text = "\(item.setIndex)"
+        weightLabel.text = item.weightString
+        repsLabel.text = item.repsString
+    }
+
+    
+    //MARK: - Factory
+    private static func makeValueLabel() -> UILabel {
+        let label = UILabel()
+        label.font = .monospacedDigitSystemFont(ofSize: 17, weight: .semibold)
+        label.textColor = .label
+        label.textAlignment = .center
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.8
+        return label
     }
 }

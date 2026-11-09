@@ -19,7 +19,6 @@ final class WorkoutDetailView: UIView {
     let collectionView: UICollectionView = {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
         collectionView.backgroundColor = .systemBackground
-        
         return collectionView
     }()
     
