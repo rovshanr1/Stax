@@ -59,28 +59,28 @@ final class WorkoutDetailVM {
     }
     
     
-    private func getWorkoutDetails(){
-        self.workoutRepo.fetchWorkouts()
-        
-        guard let selectedWorkout = self.workoutRepo.getWorkout(by: self.workoutID) else {
-            print(("VM cant find workout with id: \(self.workoutID)"))
+    private func getWorkoutDetails() {
+        workoutRepo.fetchWorkouts()
+
+        guard let workout = workoutRepo.getWorkout(by: workoutID) else {
+            print("VM cant find workout with id: \(workoutID)")
             return
         }
-        
-        let summaryItem  = createSummaryItem(from: selectedWorkout)
-        output.summaryData.send(summaryItem)
-        
-        let realMuscleData = MuscleSplitCalculation.calculateMuscleSplit(from: selectedWorkout)
-        if !realMuscleData.isEmpty {
-            self.output.muscleSplitData.send(MuscleSplitItem(muscleData: realMuscleData))
+
+        output.summaryData.send(createSummaryItem(from: workout))
+
+        let muscleData = MuscleSplitCalculation.calculateMuscleSplit(from: workout)
+        if !muscleData.isEmpty {
+            output.muscleSplitData.send(MuscleSplitItem(muscleData: muscleData))
         }
-        
-        let exerciseSection = createExerciseSections(from: selectedWorkout)
-        output.exerciseData.send(exerciseSection)
+
+        output.exerciseData.send(createExerciseSections(from: workout))
     }
+
     
     private func createSummaryItem(from workout: WorkoutDomainModel) -> DetailSummaryItems {
         return  DetailSummaryItems(
+            id: workout.id,
             workoutName: workout.name ?? "Unknown Workout",
             workoutDescription: workout.workoutDescription,
             durationString: workout.duration.formatDuration(),
@@ -93,24 +93,28 @@ final class WorkoutDetailVM {
         var section: [ExerciseSectionData] = []
         
         for workoutExercise in workout.workoutExercises {
+            let id = workoutExercise.id
             let exerciseName = workoutExercise.exercise?.name ?? ""
             let muscleName = workoutExercise.exercise?.targetMuscleGroups?.rawValue
             let exerciseImage = workoutExercise.exercise?.exerciseImage ?? ""
+            let exerciseNote = workoutExercise.notes
             
             let headerItem = DetailExerciseHeaderItem(
+                id: id,
                 exerciseName: exerciseName,
                 muscleGroups: muscleName != nil ? [muscleName!] : nil,
-                imageURL: exerciseImage)
+                imageURL: exerciseImage,
+                note: exerciseNote)
             
             var setRowItems: [DetailSetRowItem] = []
             
             let sortedSets = workoutExercise.workoutSets.sorted {$0.orderIndex < $1.orderIndex }
             
             for (index, set) in sortedSets.enumerated() {
-                let weightStr = floor(set.weight) == set.weight ? "\(Int(set.weight))" : String(format: "%.1f", set.weight)
                 let setItem = DetailSetRowItem(
+                    id: set.id,
                     setIndex: index + 1,
-                    weightString: weightStr,
+                    weightString: set.weight.formatWeight(),
                     repsString: "\(set.reps)",
                     isCompleted: set.isCompleted)
                 setRowItems.append(setItem)

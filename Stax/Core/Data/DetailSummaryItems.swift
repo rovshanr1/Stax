@@ -8,7 +8,7 @@
 import Foundation
 
 nonisolated struct DetailSummaryItems: Hashable, Sendable {
-    let id = UUID()
+    let id: String
     let workoutName: String
     let workoutDescription: String?
     let durationString: String
@@ -18,14 +18,15 @@ nonisolated struct DetailSummaryItems: Hashable, Sendable {
 }
 
 nonisolated struct DetailExerciseHeaderItem: Hashable, Sendable {
-    let id = UUID()
+    let id: String
     let exerciseName: String
     let muscleGroups: [String]?
     let imageURL: String?
+    let note: String?
 }
 
 nonisolated struct DetailSetRowItem: Hashable, Sendable{
-    let id = UUID()
+    let id: String
     let setIndex: Int
     let weightString: String
     let repsString: String
