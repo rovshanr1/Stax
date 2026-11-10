@@ -14,12 +14,15 @@ enum SplashEvent{
 
 class SplashVC: UIViewController {
     var didSentEventClosure: ((SplashEvent) -> Void)?
-
+    
     var vm: SplashVM
-    
     let contentView = SplashView()
-    
     var cancellables: Set<AnyCancellable> = []
+    
+    private var isAnimationFinished = false
+    private var isSyncCompleted = false
+    private var hasProceeded = false
+    private var hasStartedAnimation = false
     
     init(vm: SplashVM) {
         self.vm = vm
@@ -32,23 +35,47 @@ class SplashVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        contentView.loadingIndicator.startAnimating()
-        
         bindViewModel()
-
+        
     }
     
     override func loadView() {
         self.view = contentView
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        // Ekran pəncərədə olandan sonra başlayır; modal bağlananda təkrar başlamasın
+        guard !hasStartedAnimation else { return }
+        hasStartedAnimation = true
+        
+        contentView.startAnimation { [weak self] in
+            self?.isAnimationFinished = true
+            self?.proceedIfReady()
+        }
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        contentView.stopAnimation()
+    }
+    
     private func bindViewModel() {
         vm.output.syncCompleted
+            .filter { $0 }
+            .first()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                self?.didSentEventClosure?(.syncComplated)
+            .sink { [weak self] _ in
+                self?.isSyncCompleted = true
+                self?.proceedIfReady()
             }
             .store(in: &cancellables)
     }
-
+    
+    private func proceedIfReady() {
+        guard isAnimationFinished, isSyncCompleted, !hasProceeded else { return }
+        hasProceeded = true
+        didSentEventClosure?(.syncComplated)
+    }
 }

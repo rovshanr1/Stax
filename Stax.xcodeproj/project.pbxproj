@@ -13,6 +13,7 @@
 		448A77562EF496DE00AF19E2 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 448A77552EF496DE00AF19E2 /* Kingfisher */; };
 		44AEDA052EDE3F8600C33816 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 44AEDA042EDE3F8600C33816 /* SnapKit */; };
 		44F0ED552F97E7C600F85666 /* ImageKitIO in Frameworks */ = {isa = PBXBuildFile; productRef = 44F0ED542F97E7C600F85666 /* ImageKitIO */; };
+		44F52A7330A26D23002D0214 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 44F52A7230A26D23002D0214 /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -60,6 +61,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				448A77562EF496DE00AF19E2 /* Kingfisher in Frameworks */,
+				44F52A7330A26D23002D0214 /* Lottie in Frameworks */,
 				447A78322F7B24F000C1FDA0 /* FirebaseAuth in Frameworks */,
 				447A78342F7B24F000C1FDA0 /* FirebaseCore in Frameworks */,
 				447A78362F7B24F000C1FDA0 /* FirebaseFirestore in Frameworks */,
@@ -114,6 +116,7 @@
 				447A78332F7B24F000C1FDA0 /* FirebaseCore */,
 				447A78352F7B24F000C1FDA0 /* FirebaseFirestore */,
 				44F0ED542F97E7C600F85666 /* ImageKitIO */,
+				44F52A7230A26D23002D0214 /* Lottie */,
 			);
 			productName = Stax;
 			productReference = 44AED9AA2ED4E25700C33816 /* Stax.app */;
@@ -148,6 +151,7 @@
 				448A77542EF496DE00AF19E2 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				447A78302F7B24F000C1FDA0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				44F0ED532F97E7C600F85666 /* XCRemoteSwiftPackageReference "imagekit-ios" */,
+				44F52A7130A26D23002D0214 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 44AED9AB2ED4E25700C33816 /* Products */;
@@ -443,6 +447,14 @@
 				minimumVersion = 3.1.0;
 			};
 		};
+		44F52A7130A26D23002D0214 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.6.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -475,6 +487,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 44F0ED532F97E7C600F85666 /* XCRemoteSwiftPackageReference "imagekit-ios" */;
 			productName = ImageKitIO;
+		};
+		44F52A7230A26D23002D0214 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 44F52A7130A26D23002D0214 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

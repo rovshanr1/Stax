@@ -10,7 +10,7 @@ import Combine
 
 final class SplashVM{
     struct Output{
-        let syncCompleted: PassthroughSubject<Void, Never>
+        let syncCompleted: CurrentValueSubject<Bool, Never>
     }
     
     let output: Output
@@ -28,6 +28,8 @@ final class SplashVM{
     
     private let minimumDisplayDuration: TimeInterval = 1.0
     
+    private var initializationTask: Task<Void, Never>?
+    
     init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol, userDefaults: UserDefaults = .standard) {
         self.firebaseSyncService = firebaseSyncService
         self.syncManager = syncManager
@@ -35,24 +37,24 @@ final class SplashVM{
         self.dataSeeder = dataSeeder
         self.userDefaults = userDefaults
         
-        self.output = .init(syncCompleted: .init())
+        self.output = .init(syncCompleted: .init(false))
         
         startInitialization()
     }
     
-    private func startInitialization(){
-        Task{
-            let startTime = Date()
-            
+    private func startInitialization() {
+        initializationTask = Task { [weak self] in
+            guard let self else { return }
+
             await dataSeeder.seedExercise()
             await cleanAbandonedWorkouts()
             await performSync()
-            
-            await enforceMinimumDisplayDuration(since: startTime)
-            
-            output.syncCompleted.send()
+
+            output.syncCompleted.send(true)
         }
     }
+    
+    deinit { initializationTask?.cancel() }
     
     //MARK: - Minimum Duration Enforcement
     private func enforceMinimumDisplayDuration(since startTime: Date) async{

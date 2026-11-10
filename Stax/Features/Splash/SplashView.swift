@@ -9,34 +9,36 @@ import UIKit
 import SnapKit
 
 class SplashView: UIView {
-    private let logoImageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(named: "StaxLogo"))
-        imageView.contentMode = .scaleAspectFit
-        return imageView
-    }()
+//    private let logoImageView: UIImageView = {
+//        let imageView = UIImageView(image: UIImage(named: "StaxLogo"))
+//        imageView.contentMode = .scaleAspectFit
+//        return imageView
+//    }()
+//    
+//    private let title: UILabel = {
+//       let label = UILabel()
+//        label.text = "Stax"
+//        label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
+//        label.textColor = .label
+//        return label
+//    }()
+//    
+//    let loadingIndicator: UIActivityIndicatorView = {
+//            let indicator = UIActivityIndicatorView(style: .medium)
+//            indicator.hidesWhenStopped = true
+//            return indicator
+//    }()
     
-    private let title: UILabel = {
-       let label = UILabel()
-        label.text = "Stax"
-        label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
-        label.textColor = .label
-        return label
-    }()
+    private let logoLoadingView = LogoLoadingView()
     
-    let loadingIndicator: UIActivityIndicatorView = {
-            let indicator = UIActivityIndicatorView(style: .medium)
-            indicator.hidesWhenStopped = true
-            return indicator
-    }()
-    
-    private lazy var stackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [logoImageView, title, loadingIndicator])
-        stackView.axis = .vertical
-        stackView.spacing = 16
-        stackView.distribution = .fill
-        stackView.alignment = .center
-        return stackView
-    }()
+//    private lazy var stackView: UIStackView = {
+//        let stackView = UIStackView(arrangedSubviews: [logoImageView, title, loadingIndicator])
+//        stackView.axis = .vertical
+//        stackView.spacing = 16
+//        stackView.distribution = .fill
+//        stackView.alignment = .center
+//        return stackView
+//    }()
     
    
 
@@ -51,15 +53,30 @@ class SplashView: UIView {
     
     
     private func setupUI(){
+//        backgroundColor = .systemBackground
+//        addSubview(stackView)
+//        
+//        logoImageView.snp.makeConstraints { make in
+//                    make.width.height.equalTo(120)
+//        }
+//        
+//        stackView.snp.makeConstraints { (make) in
+//            make.center.equalToSuperview()
+//        }
         backgroundColor = .systemBackground
-        addSubview(stackView)
-        
-        logoImageView.snp.makeConstraints { make in
-                    make.width.height.equalTo(120)
-        }
-        
-        stackView.snp.makeConstraints { (make) in
-            make.center.equalToSuperview()
-        }
+         addSubview(logoLoadingView)
+
+         logoLoadingView.snp.makeConstraints { make in
+             make.edges.equalToSuperview()
+         }
     }
+    
+    func startAnimation(completion: (() -> Void)? = nil) {
+        logoLoadingView.start(completion: completion)
+    }
+    
+    func stopAnimation() {
+        logoLoadingView.stop()
+    }
+
 }
