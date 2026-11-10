@@ -36,7 +36,7 @@ class SplashVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         bindViewModel()
-        
+        vm.start()
     }
     
     override func loadView() {

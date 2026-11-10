@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+@MainActor
 final class SplashVM{
     struct Output{
         let syncCompleted: CurrentValueSubject<Bool, Never>
@@ -26,8 +27,6 @@ final class SplashVM{
     
     private let userDefaults: UserDefaults
     
-    private let minimumDisplayDuration: TimeInterval = 1.0
-    
     private var initializationTask: Task<Void, Never>?
     
     init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol, userDefaults: UserDefaults = .standard) {
@@ -38,45 +37,36 @@ final class SplashVM{
         self.userDefaults = userDefaults
         
         self.output = .init(syncCompleted: .init(false))
-        
-        startInitialization()
     }
     
-    private func startInitialization() {
-        initializationTask = Task { [weak self] in
-            guard let self else { return }
-
-            await dataSeeder.seedExercise()
-            await cleanAbandonedWorkouts()
-            await performSync()
-
-            output.syncCompleted.send(true)
+    func start() {
+        guard initializationTask == nil else { return }
+        
+        initializationTask = Task{
+            await initialize()
         }
     }
     
-    deinit { initializationTask?.cancel() }
-    
-    //MARK: - Minimum Duration Enforcement
-    private func enforceMinimumDisplayDuration(since startTime: Date) async{
-        let elapsed = Date().timeIntervalSince(startTime)
-        let remaining = minimumDisplayDuration - elapsed
+    private func initialize() async {
+        await dataSeeder.seedExercise()
+        await cleanAbandonedWorkouts()
+        await performSync()
         
-        guard remaining > 0 else { return }
-        
-        try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+        output.syncCompleted.send(true)
     }
     
     //MARK: - Garbage Collection
     private func cleanAbandonedWorkouts() async{
         let workouts = await workoutRepo.fetchAllAsync()
-        let abandoned = workouts.filter { $0.name == nil || $0.name == ""   }
-        
+        let abandoned = workouts.filter { ($0.name ?? "").isEmpty && $0.duration == 0 }
+
         for draft in abandoned{
             if let id = draft.id?.uuidString{
                 await workoutRepo.deleteAsync(id)
             }
         }
         
+        //TODO: - Cleaning this code
         if !abandoned.isEmpty {
             print("SplashVM: \(abandoned.count) abandoned workout(s) cleaned up.")
         }
