@@ -14,9 +14,12 @@ protocol DataSeederProtocol {
 
 final class DataSeeder: DataSeederProtocol{
     let context: NSManagedObjectContext
+    private let seedURL: URL?
     
-    init(context: NSManagedObjectContext) {
+    init(context: NSManagedObjectContext,
+         seedURL: URL? = Bundle.main.url(forResource: "exercises_seed", withExtension: "json")) {
         self.context = context
+        self.seedURL = seedURL
     }
     
     func seedExercise() async{

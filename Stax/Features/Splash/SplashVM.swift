@@ -23,16 +23,17 @@ final class SplashVM{
     private let workoutRepo: DataRepository<Workout>
     private let userDefaults: UserDefaults
     
-    private let cloudFetchTimeout: TimeInterval = 8
+    private let cloudFetchTimeout: TimeInterval
     
     private var initializationTask: Task<Void, Never>?
     
-    init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol, userDefaults: UserDefaults = .standard) {
+    init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol, userDefaults: UserDefaults = .standard, cloudFetchTimeout: TimeInterval = 8) {
         self.firebaseSyncService = firebaseSyncService
         self.syncManager = syncManager
         self.workoutRepo = workoutRepo
         self.dataSeeder = dataSeeder
         self.userDefaults = userDefaults
+        self.cloudFetchTimeout = cloudFetchTimeout
         
         self.output = .init(syncCompleted: .init(false))
     }
