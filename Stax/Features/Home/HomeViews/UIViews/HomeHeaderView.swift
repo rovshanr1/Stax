@@ -65,10 +65,13 @@ class HomeHeaderView: UIView {
         return label
     }()
     
-    private var separatorView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .separator
-        return view
+    private let workoutDescription: UILabel = {
+        let label = UILabel()
+        label.font = .preferredFont(forTextStyle: .subheadline)
+        label.textColor = .secondaryLabel
+        label.numberOfLines = 2
+        label.isHidden = true
+        return label
     }()
     
     private lazy var titleStackView: UIStackView = {
@@ -102,7 +105,7 @@ class HomeHeaderView: UIView {
     }()
     
     private lazy var mainStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [titleStackView, informationStackView])
+        let stackView = UIStackView(arrangedSubviews: [titleStackView, workoutDescription, informationStackView])
         stackView.axis = .vertical
         stackView.spacing = 16
         return stackView
@@ -124,19 +127,23 @@ class HomeHeaderView: UIView {
             make.edges.equalToSuperview()
         }
         
-        separatorView.snp.makeConstraints{ make in
-            make.height.equalTo(1)
-        }
-        
         mainStackView.isUserInteractionEnabled = true
         
         moreButton.addTarget(self, action: #selector(moreButtonTapped), for: .touchUpInside)
     }
     
-    func configureHomeHeaderView(name: String, time: String, volume: String){
+    func configureHomeHeaderView(name: String, notes: String? = nil, time: String, volume: String){
         workoutTitleLabel.text = name
         timeValueLabel.text = time
         volumeValueLabel.text = volume
+        
+        let trimmed = notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let hasNotes = !trimmed.isEmpty
+        
+        workoutDescription.text = hasNotes ? trimmed : nil
+        workoutDescription.isHidden = !hasNotes
+        
+        mainStackView.setCustomSpacing(hasNotes ? 4 : 16, after: titleStackView)
     }
     
     

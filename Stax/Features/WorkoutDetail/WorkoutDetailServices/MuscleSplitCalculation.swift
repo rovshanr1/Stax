@@ -24,12 +24,16 @@ struct MuscleSplitCalculation {
         
         guard totalValidSets > 0 else {return [] }
         
-        let chartDataArray = muscleSetCounts.map {(muscle, count) -> MuscleData in
-            let percentage = (Double(count) / Double(totalValidSets)) * 100.0
-            return MuscleData(muscleName: muscle.rawValue, percentage: percentage)
+        let chartDataArray = muscleSetCounts.map { muscle, count in
+            MuscleData(muscleName: muscle.rawValue,
+                       percentage: Double(count) / Double(totalValidSets) * 100.0)
         }
         
-        return chartDataArray.sorted { $0.percentage > $1.percentage }
+        return chartDataArray.sorted {
+            $0.percentage != $1.percentage
+                ? $0.percentage > $1.percentage
+                : $0.muscleName < $1.muscleName
+        }
     }
     
 }

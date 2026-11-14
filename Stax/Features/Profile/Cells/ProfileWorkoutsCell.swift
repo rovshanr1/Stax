@@ -88,7 +88,7 @@ class ProfileWorkoutsCell: UICollectionViewCell {
         let timeStr = workout.duration.formatDuration()
         let workoutName = workout.displayName
         
-        headerView.configureHomeHeaderView(name: workoutName, time: timeStr, volume: volumeStr)
+        headerView.configureHomeHeaderView(name: workoutName, notes: workout.workoutDescription,time: timeStr, volume: volumeStr)
         
         exerciseStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         
@@ -99,7 +99,8 @@ class ProfileWorkoutsCell: UICollectionViewCell {
             if index < displayLimit{
                 let exerciseView = ExerciseInfoView()
                 
-                exerciseView.configure(title: exerciseItem.exercise?.name ?? "Unknown Exercise", image: exerciseItem.exercise?.exerciseImage ?? "")
+                exerciseView.configure(title: exerciseItem.exercise?.name ?? "Unknown Exercise",
+                                       image: exerciseItem.exercise?.exerciseImage ?? "")
                 
                 exerciseStackView.addArrangedSubview(exerciseView)
             }

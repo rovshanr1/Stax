@@ -8,61 +8,71 @@
 import Foundation
 import CoreData
 
-protocol DataSeederProtocol{
+protocol DataSeederProtocol {
     func seedExercise() async
 }
 
 final class DataSeeder: DataSeederProtocol{
     let context: NSManagedObjectContext
+    private let seedURL: URL?
     
-    init(context: NSManagedObjectContext) {
+    init(context: NSManagedObjectContext,
+         seedURL: URL? = Bundle.main.url(forResource: "exercises_seed", withExtension: "json")) {
         self.context = context
+        self.seedURL = seedURL
     }
     
     func seedExercise() async{
         
-        let fetchRequest: NSFetchRequest<Exercise> = Exercise.fetchRequest()
-        do{
-            let count = try context.count(for: fetchRequest)
-            
-            if count > 0 { return }
-            
-            await seed()
-            try context.save()
-        } catch{
-            print("Failed to fetch count of Exercise")
+        do {
+            let request: NSFetchRequest<Exercise> = Exercise.fetchRequest()
+            guard try context.count(for: request) == 0 else { return }
+        } catch {
+            print("Seeder: count failed: \(error)")
+            return
         }
-    }
-    
-    
-    private func seed() async{
         
-        //Finding json data
-        guard let url = Bundle.main.url(forResource: "exercises_seed", withExtension: "json"),
-        let data = try? Data(contentsOf: url) else {return}
+        guard let dtos = await Self.loadSeedData() else { return }
         
-        //Decoding
-        let exerciseDTOs = try? JSONDecoder().decode([ExerciseDTO].self, from: data)
-        
-        //Mapping
-        exerciseDTOs?.forEach { dto in
-            let newExercise = Exercise(context: context)
-            newExercise.name = dto.name
-            newExercise.targetMuscle = dto.targetMuscle
-            newExercise.exerciseImage = dto.exerciseImage
-            newExercise.type = dto.type
-            
-            if let staticUUID = UUID(uuidString: dto.id) {
-                newExercise.id = staticUUID
+        for dto in dtos {
+            guard let id = UUID(uuidString: dto.id) else {
+                print("Seeder: skipped exercise with invalid id: \(dto.name)")
+                continue
             }
+            
+            let exercise = Exercise(context: context)
+            exercise.id = id
+            exercise.name = dto.name
+            exercise.targetMuscle = dto.targetMuscle
+            exercise.exerciseImage = dto.exerciseImage
+            exercise.type = dto.type
         }
-        
-        //Saving
-        do{
+        do {
             try context.save()
             print("Seeding data completed")
-        } catch{
-            print("Error\(DatabaseError.unknown(error.localizedDescription))")
+        } catch {
+            context.rollback()
+            print("Seeder: save failed: \(error)")
         }
     }
+    
+    
+    
+    private static func loadSeedData() async -> [ExerciseDTO]? {
+        await Task.detached(priority: .userInitiated) {
+            guard let url = Bundle.main.url(forResource: "exercises_seed", withExtension: "json") else {
+                print("Seeder: exercises_seed.json not found in bundle")
+                return nil
+            }
+            
+            do {
+                let data = try Data(contentsOf: url)
+                return try JSONDecoder().decode([ExerciseDTO].self, from: data)
+            } catch {
+                print("Seeder: decoding failed: \(error)")
+                return nil
+            }
+        }.value
+    }
 }
+

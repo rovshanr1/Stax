@@ -107,13 +107,14 @@ final class WorkoutDetailVC: UIViewController{
         }
         
         let exerciseTitle = UICollectionView.CellRegistration<WorkoutExerciseHeaderCell, DetailExerciseHeaderItem> { (cell, indexPath, item) in
-            cell.configureWorkoutExerciseHeader(title: item.exerciseName, image: item.imageURL ?? "")
+            cell.configureWorkoutExerciseHeader(title: item.exerciseName, image: item.imageURL ?? "", note: item.note)
+            cell.selectedBackgroundView?.backgroundColor = .clear
             cell.backgroundColor = .systemBackground
         }
         
         let setDetail = UICollectionView.CellRegistration<WorkoutSetCell, DetailSetRowItem> { (cell, indexPath, item) in
             cell.configureWorkoutDetailSetCell(with: item)
-            cell.backgroundColor = .systemBackground
+            cell.isUserInteractionEnabled = false
         }
         
         
@@ -177,7 +178,7 @@ final class WorkoutDetailVC: UIViewController{
 }
 
 extension WorkoutDetailVC: UICollectionViewDelegate{
-    
+
 }
 
 

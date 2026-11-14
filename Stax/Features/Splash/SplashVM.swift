@@ -8,9 +8,10 @@
 import Foundation
 import Combine
 
+@MainActor
 final class SplashVM{
     struct Output{
-        let syncCompleted: PassthroughSubject<Void, Never>
+        let syncCompleted: CurrentValueSubject<Bool, Never>
     }
     
     let output: Output
@@ -19,85 +20,115 @@ final class SplashVM{
     private let firebaseSyncService: FirebaseSyncServiceInterface
     private let syncManager: SyncManagerInterface
     private let dataSeeder: DataSeederProtocol
-    
     private let workoutRepo: DataRepository<Workout>
-    
-    private var cancellables: Set<AnyCancellable> = []
-    
     private let userDefaults: UserDefaults
     
-    private let minimumDisplayDuration: TimeInterval = 1.0
+    private let cloudFetchTimeout: TimeInterval
     
-    init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol, userDefaults: UserDefaults = .standard) {
+    private var initializationTask: Task<Void, Never>?
+    
+    init(firebaseSyncService: FirebaseSyncServiceInterface, syncManager: SyncManagerInterface, workoutRepo: DataRepository<Workout>, dataSeeder: DataSeederProtocol, userDefaults: UserDefaults = .standard, cloudFetchTimeout: TimeInterval = 8) {
         self.firebaseSyncService = firebaseSyncService
         self.syncManager = syncManager
         self.workoutRepo = workoutRepo
         self.dataSeeder = dataSeeder
         self.userDefaults = userDefaults
+        self.cloudFetchTimeout = cloudFetchTimeout
         
-        self.output = .init(syncCompleted: .init())
-        
-        startInitialization()
+        self.output = .init(syncCompleted: .init(false))
     }
     
-    private func startInitialization(){
-        Task{
-            let startTime = Date()
-            
-            await dataSeeder.seedExercise()
-            await cleanAbandonedWorkouts()
-            await performSync()
-            
-            await enforceMinimumDisplayDuration(since: startTime)
-            
-            output.syncCompleted.send()
+    func start() {
+        guard initializationTask == nil else { return }
+        
+        initializationTask = Task{
+            await initialize()
         }
     }
     
-    //MARK: - Minimum Duration Enforcement
-    private func enforceMinimumDisplayDuration(since startTime: Date) async{
-        let elapsed = Date().timeIntervalSince(startTime)
-        let remaining = minimumDisplayDuration - elapsed
-        
-        guard remaining > 0 else { return }
-        
-        try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+    private func initialize() async {
+        await dataSeeder.seedExercise()
+        cleanAbandonedWorkouts()
+        await restoreFromCloudIfNeeded()
+        output.syncCompleted.send(true)
     }
     
-    //MARK: - Garbage Collection
-    private func cleanAbandonedWorkouts() async{
-        let workouts = await workoutRepo.fetchAllAsync()
-        let abandoned = workouts.filter { $0.name == nil || $0.name == ""   }
-        
-        for draft in abandoned{
-            if let id = draft.id?.uuidString{
-                await workoutRepo.deleteAsync(id)
-            }
+    private func cleanAbandonedWorkouts() {
+        let abandoned = workoutRepo.fetch().filter {
+            ($0.name ?? "").isEmpty && $0.duration == 0
         }
-        
-        if !abandoned.isEmpty {
+        guard !abandoned.isEmpty else { return }
+ 
+        abandoned.forEach { workoutRepo.deleteNow($0) }
+ 
+        do {
+            try workoutRepo.saveNow()
             print("SplashVM: \(abandoned.count) abandoned workout(s) cleaned up.")
+        } catch {
+            workoutRepo.rollback()
+            print("SplashVM: cleanup failed: \(error)")
         }
     }
     
     
     //MARK: - FirebaseSync
-    private func performSync() async{
-        if userDefaults.bool(forKey: UserDefaultsKeys.isSeededFromFirebase) == true {
-            return
-        }
-        
+    private func restoreFromCloudIfNeeded() async {
+        guard !userDefaults.bool(forKey: UserDefaultsKeys.isSeededFromFirebase) else { return }
+        guard let fetched = await fetchCloudWorkoutsWithTimeout() else { return }
+ 
         do {
-            let cloudWorkouts = try await firebaseSyncService.fetchInitialWorkoutsFromCloud()
-            
-            for workout in cloudWorkouts {
-                syncManager.saveCloudWorkoutToLocal(cloudWorkout: workout)
+            let result = try syncManager.restoreWorkouts(fetched.workouts)
+ 
+
+            let isComplete = fetched.undecodableCount == 0 && result.missingExerciseDefinitions == 0
+            if isComplete {
+                userDefaults.set(true, forKey: UserDefaultsKeys.isSeededFromFirebase)
             }
-            
-            userDefaults.set(true, forKey: UserDefaultsKeys.isSeededFromFirebase)
+ 
+            print("SplashVM: restored \(result.restoredWorkouts), skipped \(result.skippedWorkouts), "
+                  + "undecodable \(fetched.undecodableCount), missing definitions \(result.missingExerciseDefinitions)")
         } catch {
-            print(error.localizedDescription)
+            print("SplashVM: cloud restore failed, will retry next launch: \(error)")
         }
     }
     
+    private func fetchCloudWorkoutsWithTimeout() async -> CloudFetchResult? {
+        let gate = ContinuationGate()
+        let service = firebaseSyncService
+        let timeout = cloudFetchTimeout
+ 
+        return await withCheckedContinuation { (continuation: CheckedContinuation<CloudFetchResult?, Never>) in
+            let timeoutTask = Task {
+                try? await Task.sleep(for: .seconds(timeout))
+                guard !Task.isCancelled, gate.tryClose() else { return }
+                print("SplashVM: cloud fetch timed out")
+                continuation.resume(returning: nil)
+            }
+ 
+            Task {
+                do {
+                    let result = try await service.fetchInitialWorkoutsFromCloud()
+                    guard gate.tryClose() else { return }
+                    timeoutTask.cancel()
+                    continuation.resume(returning: result)
+                } catch {
+                    guard gate.tryClose() else { return }
+                    timeoutTask.cancel()
+                    print("SplashVM: cloud fetch failed: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+    }
+    
+}
+
+private final class ContinuationGate {
+    private var isOpen = true
+ 
+    func tryClose() -> Bool {
+        guard isOpen else { return false }
+        isOpen = false
+        return true
+    }
 }

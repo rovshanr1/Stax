@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import Kingfisher
 
 final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     static let reuseIdentifier = "WorkoutSessionExerciseListCell"
@@ -28,14 +29,11 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     //MARK: - UI Elements
     private var addNotesTextView = TextView()
     
-    private var exerciseImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
-        imageView.clipsToBounds = true
-        let config = UIImage.SymbolConfiguration(pointSize: 36, weight: .regular)
-        imageView.image = UIImage(systemName: "dumbbell", withConfiguration: config)
-        imageView.tintColor = .systemGray2
-        return imageView
+    private var workoutImageView: CircularImageView = {
+        let image = CircularImageView()
+        image.clipsToBounds = true
+        image.backgroundColor = .secondarySystemBackground
+        return image
     }()
     
     private var exerciseName: UILabel = {
@@ -87,7 +85,7 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     
     //MARK: - Stack Views
     private lazy var exerciseHeadingStackLeft: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [exerciseImageView, exerciseName])
+        let stackView = UIStackView(arrangedSubviews: [workoutImageView, exerciseName])
         stackView.axis = .horizontal
         stackView.alignment = .center
         stackView.spacing = 8
@@ -142,6 +140,9 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        workoutImageView.kf.cancelDownloadTask()
+        workoutImageView.image = nil
+        
         currentExerciseID = nil
         setsView.onUpdateSet = nil
         setsView.addSetButtonTapped = nil
@@ -186,8 +187,8 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
             make.width.equalTo(32)
         }
         
-        exerciseImageView.snp.makeConstraints { (make) in
-            make.width.equalTo(32)
+        workoutImageView.snp.makeConstraints { (make) in
+            make.width.height.equalTo(60)
         }
         
         addNotesTextView.snp.makeConstraints { (make) in
@@ -203,6 +204,16 @@ final class WorkoutSessionExerciseListCell: UICollectionViewCell {
         
         setsView.configureSets(with: exercise.workoutSets)
         
+        if let url = URL(string: exercise.exercise?.exerciseImage ?? ""){
+            self.workoutImageView.contentMode = .scaleAspectFill
+            workoutImageView.kf.setImage(with: url)
+        }else{
+            self.workoutImageView.contentMode = .center
+            
+            let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular)
+            self.workoutImageView.image = UIImage(systemName: "dumbbell.fill", withConfiguration: config)
+            self.workoutImageView.tintColor = .systemGray
+        }
         
         setsView.addSetButtonTapped = { [weak self] in
             self?.addSetTapped?(exercise)

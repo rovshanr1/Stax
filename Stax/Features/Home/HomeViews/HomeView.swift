@@ -16,7 +16,6 @@ class HomeUIView: UIView {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
         collectionView.backgroundColor = .systemGroupedBackground
         
-        collectionView.register(HomeCollectionViewCell.self, forCellWithReuseIdentifier: HomeCollectionViewCell.identifier)
         
         return collectionView
     }()
