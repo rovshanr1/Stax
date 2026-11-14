@@ -12,7 +12,7 @@ import FirebaseAuth
 protocol FirebaseSyncServiceInterface{
     func syncWorkoutToCloud(workout: WorkoutDomainModel) async throws
     func deleteWorkoutFromCloud(workoutId: String) async throws
-    func fetchInitialWorkoutsFromCloud() async throws -> [WorkoutDomainModel]
+    func fetchInitialWorkoutsFromCloud() async throws -> CloudFetchResult
     func deleteDataBaseFromFirebase() async throws
 }
 
@@ -25,6 +25,10 @@ enum FirebaseSyncError: LocalizedError {
     }
 }
 
+struct CloudFetchResult {
+    let workouts: [WorkoutDomainModel]
+    let undecodableCount: Int
+}
 
 final class FirebaseSyncService: FirebaseSyncServiceInterface {
     
@@ -53,15 +57,27 @@ final class FirebaseSyncService: FirebaseSyncServiceInterface {
         }
     }
     
-   func fetchInitialWorkoutsFromCloud() async throws -> [WorkoutDomainModel] {
+    func fetchInitialWorkoutsFromCloud() async throws -> CloudFetchResult {
         guard let uid = Auth.auth().currentUser?.uid else {
             throw FirebaseSyncError.notSignedIn
         }
         
-        let collectionRef = dataBase.collection("users").document(uid).collection("workouts")
-        let snapshot = try await collectionRef.getDocuments()
+        let snapshot = try await dataBase.collection("users").document(uid)
+                .collection("workouts").getDocuments()
         
-        return snapshot.documents.compactMap { try? $0.data(as: WorkoutDomainModel.self) }
+        var workouts: [WorkoutDomainModel] = []
+        var failed = 0
+        
+        for document in snapshot.documents {
+            do{
+                workouts.append(try document.data(as: WorkoutDomainModel.self))
+            }catch{
+                failed += 1
+                print("Undecodable cloud workout \(document.documentID): \(error)")
+            }
+        }
+        
+        return CloudFetchResult(workouts: workouts, undecodableCount: failed)
     }
     
     

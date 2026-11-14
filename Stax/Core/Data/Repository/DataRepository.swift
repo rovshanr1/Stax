@@ -180,6 +180,15 @@ final class DataRepository<T: NSManagedObject>: GenericRepository{
             context.rollback()
         }
     }
+    
+    func saveNow() throws {
+        guard context.hasChanges else { return }
+        try context.save()
+    }
+    
+    func deleteNow(_ object: T) {
+        context.delete(object)
+    }
 }
 
 
